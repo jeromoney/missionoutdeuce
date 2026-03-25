@@ -1,0 +1,28 @@
+databases:
+  - name: missionout-db
+    databaseName: missionout
+    user: missionout_app
+    plan: free
+
+services:
+  - type: web
+    name: missionout-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -e .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: missionout-db
+          property: connectionString
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT
+        value: "8000"
+      - key: DEBUG
+        value: "false"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
