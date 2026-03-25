@@ -2,8 +2,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../app_config.dart';
 import '../data/demo_data.dart';
 import '../models/dashboard_snapshot.dart';
+import '../models/incident_draft.dart';
+import '../models/incident_update.dart';
 import '../models/records.dart';
 
 class MissionOutApi {
@@ -11,10 +14,7 @@ class MissionOutApi {
     http.Client? client,
     String? baseUrl,
   })  : _client = client ?? http.Client(),
-        _baseUrl = baseUrl ?? const String.fromEnvironment(
-          'API_BASE_URL',
-          defaultValue: 'http://127.0.0.1:8000',
-        );
+        _baseUrl = baseUrl ?? resolveApiBaseUrl();
 
   final http.Client _client;
   final String _baseUrl;
@@ -47,6 +47,37 @@ class MissionOutApi {
     }
   }
 
+  Future<Incident> createIncident(IncidentDraft draft) async {
+    final response = await _client.post(
+      Uri.parse('$_baseUrl/incidents'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'title': draft.title,
+        'team': draft.team,
+        'location': draft.location,
+        'notes': draft.notes,
+        'active': true,
+      }),
+    );
+
+    return _decodeIncidentResponse(response, 'create incident');
+  }
+
+  Future<Incident> updateIncident(int incidentId, IncidentUpdate update) async {
+    final response = await _client.patch(
+      Uri.parse('$_baseUrl/incidents/$incidentId'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'title': update.title,
+        'location': update.location,
+        'notes': update.notes,
+        'active': update.active,
+      }),
+    );
+
+    return _decodeIncidentResponse(response, 'update incident');
+  }
+
   Future<List<Map<String, dynamic>>> _getList(String path) async {
     final response = await _client.get(Uri.parse('$_baseUrl$path'));
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -66,5 +97,18 @@ class MissionOutApi {
     }
 
     throw Exception('Expected a JSON list from $path');
+  }
+
+  Incident _decodeIncidentResponse(http.Response response, String action) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to $action (${response.statusCode})');
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is Map<String, dynamic>) {
+      return Incident.fromJson(decoded);
+    }
+
+    throw Exception('Expected a JSON object when attempting to $action');
   }
 }

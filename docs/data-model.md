@@ -2,7 +2,7 @@
 
 This document defines the core shared entities used across:
 
-- `admin_web/`
+- `dispatcher/`
 - `responder/`
 - `backend/`
 

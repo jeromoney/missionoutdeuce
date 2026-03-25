@@ -1,12 +1,29 @@
+import os
+from pathlib import Path
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_EXTERNAL_ENV_FILE = REPO_ROOT.parent / "Secrets" / "missionout-backend.env"
+ENV_FILE_CANDIDATES: list[str] = []
+
+env_file_override = os.getenv("MISSIONOUT_ENV_FILE")
+if env_file_override:
+    ENV_FILE_CANDIDATES.append(env_file_override)
+elif DEFAULT_EXTERNAL_ENV_FILE.exists():
+    ENV_FILE_CANDIDATES.append(str(DEFAULT_EXTERNAL_ENV_FILE))
+
+ENV_FILE_CANDIDATES.append(".env")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=tuple(ENV_FILE_CANDIDATES),
         env_file_encoding="utf-8",
         extra="ignore",
+        enable_decoding=False,
     )
 
     app_name: str = "MissionOut API"

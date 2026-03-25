@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import auth, events, health, incidents
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
 from app.models import DeliveryEvent, Incident, ResponseRecord

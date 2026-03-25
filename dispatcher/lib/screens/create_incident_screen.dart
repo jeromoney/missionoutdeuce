@@ -13,12 +13,14 @@ class CreateIncidentScreen extends StatefulWidget {
 class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
+  final _teamController = TextEditingController(text: 'Dispatch');
   final _locationController = TextEditingController();
   final _notesController = TextEditingController();
 
   @override
   void dispose() {
     _titleController.dispose();
+    _teamController.dispose();
     _locationController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -73,6 +75,17 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
                       child: TextFormField(
                         controller: _titleController,
                         decoration: _inputDecoration('Injured climber extraction'),
+                        textInputAction: TextInputAction.next,
+                        validator: _requiredField,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _LabeledField(
+                      label: 'Team',
+                      child: TextFormField(
+                        controller: _teamController,
+                        decoration: _inputDecoration('Chaffee SAR'),
+                        textInputAction: TextInputAction.next,
                         validator: _requiredField,
                       ),
                     ),
@@ -176,6 +189,7 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
     Navigator.of(context).pop(
       IncidentDraft(
         title: _titleController.text.trim(),
+        team: _teamController.text.trim(),
         location: _locationController.text.trim(),
         notes: _notesController.text.trim(),
       ),

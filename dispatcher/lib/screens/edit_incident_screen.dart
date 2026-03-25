@@ -116,7 +116,7 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       value: _active,
-                      activeColor: AppPalette.success,
+                      activeThumbColor: AppPalette.success,
                       title: const Text(
                         'Incident active',
                         style: TextStyle(

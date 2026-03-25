@@ -4,6 +4,7 @@ import '../models/records.dart';
 
 const demoIncidents = [
   Incident(
+    id: 1,
     title: 'Injured Climber Extraction',
     team: 'Chaffee SAR',
     location: 'Mt. Princeton Southwest Gully',
@@ -38,6 +39,7 @@ const demoIncidents = [
     ],
   ),
   Incident(
+    id: 2,
     title: 'Overdue Snowmobiler',
     team: 'Summit County Rescue',
     location: 'Georgia Pass East Approach',
@@ -66,6 +68,7 @@ const demoIncidents = [
     ],
   ),
   Incident(
+    id: 3,
     title: 'Avalanche Witness Report',
     team: 'Alpine Rescue',
     location: 'Monarch Crest Sector 4',

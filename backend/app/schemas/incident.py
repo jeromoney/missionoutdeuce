@@ -11,6 +11,7 @@ class ResponseRecordRead(BaseModel):
 
 
 class IncidentRead(BaseModel):
+    id: int
     title: str
     team: str
     location: str
@@ -18,3 +19,18 @@ class IncidentRead(BaseModel):
     notes: str
     active: bool
     responses: list[ResponseRecordRead]
+
+
+class IncidentCreate(BaseModel):
+    title: str
+    team: str
+    location: str
+    notes: str
+    active: bool = True
+
+
+class IncidentUpdate(BaseModel):
+    title: str
+    location: str
+    notes: str
+    active: bool

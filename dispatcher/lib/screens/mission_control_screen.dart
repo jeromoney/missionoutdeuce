@@ -193,21 +193,30 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       return;
     }
 
-    final newIncident = Incident(
-      title: draft.title,
-      team: 'Dispatch',
-      location: draft.location,
-      created: 'just now',
-      notes: draft.notes,
-      active: true,
-      responses: const [],
-    );
+      setState(() {
+        statusMessage = 'Creating incident...';
+      });
 
-    setState(() {
-      incidents = [newIncident, ...incidents];
-      selected = 0;
-      statusMessage = 'Incident created locally. Backend submission can be wired next.';
-    });
+    try {
+      final newIncident = await api.createIncident(draft);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        incidents = [newIncident, ...incidents];
+        selected = 0;
+        statusMessage = 'Incident created and saved to the backend.';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        statusMessage = 'Could not create incident: $error';
+      });
+    }
   }
 
   Future<void> _openEditIncident() async {
@@ -225,21 +234,37 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       return;
     }
 
-    final updatedIncident = incidents[selected].copyWith(
-      title: update.title,
-      location: update.location,
-      notes: update.notes,
-      active: update.active,
-    );
-
     setState(() {
-      incidents = [
-        for (var index = 0; index < incidents.length; index++)
-          if (index == selected) updatedIncident else incidents[index],
-      ];
-      statusMessage =
-          'Incident updated locally. Backend persistence can be wired next.';
+      statusMessage = 'Saving incident changes...';
     });
+
+    final selectedIncident = incidents[selected];
+
+    try {
+      final updatedIncident = await api.updateIncident(
+        selectedIncident.id,
+        update,
+      );
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        incidents = [
+          for (var index = 0; index < incidents.length; index++)
+            if (index == selected) updatedIncident else incidents[index],
+        ];
+        statusMessage = 'Incident changes saved to the backend.';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        statusMessage = 'Could not save incident changes: $error';
+      });
+    }
   }
 }
 

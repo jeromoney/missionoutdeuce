@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class Incident {
   const Incident({
+    required this.id,
     required this.title,
     required this.team,
     required this.location,
@@ -11,6 +12,7 @@ class Incident {
     this.active = true,
   });
 
+  final int id;
   final String title;
   final String team;
   final String location;
@@ -20,6 +22,7 @@ class Incident {
   final bool active;
 
   Incident copyWith({
+    int? id,
     String? title,
     String? team,
     String? location,
@@ -29,6 +32,7 @@ class Incident {
     bool? active,
   }) {
     return Incident(
+      id: id ?? this.id,
       title: title ?? this.title,
       team: team ?? this.team,
       location: location ?? this.location,
@@ -46,6 +50,7 @@ class Incident {
         .toList();
 
     return Incident(
+      id: json['id'] as int? ?? 0,
       title: json['title'] as String? ?? 'Untitled incident',
       team: json['team'] as String? ?? 'Unknown team',
       location: json['location'] as String? ?? 'Unknown location',

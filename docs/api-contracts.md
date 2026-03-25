@@ -2,7 +2,7 @@
 
 This document describes the shared API contract between:
 
-- `admin_web/`
+- `dispatcher/`
 - `responder/`
 - `backend/`
 
@@ -218,5 +218,5 @@ Suggested payload shape:
 ## Ownership
 
 - Backend owns API truth and validation.
-- `admin_web/` and `responder/` should mirror backend contracts in their Dart models.
+- `dispatcher/` and `responder/` should mirror backend contracts in their Dart models.
 - This document should be updated whenever route shapes change in a meaningful way.

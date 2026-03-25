@@ -4,7 +4,7 @@ MissionOut is a SAR alerting platform organized as a monorepo with separate apps
 
 ## Repo Layout
 
-- `admin_web/`
+- `dispatcher/`
   Flutter app for the administrative and dispatcher web interface.
 - `responder/`
   Placeholder workspace for the responder app and native alerting code.
@@ -19,14 +19,14 @@ MissionOut is a SAR alerting platform organized as a monorepo with separate apps
 
 ## Current Status
 
-- The dispatcher/admin web prototype lives in `admin_web/`.
+- The dispatcher/admin web prototype lives in `dispatcher/`.
 - The backend scaffold lives in `backend/`.
 - The dedicated responder app has not been scaffolded yet, but the folder is reserved for that work.
 
 ## Run The Web App
 
 ```powershell
-cd admin_web
+cd dispatcher
 flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000
 ```
 

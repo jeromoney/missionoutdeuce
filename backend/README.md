@@ -12,7 +12,9 @@ FastAPI + PostgreSQL scaffold for the MissionOut web and responder clients.
 ## Quick Start
 
 1. Create a database named `missionout`.
-2. Copy `.env.example` to `.env` and update `DATABASE_URL` if needed.
+2. Choose one local config approach:
+   - Copy `.env.example` to `.env` and update `DATABASE_URL` if needed.
+   - Or keep secrets outside the repo in `..\Secrets\missionout-backend.env`.
    Set `GOOGLE_CLIENT_ID` to your Google web client id.
 3. Install dependencies:
 
@@ -35,9 +37,32 @@ python -m app.seed
 python run.py
 ```
 
+## External Secrets File
+
+The backend will automatically look for:
+
+```text
+..\Secrets\missionout-backend.env
+```
+
+relative to the repo root. In your current layout that means:
+
+```text
+C:\Users\justi\OneDrive\Documents\Projects\Secrets\missionout-backend.env
+```
+
+You can also override the location explicitly:
+
+```powershell
+$env:MISSIONOUT_ENV_FILE="C:\Users\justi\OneDrive\Documents\Projects\Secrets\missionout-backend.env"
+python run.py
+```
+
+If no external file is found, the backend falls back to `backend/.env`.
+
 ## Render Deploy
 
-The repo includes a Render blueprint at [render.yaml](/Users/justi/OneDrive/Documents/missionout/render.yaml).
+The repo includes a Render blueprint at [render.yaml](/Users/justi/OneDrive/Documents/Projects/missionout/render.yaml).
 
 After creating the `missionout-backend` service and `missionout-db` database in Render, set:
 
