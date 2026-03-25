@@ -19,6 +19,7 @@ class MissionOutApi {
   final http.Client _client;
   final String _baseUrl;
 
+  // The UI/backend contract for these routes lives in docs/api-contracts.md.
   Future<DashboardSnapshot> fetchDashboard() async {
     try {
       final incidentsFuture = _getList('/incidents');

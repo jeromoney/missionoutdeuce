@@ -1,19 +1,21 @@
 # MissionOut Data Model
 
-This document defines the core shared entities used across:
+This document defines the shared entities used across:
 
-- `dispatcher/`
-- `responder/`
 - `backend/`
+- `UserInterface/dispatcher/`
+- `UserInterface/responder/`
 
-The backend remains the implementation source of truth, but this file is the human-readable contract for the system's data model.
+This file is the language boundary between backend and UI.
+Backend storage models and UI view models may differ internally, but the concepts and field meanings shared across the stack should be documented here first.
 
 ## Principles
 
-- The backend owns authoritative state.
+- The backend owns authoritative runtime state.
 - Frontend apps should model the same concepts, even if they only use a subset of fields.
 - Fields should be stable and predictable across web, responder, and backend services.
 - Emergency alerting features should prefer explicit state over derived guesswork.
+- Internal implementation details should not be treated as the contract.
 
 ## Core Entities
 
@@ -45,7 +47,7 @@ Notes:
 
 ## ResponseRecord
 
-Represents a responder’s current state for a specific incident.
+Represents a responder's current state for a specific incident.
 
 Fields:
 
@@ -133,7 +135,7 @@ Likely fields:
 
 ## TeamMembership
 
-Represents a user’s membership and role in a team.
+Represents a user's membership and role in a team.
 
 Likely fields:
 
@@ -164,7 +166,7 @@ Likely fields:
 
 ## Source of Truth
 
-- Human-readable shared contract: this file
-- API and validation source: backend Pydantic schemas
-- Persistence source: backend SQLAlchemy models and database schema
+- Human-readable shared contract: this file and [api-contracts.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/api-contracts.md)
+- Backend validation source: backend Pydantic schemas
+- Backend persistence source: SQLAlchemy models and database schema
 - Frontend mapping source: Dart models in each client app

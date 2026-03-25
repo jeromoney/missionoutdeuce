@@ -1,18 +1,21 @@
 # MissionOut API Contracts
 
-This document describes the shared API contract between:
+This document is the contract boundary between:
 
-- `dispatcher/`
-- `responder/`
 - `backend/`
+- `UserInterface/dispatcher/`
+- `UserInterface/responder/`
 
-The backend implementation is authoritative, but this document should stay aligned with the real routes and schemas.
+The backend and UI should only coordinate through the contracts documented here and in [data-model.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/data-model.md).
+Changes to routes, payloads, or meanings should be proposed here first and then implemented on both sides.
 
 ## Principles
 
 - Backend responses should be stable and explicit.
 - Field names should be consistent across clients.
-- Clients should avoid inventing alternate schema shapes when the backend contract already exists.
+- UI clients should not invent alternate schema shapes when the contract already exists.
+- Backend implementation details should not leak into UI code.
+- A route is not complete until this document reflects its request and response shape.
 
 ## Current Routes
 
@@ -67,6 +70,7 @@ Response shape:
 ```json
 [
   {
+    "id": 42,
     "title": "Injured Climber Extraction",
     "team": "Chaffee SAR",
     "location": "Mt. Princeton Southwest Gully",
@@ -87,6 +91,7 @@ Response shape:
 
 Field definitions:
 
+- `id`: numeric incident identifier
 - `title`: short incident name
 - `team`: primary responsible team
 - `location`: human-readable location
@@ -123,17 +128,13 @@ Field definitions:
 - `icon`: icon key understood by clients
 - `color`: UI hint color
 
-## Planned Routes
-
-These are recommended next contracts for the current UI work.
-
 ## `POST /incidents`
 
 Purpose:
 
 - Create a new incident from the admin dispatcher UI.
 
-Suggested request:
+Request shape:
 
 ```json
 {
@@ -145,9 +146,20 @@ Suggested request:
 }
 ```
 
-Suggested response:
+Response shape:
 
-- return the created incident in the same shape used by `GET /incidents`
+```json
+{
+  "id": 42,
+  "title": "Injured Climber Extraction",
+  "team": "Chaffee SAR",
+  "location": "Mt. Princeton Southwest Gully",
+  "created": "Just now",
+  "notes": "Subject reports lower-leg injury above treeline.",
+  "active": true,
+  "responses": []
+}
+```
 
 ## `PATCH /incidents/{id}`
 
@@ -155,7 +167,7 @@ Purpose:
 
 - Update incident details such as title, location, notes, or active status.
 
-Suggested request:
+Request shape:
 
 ```json
 {
@@ -166,15 +178,26 @@ Suggested request:
 }
 ```
 
-Suggested response:
+Response shape:
 
-- return the updated incident in the same shape used by `GET /incidents`
+```json
+{
+  "id": 42,
+  "title": "Updated Incident Title",
+  "team": "Chaffee SAR",
+  "location": "Updated Location",
+  "created": "8 min ago",
+  "notes": "Updated notes",
+  "active": true,
+  "responses": []
+}
+```
 
 ## `POST /incidents/{id}/responses`
 
 Purpose:
 
-- Update a responder’s incident-specific state.
+- Update a responder's incident-specific state.
 
 Suggested request:
 
@@ -217,6 +240,7 @@ Suggested payload shape:
 
 ## Ownership
 
-- Backend owns API truth and validation.
-- `dispatcher/` and `responder/` should mirror backend contracts in their Dart models.
+- This document owns the cross-stack contract.
+- Backend owns validation and persistence behind the contract.
+- `UserInterface/dispatcher/` and `UserInterface/responder/` should mirror these contracts in their Dart models.
 - This document should be updated whenever route shapes change in a meaningful way.

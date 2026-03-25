@@ -198,4 +198,5 @@ Responsibilities:
 - Android and iOS native code own the alarm and OS-level alert path.
 - Team Admin and Super Admin are intentionally separate roles with different scopes.
 - PostgreSQL is the source of truth for incidents, responses, teams, and permissions.
-- Repository layout: `dispatcher/`, `responder/`, and `backend/` as top-level app folders.
+- Repository layout: `backend/`, `UserInterface/`, and `docs/` at the repo root.
+- Cross-stack coordination should happen through the documented contract in `docs/`, not through direct source dependencies.

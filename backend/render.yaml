@@ -1,13 +1,7 @@
-databases:
-  - name: missionout-db
-    databaseName: missionout
-    user: missionout_app
-    plan: free
-
 services:
   - type: web
     name: missionout-backend
-    runtime: python
+    env: python
     plan: free
     rootDir: backend
     buildCommand: pip install uv && uv sync --frozen --no-dev
@@ -26,3 +20,6 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false
+
+databases:
+  - name: missionout-db
