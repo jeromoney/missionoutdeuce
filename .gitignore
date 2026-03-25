@@ -56,6 +56,5 @@ app.*.map.json
 **/.coverage
 **/coverage.xml
 **/htmlcov/
-**/.env
 **/.env.*
 !**/.env.example
