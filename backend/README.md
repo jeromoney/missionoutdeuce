@@ -35,6 +35,23 @@ python -m app.seed
 python run.py
 ```
 
+## Render Deploy
+
+The repo includes a Render blueprint at [render.yaml](/Users/justi/OneDrive/Documents/missionout/render.yaml).
+
+After creating the `missionout-backend` service and `missionout-db` database in Render, set:
+
+```text
+GOOGLE_CLIENT_ID=<your-google-web-client-id>
+ALLOWED_ORIGINS=https://<your-admin-web-domain>
+```
+
+If you want both local and deployed frontends to work during testing, use a comma-separated list:
+
+```text
+ALLOWED_ORIGINS=https://<your-admin-web-domain>,http://localhost:3000,http://127.0.0.1:3000
+```
+
 ## Available Routes
 
 - `GET /health`

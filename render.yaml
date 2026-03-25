@@ -22,7 +22,11 @@ services:
         value: 0.0.0.0
       - key: API_PORT
         value: "8000"
+      - key: APP_NAME
+        value: MissionOut API
       - key: DEBUG
         value: "false"
       - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: ALLOWED_ORIGINS
         sync: false
