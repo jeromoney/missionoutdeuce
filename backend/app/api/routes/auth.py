@@ -48,6 +48,7 @@ def google_auth(payload: GoogleAuthRequest):
     return AuthUserRead(
         name=name,
         initials=initials,
-        role=payload.requested_role,
+        global_permissions=[],
+        team_memberships=[],
         email=email,
     )

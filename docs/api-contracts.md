@@ -4,6 +4,7 @@ This document explains the contract boundary between:
 
 - `backend/`
 - `UserInterface/dispatcher/`
+- `UserInterface/team_admin/`
 - `UserInterface/responder/`
 
 The canonical machine-readable contract lives in [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
@@ -15,6 +16,7 @@ This file exists to explain the intent, ownership, and usage of that contract al
 - Field names should be consistent across clients.
 - UI clients should not invent alternate schema shapes when the contract already exists.
 - Backend implementation details should not leak into UI code.
+- Dispatcher and Team Management clients should share the same backend API while enforcing different permissions.
 - A route change is not complete until the exported OpenAPI contract is regenerated.
 
 ## Contract-First Workflow
@@ -41,7 +43,7 @@ Request shape:
 ```json
 {
   "id_token": "google-id-token",
-  "requested_role": "Responder"
+  "requested_client": "responder"
 }
 ```
 
@@ -51,10 +53,23 @@ Response shape:
 {
   "name": "Justin Mercer",
   "initials": "JM",
-  "role": "Responder",
+  "global_permissions": [],
+  "team_memberships": [
+    {
+      "team_id": 7,
+      "team_name": "Chaffee SAR",
+      "roles": ["responder", "dispatcher"]
+    }
+  ],
   "email": "justin@example.com"
 }
 ```
+
+Notes:
+
+- Authentication should return the caller's effective memberships and roles, not collapse them into a single role string.
+- Client selection such as `responder`, `dispatcher`, or `team_admin` determines the requested app surface, not the full authorization set.
+- The `team_admin` client surface represents the Team Management app, not a global admin console.
 
 ## `GET /health`
 
@@ -75,7 +90,7 @@ Response:
 
 Purpose:
 
-- Returns incidents for the dispatcher/admin board.
+- Returns incidents for the dispatcher board and authorized team-management or super-admin views.
 
 Response shape:
 
@@ -116,7 +131,7 @@ Field definitions:
 
 Purpose:
 
-- Returns operational event feed items for the dispatcher/admin interface.
+- Returns operational event feed items for the dispatcher interface and authorized team-management or super-admin views.
 
 Response shape:
 
@@ -144,7 +159,7 @@ Field definitions:
 
 Purpose:
 
-- Create a new incident from the admin dispatcher UI.
+- Create a new incident from the dispatcher web UI.
 
 Request shape:
 
@@ -225,6 +240,28 @@ Suggested response:
 - updated response record
 - or updated incident, depending on chosen backend pattern
 
+## Planned Team Management Routes
+
+These routes are not fully defined in the current scaffold but should remain on the same API surface as dispatcher and responder routes.
+
+Recommended team-scoped capabilities:
+
+- `GET /teams/{team_id}/members`
+  Returns team membership records for Team Management and Super Admin workflows.
+- `POST /teams/{team_id}/members`
+  Creates or invites a user into a team and assigns one or more team-scoped roles.
+- `PATCH /teams/{team_id}/members/{membership_id}`
+  Updates membership state such as active status or assigned roles.
+- `GET /teams/{team_id}/devices`
+  Returns device health and registration visibility for team-management workflows.
+
+Guidance:
+
+- Team Management routes should support create, invite, activate, and deactivate flows for one existing team.
+- Team Management routes should avoid destructive hard-delete semantics for users with operational history.
+- Team Management routes should not create teams or perform global administration.
+- Dispatcher permissions should not imply Team Admin access, and Team Admin permissions should not imply dispatch access.
+
 ## Realtime Contract
 
 Recommended future event types:
@@ -234,6 +271,7 @@ Recommended future event types:
 - `incident.response_changed`
 - `incident.resolved`
 - `delivery.event`
+- `team.membership_changed`
 
 Suggested payload shape:
 
@@ -254,5 +292,6 @@ Suggested payload shape:
 
 - [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json) owns the cross-stack HTTP contract.
 - Backend owns validation and persistence behind the contract and exports the OpenAPI artifact.
-- `UserInterface/dispatcher/` and `UserInterface/responder/` should mirror these contracts in their Dart models.
+- `UserInterface/dispatcher/`, `UserInterface/team_admin/`, and `UserInterface/responder/` should mirror these contracts in their client models.
+- `UserInterface/team_admin/` is the Team Management app for Team Admin users.
 - This document should be updated whenever the semantics, examples, or workflow guidance change in a meaningful way.

@@ -4,6 +4,7 @@ This document defines the shared entities used across:
 
 - `backend/`
 - `UserInterface/dispatcher/`
+- `UserInterface/team_admin/`
 - `UserInterface/responder/`
 
 This file is the language boundary between backend and UI.
@@ -135,21 +136,30 @@ Likely fields:
 
 ## TeamMembership
 
-Represents a user's membership and role in a team.
+Represents a user's membership and granted roles in a team.
 
 Likely fields:
 
 - `id`
 - `user_id`
 - `team_id`
-- `role`
+- `roles`
+- `is_active`
+- `granted_at`
+- `revoked_at`
 
 Expected roles:
 
 - `responder`
 - `dispatcher`
 - `team_admin`
-- `super_admin`
+
+Notes:
+
+- Team-scoped roles should allow a user to hold both `dispatcher` and `team_admin` for the same team when explicitly granted.
+- A single membership should represent one `user_id` plus one `team_id`, with the full set of granted team-scoped roles attached to that membership.
+- `super_admin` should be modeled outside team membership or as a separate global permission concept, not as a normal team-scoped role.
+- The Team Management app should use Team Admin permissions only for one existing team and should prefer deactivation over hard deletion so historical incidents and responses remain auditable.
 
 ## AlertDelivery
 

@@ -20,7 +20,7 @@ String resolveApiBaseUrl() {
   final isLocalHost = host == 'localhost' || host == '127.0.0.1';
 
   if (isLocalHost || host.isEmpty) {
-    return 'http://127.0.0.1:8000';
+    return _defaultApiBaseUrl;
   }
 
   return _defaultApiBaseUrl;

@@ -1,11 +1,44 @@
 {
   "components": {
     "schemas": {
+      "AuthTeamMembershipRead": {
+        "properties": {
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          },
+          "team_name": {
+            "title": "Team Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "team_id",
+          "team_name",
+          "roles"
+        ],
+        "title": "AuthTeamMembershipRead",
+        "type": "object"
+      },
       "AuthUserRead": {
         "properties": {
           "email": {
             "title": "Email",
             "type": "string"
+          },
+          "global_permissions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Global Permissions",
+            "type": "array"
           },
           "initials": {
             "title": "Initials",
@@ -15,15 +48,19 @@
             "title": "Name",
             "type": "string"
           },
-          "role": {
-            "title": "Role",
-            "type": "string"
+          "team_memberships": {
+            "items": {
+              "$ref": "#/components/schemas/AuthTeamMembershipRead"
+            },
+            "title": "Team Memberships",
+            "type": "array"
           }
         },
         "required": [
           "name",
           "initials",
-          "role",
+          "global_permissions",
+          "team_memberships",
           "email"
         ],
         "title": "AuthUserRead",
@@ -68,14 +105,14 @@
             "title": "Id Token",
             "type": "string"
           },
-          "requested_role": {
-            "title": "Requested Role",
+          "requested_client": {
+            "title": "Requested Client",
             "type": "string"
           }
         },
         "required": [
           "id_token",
-          "requested_role"
+          "requested_client"
         ],
         "title": "GoogleAuthRequest",
         "type": "object"
@@ -223,6 +260,34 @@
         "title": "IncidentUpdate",
         "type": "object"
       },
+      "ResponseRecordCreate": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "rank": {
+            "default": 1,
+            "title": "Rank",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "detail"
+        ],
+        "title": "ResponseRecordCreate",
+        "type": "object"
+      },
       "ResponseRecordRead": {
         "properties": {
           "detail": {
@@ -322,7 +387,7 @@
     }
   },
   "info": {
-    "description": "MissionOut API contract for dispatcher and responder clients. The exported OpenAPI document in contracts/openapi.json is the cross-stack source of truth.",
+    "description": "MissionOut API contract for dispatcher, team admin, and responder clients. The exported OpenAPI document in contracts/openapi.json is the cross-stack source of truth.",
     "title": "MissionOut API",
     "version": "0.1.0"
   },
@@ -547,6 +612,58 @@
           }
         },
         "summary": "Update Incident",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/incidents/{incident_id}/responses": {
+      "post": {
+        "operationId": "create_incident_response_incidents__incident_id__responses_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseRecordCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseRecordRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Incident Response",
         "tags": [
           "incidents"
         ]

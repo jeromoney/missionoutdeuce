@@ -18,6 +18,7 @@ elif DEFAULT_EXTERNAL_ENV_FILE.exists():
     ENV_FILE_CANDIDATES.append(str(DEFAULT_EXTERNAL_ENV_FILE))
 
 ENV_FILE_CANDIDATES.append(".env")
+ENV_FILE_CANDIDATES.append(str(BACKEND_ROOT / ".env"))
 
 
 class Settings(BaseSettings):

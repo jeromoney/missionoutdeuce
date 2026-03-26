@@ -57,18 +57,25 @@ Focus:
 - Accuracy
 - Low-friction workflow during live incidents
 
+Restrictions:
+- Does not automatically gain team management permissions
+- May create and monitor incidents only for teams where dispatcher access is granted
+
 ### 3. Team Admin
 Manages a single team only.
 
 Responsibilities:
-- Manage users within their own team
-- Approve or revoke team access
+- Create, invite, activate, or deactivate users within their own team
+- Manage team membership and team-scoped roles
 - View team incidents, responses, and device health
-- Configure team-level settings
+- Support ongoing user administration for one existing team
 
 Restrictions:
 - Cannot view or manage other teams
+- Cannot create or delete teams
 - Cannot assign global permissions
+- Does not automatically gain dispatcher permissions
+- Should deactivate accounts rather than hard-delete operational history
 
 ### 4. Super Admin
 Manages the full system across all teams.
@@ -87,19 +94,35 @@ Scope:
 
 ## System Components
 
-### 5. Web Client
-Primary starting interface for early development and operational workflows.
+### 5. Dispatcher Web Client
+Primary operational interface for live incident workflows.
 
 Responsibilities:
 - Display incidents and responses
-- Support dispatcher workflows
-- Support Team Admin and Super Admin workflows
-- Provide responder visibility when web access is appropriate
+- Support dispatcher workflows only
+- Optimize for fast incident creation and acknowledgement monitoring
 
 Technology:
 - Flutter web
 
-### 6. Mobile Client
+### 6. Team Management App
+Dedicated web interface for single-team user administration used by a smaller trained group.
+
+Responsibilities:
+- Create, invite, activate, and deactivate team users
+- Assign or revoke team-scoped roles
+- Review team device health, incidents, and response history
+- Keep user-management complexity out of the responder experience
+
+Restrictions:
+- Manages one existing team only
+- Does not create teams
+- Does not perform global administration
+
+Technology:
+- Flutter web
+
+### 7. Mobile Client
 Shared responder application UI.
 
 Responsibilities:
@@ -112,7 +135,7 @@ Technology:
 - Flutter for shared UI
 - Platform channels for native integration
 
-### 7. Native Alert Handler
+### 8. Native Alert Handler
 Owns the mission-critical mobile alert path.
 
 Responsibilities:
@@ -126,21 +149,21 @@ Requirements:
 - Must function when the app is backgrounded or cold-started
 - Must not depend on Flutter being active to begin the alert
 
-### 8. API Server
+### 9. API Server
 System-of-record entry point for clients and workers.
 
 Responsibilities:
 - Authenticate users and devices
 - Manage teams, memberships, incidents, and responses
 - Register devices and track tokens
-- Expose APIs for web and mobile clients
+- Expose the same role-aware APIs for dispatcher web, the Team Management app, and mobile clients
 - Maintain authoritative system state
 
 Technology:
 - FastAPI
 - PostgreSQL
 
-### 9. Notification Worker
+### 10. Notification Worker
 Handles first-line dispatch delivery.
 
 Responsibilities:
@@ -152,7 +175,7 @@ Technology:
 - Celery
 - Redis
 
-### 10. Escalation Worker
+### 11. Escalation Worker
 Owns follow-up delivery when responders do not acknowledge in time.
 
 Responsibilities:
@@ -166,7 +189,7 @@ Technology:
 - Redis
 - Twilio
 
-### 11. Device Registry
+### 12. Device Registry
 Tracks delivery targets and their health.
 
 Responsibilities:
@@ -176,7 +199,7 @@ Responsibilities:
 - Provide valid targets for delivery workers
 
 ## Core Interaction Flow
-1. Dispatcher creates an incident in the web or mobile UI.
+1. Dispatcher creates an incident in the dispatcher web UI.
 2. API server stores the incident in PostgreSQL.
 3. Notification worker fans out push notifications to target devices.
 4. Native alert handler wakes the phone and starts the alarm experience.
@@ -196,6 +219,8 @@ Responsibilities:
 ## Notes
 - Flutter is the shared UI layer across web and mobile.
 - Android and iOS native code own the alarm and OS-level alert path.
+- Dispatcher and Team Admin are intentionally separate team-scoped roles.
+- The Team Management app is a dedicated web-only surface for Team Admin users on the same API.
 - Team Admin and Super Admin are intentionally separate roles with different scopes.
 - PostgreSQL is the source of truth for incidents, responses, teams, and permissions.
 - Repository layout: `backend/`, `UserInterface/`, and `docs/` at the repo root.

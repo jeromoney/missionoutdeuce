@@ -2,42 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
 
+import 'app_config.dart';
 import 'app_palette.dart';
 import 'screens/logged_out_screen.dart';
-import 'screens/responder_home_screen.dart';
+import 'screens/team_admin_home_screen.dart';
 
 void main() {
-  runApp(const MissionOutResponderApp());
+  runApp(const MissionOutTeamAdminApp());
 }
 
-class MissionOutResponderApp extends StatefulWidget {
-  const MissionOutResponderApp({super.key});
+class MissionOutTeamAdminApp extends StatefulWidget {
+  const MissionOutTeamAdminApp({super.key});
 
   @override
-  State<MissionOutResponderApp> createState() => _MissionOutResponderAppState();
+  State<MissionOutTeamAdminApp> createState() => _MissionOutTeamAdminAppState();
 }
 
-class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
-  static const apiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:8000',
-  );
-  static const googleClientId = String.fromEnvironment(
-    'GOOGLE_CLIENT_ID',
-    defaultValue: '',
-  );
-
+class _MissionOutTeamAdminAppState extends State<MissionOutTeamAdminApp> {
   final auth = AuthController(
-    loggedOutRoleLabel: 'Responder',
+    loggedOutRoleLabel: 'Team Admin',
     defaultUser: const AuthUser(
       name: 'Justin Mercer',
       initials: 'JM',
-      role: 'Responder',
+      role: 'Team Admin',
       email: 'justin@missionout.test',
     ),
-    backendBaseUrl: apiBaseUrl.endsWith('/')
-        ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
-        : apiBaseUrl,
+    backendBaseUrl: resolveApiBaseUrl(),
     googleClientId: googleClientId.isEmpty ? null : googleClientId,
   );
 
@@ -45,13 +35,13 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'MissionOut Responder',
-      theme: buildMissionOutTheme(accent: ResponderPalette.accent),
+      title: 'MissionOut Team Admin',
+      theme: buildMissionOutTheme(accent: TeamAdminPalette.accent),
       home: ListenableBuilder(
         listenable: auth,
         builder: (context, _) {
           return auth.isLoggedIn
-              ? ResponderHomeScreen(auth: auth)
+              ? TeamAdminHomeScreen(auth: auth)
               : LoggedOutScreen(
                   onMagicLinkLogin: auth.loginWithMagicLink,
                   onGoogleLogin: auth.loginWithGoogle,

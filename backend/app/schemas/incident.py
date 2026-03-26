@@ -2,6 +2,13 @@ from pydantic import BaseModel
 
 
 # Keep these request and response shapes aligned with contracts/openapi.json.
+class ResponseRecordCreate(BaseModel):
+    name: str
+    status: str
+    detail: str
+    rank: int = 1
+
+
 class ResponseRecordRead(BaseModel):
     name: str
     status: str

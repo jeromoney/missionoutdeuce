@@ -21,9 +21,9 @@ app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
     description=(
-        "MissionOut API contract for dispatcher and responder clients. "
-        "The exported OpenAPI document in contracts/openapi.json is the "
-        "cross-stack source of truth."
+        "MissionOut API contract for dispatcher, team admin, and responder "
+        "clients. The exported OpenAPI document in contracts/openapi.json is "
+        "the cross-stack source of truth."
     ),
     lifespan=lifespan,
 )

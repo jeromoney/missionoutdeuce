@@ -1,0 +1,9 @@
+{
+  "name": "MissionOut Team Admin",
+  "short_name": "Team Admin",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#06131F",
+  "theme_color": "#10283E",
+  "description": "MissionOut team administration web application."
+}

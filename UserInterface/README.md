@@ -14,7 +14,9 @@ Its integration surface with `backend/` is the shared contract:
 ## Repo Layout
 
 - `dispatcher/`
-  Flutter app for the administrative and dispatcher web interface.
+  Flutter app for dispatcher-only live incident workflows.
+- `team_admin/`
+  Flutter app for single-team administration workflows.
 - `responder/`
   Flutter app for responder-facing experiences.
 - `shared_auth/`
@@ -29,7 +31,8 @@ They are not a contract surface for `backend/`.
 
 ## Current Status
 
-- The dispatcher/admin web prototype lives in `dispatcher/`.
+- The dispatcher web prototype lives in `dispatcher/`.
+- The Team Admin web prototype lives in `team_admin/`.
 - The backend lives in the sibling `backend/` folder at the repo root.
 - The responder app scaffold lives in `responder/`.
 
@@ -37,6 +40,13 @@ They are not a contract surface for `backend/`.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\dispatcher\tool\flutter_with_local_env.ps1 run -d chrome
+```
+
+For the Team Admin app:
+
+```powershell
+cd .\team_admin
+flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000
 ```
 
 The dispatcher wrapper script automatically looks for:
@@ -61,9 +71,9 @@ GOOGLE_CLIENT_ID
 
 The shared env file can also contain backend-only settings. The dispatcher only uses the Dart defines it reads at build time.
 
-For the deployed backend, set `API_BASE_URL=https://missionout-backend.onrender.com`.
+For local backend testing, set `API_BASE_URL=http://127.0.0.1:8000`.
 
-For local backend testing instead, set `API_BASE_URL=http://127.0.0.1:8000`.
+For the deployed backend instead, set `API_BASE_URL=https://missionout-backend.onrender.com`.
 
 ## Run The Backend
 

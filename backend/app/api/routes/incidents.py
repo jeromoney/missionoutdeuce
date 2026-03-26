@@ -3,11 +3,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
-from app.models.incident import Incident
+from app.models.incident import Incident, ResponseRecord
 from app.schemas.incident import (
     IncidentCreate,
     IncidentRead,
     IncidentUpdate,
+    ResponseRecordCreate,
     ResponseRecordRead,
 )
 from app.services.formatters import relative_time_label
@@ -80,3 +81,26 @@ def update_incident(
     db.commit()
     db.refresh(incident)
     return _serialize_incident(incident)
+
+
+@router.post("/{incident_id}/responses", response_model=ResponseRecordRead, status_code=201)
+def create_incident_response(
+    incident_id: int,
+    payload: ResponseRecordCreate,
+    db: Session = Depends(get_db),
+):
+    incident = db.scalar(select(Incident).where(Incident.id == incident_id))
+    if incident is None:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    response = ResponseRecord(
+        incident_id=incident_id,
+        name=payload.name,
+        status=payload.status,
+        detail=payload.detail,
+        rank=payload.rank,
+    )
+    db.add(response)
+    db.commit()
+    db.refresh(response)
+    return ResponseRecordRead.model_validate(response)
