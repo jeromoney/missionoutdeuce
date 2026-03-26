@@ -1,9 +1,10 @@
-from sqlalchemy import delete
+from sqlalchemy import delete, text
 
 from app.db.base import Base
 from app.db.session import SessionLocal
 from app.models.event import DeliveryEvent
 from app.models.incident import Incident, ResponseRecord
+from app.models.team_management import Device, Team, TeamMembership, User
 from app.db.session import engine
 
 
@@ -11,9 +12,167 @@ def seed() -> None:
     Base.metadata.create_all(bind=engine)
 
     with SessionLocal() as db:
-        db.execute(delete(ResponseRecord))
-        db.execute(delete(Incident))
-        db.execute(delete(DeliveryEvent))
+        if db.bind is not None and db.bind.dialect.name == "postgresql":
+            # Keep seeded IDs predictable so clients can rely on stable team ids.
+            db.execute(
+                text(
+                    "TRUNCATE TABLE "
+                    "devices, team_memberships, users, teams, responses, incidents, delivery_events "
+                    "RESTART IDENTITY CASCADE"
+                )
+            )
+        else:
+            db.execute(delete(Device))
+            db.execute(delete(TeamMembership))
+            db.execute(delete(User))
+            db.execute(delete(Team))
+            db.execute(delete(ResponseRecord))
+            db.execute(delete(Incident))
+            db.execute(delete(DeliveryEvent))
+
+        chaffee_team = Team(name="Chaffee SAR", is_active=True)
+        summit_team = Team(name="Summit County Rescue", is_active=True)
+
+        justin = User(
+            name="Justin Mercer",
+            email="justin@example.com",
+            phone="555-0101",
+            is_active=True,
+        )
+        sarah = User(
+            name="Sarah Keller",
+            email="sarah@example.com",
+            phone="555-0102",
+            is_active=True,
+        )
+        mike = User(
+            name="Mike Donnelly",
+            email="mike@example.com",
+            phone="555-0103",
+            is_active=True,
+        )
+        team_manager = User(
+            name="Avery Teamlead",
+            email="avery@example.com",
+            phone="555-0110",
+            is_active=True,
+        )
+        taylor = User(
+            name="Taylor Price",
+            email="taylor@example.com",
+            phone="555-0201",
+            is_active=True,
+        )
+        chris = User(
+            name="Chris Everett",
+            email="chris@example.com",
+            phone="555-0202",
+            is_active=True,
+        )
+        summit_admin = User(
+            name="Jordan Summit",
+            email="jordan@example.com",
+            phone="555-0210",
+            is_active=True,
+        )
+
+        db.add_all(
+            [
+                chaffee_team,
+                summit_team,
+                justin,
+                sarah,
+                mike,
+                team_manager,
+                taylor,
+                chris,
+                summit_admin,
+            ]
+        )
+        db.flush()
+
+        memberships = [
+            TeamMembership(
+                user_id=justin.id,
+                team_id=chaffee_team.id,
+                roles=["responder", "dispatcher"],
+                is_active=True,
+            ),
+            TeamMembership(
+                user_id=sarah.id,
+                team_id=chaffee_team.id,
+                roles=["responder"],
+                is_active=True,
+            ),
+            TeamMembership(
+                user_id=mike.id,
+                team_id=chaffee_team.id,
+                roles=["responder"],
+                is_active=True,
+            ),
+            TeamMembership(
+                user_id=team_manager.id,
+                team_id=chaffee_team.id,
+                roles=["team_admin"],
+                is_active=True,
+            ),
+            TeamMembership(
+                user_id=taylor.id,
+                team_id=summit_team.id,
+                roles=["responder", "dispatcher"],
+                is_active=True,
+            ),
+            TeamMembership(
+                user_id=chris.id,
+                team_id=summit_team.id,
+                roles=["responder"],
+                is_active=True,
+            ),
+            TeamMembership(
+                user_id=summit_admin.id,
+                team_id=summit_team.id,
+                roles=["team_admin"],
+                is_active=True,
+            ),
+        ]
+
+        devices = [
+            Device(
+                user_id=justin.id,
+                platform="android",
+                push_token="fcm-token-justin",
+                is_active=True,
+                is_verified=True,
+            ),
+            Device(
+                user_id=sarah.id,
+                platform="ios",
+                push_token="apns-token-sarah",
+                is_active=True,
+                is_verified=True,
+            ),
+            Device(
+                user_id=mike.id,
+                platform="android",
+                push_token="fcm-token-mike",
+                is_active=False,
+                is_verified=False,
+            ),
+            Device(
+                user_id=taylor.id,
+                platform="ios",
+                push_token="apns-token-taylor",
+                is_active=True,
+                is_verified=True,
+            ),
+            Device(
+                user_id=chris.id,
+                platform="android",
+                push_token="fcm-token-chris",
+                is_active=True,
+                is_verified=True,
+            ),
+        ]
 
         incidents = [
             Incident(
@@ -83,6 +242,8 @@ def seed() -> None:
             ),
         ]
 
+        db.add_all(memberships)
+        db.add_all(devices)
         db.add_all(incidents)
         db.add_all(events)
         db.commit()

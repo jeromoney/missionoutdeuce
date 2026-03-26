@@ -10,12 +10,14 @@ class AuthController extends ChangeNotifier {
     required this.loggedOutRoleLabel,
     required this.defaultUser,
     required this.backendBaseUrl,
+    required this.requestedClient,
     this.googleClientId,
   });
 
   final String loggedOutRoleLabel;
   final AuthUser defaultUser;
   final String backendBaseUrl;
+  final String requestedClient;
   final String? googleClientId;
 
   AuthUser? _currentUser;
@@ -24,10 +26,7 @@ class AuthController extends ChangeNotifier {
   bool get isLoggedIn => _currentUser != null;
   String get roleLabel => _currentUser?.role ?? loggedOutRoleLabel;
 
-  void loginWithMagicLink({
-    required String email,
-    AuthUser? user,
-  }) {
+  void loginWithMagicLink({required String email, AuthUser? user}) {
     final baseUser = user ?? defaultUser;
     _currentUser = baseUser.copyWith(email: email);
     notifyListeners();
@@ -55,7 +54,7 @@ class AuthController extends ChangeNotifier {
       headers: const {'Content-Type': 'application/json'},
       body: jsonEncode({
         'id_token': idToken,
-        'requested_role': loggedOutRoleLabel,
+        'requested_client': requestedClient,
       }),
     );
 
@@ -68,7 +67,11 @@ class AuthController extends ChangeNotifier {
       throw Exception('Invalid auth response.');
     }
 
-    _currentUser = AuthUser.fromJson(decoded);
+    _currentUser = AuthUser.fromJson(
+      decoded,
+      requestedClient: requestedClient,
+      fallbackRole: loggedOutRoleLabel,
+    );
     notifyListeners();
   }
 

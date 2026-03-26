@@ -240,20 +240,95 @@ Suggested response:
 - updated response record
 - or updated incident, depending on chosen backend pattern
 
-## Planned Team Management Routes
+## `GET /teams/{team_id}/members`
 
-These routes are not fully defined in the current scaffold but should remain on the same API surface as dispatcher and responder routes.
+Purpose:
 
-Recommended team-scoped capabilities:
+- Returns team membership records for Team Management and Super Admin workflows.
 
-- `GET /teams/{team_id}/members`
-  Returns team membership records for Team Management and Super Admin workflows.
-- `POST /teams/{team_id}/members`
-  Creates or invites a user into a team and assigns one or more team-scoped roles.
-- `PATCH /teams/{team_id}/members/{membership_id}`
-  Updates membership state such as active status or assigned roles.
-- `GET /teams/{team_id}/devices`
-  Returns device health and registration visibility for team-management workflows.
+Response shape:
+
+```json
+[
+  {
+    "id": 1,
+    "user_id": 1,
+    "team_id": 1,
+    "name": "Justin Mercer",
+    "email": "justin@example.com",
+    "phone": "555-0101",
+    "roles": ["responder", "dispatcher"],
+    "is_active": true,
+    "granted_at": "2026-03-26T17:24:41.769162",
+    "revoked_at": null
+  }
+]
+```
+
+## `POST /teams/{team_id}/members`
+
+Purpose:
+
+- Creates or invites a user into a team and assigns one or more team-scoped roles.
+
+Request shape:
+
+```json
+{
+  "name": "Avery Teamlead",
+  "email": "avery@example.com",
+  "phone": "555-0110",
+  "roles": ["team_admin"],
+  "is_active": true
+}
+```
+
+Response:
+
+- created membership record
+- status `201`
+
+## `PATCH /teams/{team_id}/members/{membership_id}`
+
+Purpose:
+
+- Updates membership state such as active status or assigned roles.
+
+Request shape:
+
+```json
+{
+  "roles": ["responder"],
+  "is_active": false
+}
+```
+
+Response:
+
+- updated membership record
+
+## `GET /teams/{team_id}/devices`
+
+Purpose:
+
+- Returns device health and registration visibility for team-management workflows.
+
+Response shape:
+
+```json
+[
+  {
+    "id": 3,
+    "user_id": 3,
+    "user_name": "Mike Donnelly",
+    "platform": "android",
+    "push_token": "fcm-token-mike",
+    "last_seen": "2026-03-26T17:24:41.764113",
+    "is_active": false,
+    "is_verified": false
+  }
+]
+```
 
 Guidance:
 

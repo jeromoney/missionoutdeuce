@@ -46,6 +46,24 @@ class TeamAdminTeam {
   }
 }
 
+class TeamAdminWorkspace {
+  const TeamAdminWorkspace({
+    required this.team,
+    required this.connectionLabel,
+    required this.connectionDetail,
+    required this.memberCrudSupported,
+    required this.usingLiveData,
+    this.statusMessage,
+  });
+
+  final TeamAdminTeam team;
+  final String connectionLabel;
+  final String connectionDetail;
+  final bool memberCrudSupported;
+  final bool usingLiveData;
+  final String? statusMessage;
+}
+
 class TeamAdminMember {
   const TeamAdminMember({
     required this.id,

@@ -29,6 +29,7 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
 
   final auth = AuthController(
     loggedOutRoleLabel: 'Responder',
+    requestedClient: 'responder',
     defaultUser: const AuthUser(
       name: 'Justin Mercer',
       initials: 'JM',

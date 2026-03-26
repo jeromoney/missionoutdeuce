@@ -3,6 +3,7 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../data/demo_team_admin_data.dart';
 import '../models/team_admin_models.dart';
 import '../services/team_admin_repository.dart';
 
@@ -17,13 +18,18 @@ class TeamAdminHomeScreen extends StatefulWidget {
 
 class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
   final repository = TeamAdminRepository();
-  late TeamAdminTeam team;
+  TeamAdminTeam team = demoManagedTeam;
+  bool loading = true;
+  bool memberCrudSupported = false;
+  bool usingLiveData = false;
   String? statusMessage;
+  String connectionLabel = 'Connecting';
+  String connectionDetail = '';
 
   @override
   void initState() {
     super.initState();
-    team = repository.loadTeam();
+    _loadWorkspace();
   }
 
   @override
@@ -53,6 +59,9 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
                 _Header(
                   team: team,
                   userInitials: widget.auth.currentUser?.initials ?? '--',
+                  connectionLabel: connectionLabel,
+                  connectionDetail: connectionDetail,
+                  usingLiveData: usingLiveData,
                   onLogout: widget.auth.logout,
                 ),
                 if (statusMessage != null) ...[
@@ -98,13 +107,16 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
                 ),
                 const SizedBox(height: 18),
                 Expanded(
-                  child: compact
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : compact
                       ? ListView(
                           children: [
                             SizedBox(
                               height: 580,
                               child: _MembersPanel(
                                 team: team,
+                                memberCrudSupported: memberCrudSupported,
                                 onCreateMember: _openCreateMember,
                                 onEditMember: _openEditMember,
                                 onToggleMember: _toggleMemberActive,
@@ -134,6 +146,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
                               flex: 7,
                               child: _MembersPanel(
                                 team: team,
+                                memberCrudSupported: memberCrudSupported,
                                 onCreateMember: _openCreateMember,
                                 onEditMember: _openEditMember,
                                 onToggleMember: _toggleMemberActive,
@@ -173,7 +186,40 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
     );
   }
 
+  Future<void> _loadWorkspace() async {
+    setState(() {
+      loading = true;
+      statusMessage = null;
+    });
+
+    final workspace = await repository.loadWorkspace(
+      memberships: widget.auth.currentUser?.teamMemberships ?? const [],
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      team = workspace.team;
+      loading = false;
+      memberCrudSupported = workspace.memberCrudSupported;
+      usingLiveData = workspace.usingLiveData;
+      connectionLabel = workspace.connectionLabel;
+      connectionDetail = workspace.connectionDetail;
+      statusMessage = workspace.statusMessage;
+    });
+  }
+
   Future<void> _openCreateMember() async {
+    if (!memberCrudSupported) {
+      setState(() {
+        statusMessage =
+            'This backend does not expose team membership CRUD yet. Live incident and response data are connected, but member invites and device management still need backend routes.';
+      });
+      return;
+    }
+
     final draft = await showDialog<TeamAdminMemberDraft>(
       context: context,
       builder: (context) => const _MemberEditorDialog(),
@@ -183,13 +229,37 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       return;
     }
 
-    setState(() {
-      team = repository.createMember(draft);
-      statusMessage = 'Added ${draft.name} to ${team.name}.';
-    });
+    try {
+      final updatedTeam = await repository.createMember(draft);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        team = updatedTeam;
+        statusMessage = 'Added ${draft.name} to ${team.name}.';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(
+        () => statusMessage = error.toString().replaceFirst(
+          'Unsupported operation: ',
+          '',
+        ),
+      );
+    }
   }
 
   Future<void> _openEditMember(TeamAdminMember member) async {
+    if (!memberCrudSupported) {
+      setState(() {
+        statusMessage =
+            'This backend does not expose team membership CRUD yet. Live incident and response data are connected, but member role edits still need backend routes.';
+      });
+      return;
+    }
+
     final draft = await showDialog<TeamAdminMemberDraft>(
       context: context,
       builder: (context) => _MemberEditorDialog(member: member),
@@ -199,13 +269,37 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       return;
     }
 
-    setState(() {
-      team = repository.updateMember(member.id, draft);
-      statusMessage = 'Updated ${member.name}.';
-    });
+    try {
+      final updatedTeam = await repository.updateMember(member.id, draft);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        team = updatedTeam;
+        statusMessage = 'Updated ${member.name}.';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(
+        () => statusMessage = error.toString().replaceFirst(
+          'Unsupported operation: ',
+          '',
+        ),
+      );
+    }
   }
 
   Future<void> _toggleMemberActive(TeamAdminMember member) async {
+    if (!memberCrudSupported) {
+      setState(() {
+        statusMessage =
+            'This backend does not expose activate/deactivate membership routes yet. Operational history is live, but member state changes still need backend support.';
+      });
+      return;
+    }
+
     final nextState = !member.isActive;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -233,12 +327,31 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       return;
     }
 
-    setState(() {
-      team = repository.setMemberActive(member.id, nextState);
-      statusMessage = nextState
-          ? 'Activated ${member.name}.'
-          : 'Deactivated ${member.name}.';
-    });
+    try {
+      final updatedTeam = await repository.setMemberActive(
+        member.id,
+        nextState,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        team = updatedTeam;
+        statusMessage = nextState
+            ? 'Activated ${member.name}.'
+            : 'Deactivated ${member.name}.';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(
+        () => statusMessage = error.toString().replaceFirst(
+          'Unsupported operation: ',
+          '',
+        ),
+      );
+    }
   }
 }
 
@@ -246,11 +359,17 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.team,
     required this.userInitials,
+    required this.connectionLabel,
+    required this.connectionDetail,
+    required this.usingLiveData,
     required this.onLogout,
   });
 
   final TeamAdminTeam team;
   final String userInitials;
+  final String connectionLabel;
+  final String connectionDetail;
+  final bool usingLiveData;
   final VoidCallback onLogout;
 
   @override
@@ -283,6 +402,14 @@ class _Header extends StatelessWidget {
                   spacing: 12,
                   runSpacing: 12,
                   children: [
+                    _Pill(
+                      label: usingLiveData
+                          ? connectionLabel
+                          : 'Fallback demo data',
+                      color: usingLiveData
+                          ? TeamAdminPalette.success
+                          : TeamAdminPalette.warning,
+                    ),
                     _Pill(label: team.name, color: TeamAdminPalette.accent),
                     _Pill(
                       label: team.organization,
@@ -296,6 +423,11 @@ class _Header extends StatelessWidget {
                       label: team.dispatchChannel,
                       color: TeamAdminPalette.warning,
                     ),
+                    if (connectionDetail.isNotEmpty)
+                      _Pill(
+                        label: connectionDetail,
+                        color: TeamAdminPalette.secondaryAccent,
+                      ),
                   ],
                 ),
               ],
@@ -334,12 +466,14 @@ class _Header extends StatelessWidget {
 class _MembersPanel extends StatelessWidget {
   const _MembersPanel({
     required this.team,
+    required this.memberCrudSupported,
     required this.onCreateMember,
     required this.onEditMember,
     required this.onToggleMember,
   });
 
   final TeamAdminTeam team;
+  final bool memberCrudSupported;
   final VoidCallback onCreateMember;
   final ValueChanged<TeamAdminMember> onEditMember;
   final ValueChanged<TeamAdminMember> onToggleMember;
@@ -351,119 +485,138 @@ class _MembersPanel extends StatelessWidget {
       subtitle:
           'Invite, activate, deactivate, and role-manage users for this one existing team.',
       action: OutlinedButton.icon(
-        onPressed: onCreateMember,
+        onPressed: memberCrudSupported ? onCreateMember : null,
         icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: const Text('Add member'),
+        label: Text(memberCrudSupported ? 'Add member' : 'CRUD unavailable'),
       ),
-      child: ListView.separated(
-        itemCount: team.members.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final member = team.members[index];
-          return Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: TeamAdminPalette.border),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  backgroundColor: member.isActive
-                      ? TeamAdminPalette.accent
-                      : TeamAdminPalette.warning,
-                  foregroundColor: TeamAdminPalette.primary,
-                  child: Text(member.name.substring(0, 1)),
+      child: team.members.isEmpty
+          ? Center(
+              child: Text(
+                memberCrudSupported
+                    ? 'No team members returned yet.'
+                    : 'This backend is connected, but it does not expose team membership data yet.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: TeamAdminPalette.textSoft,
+                  height: 1.5,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
+              ),
+            )
+          : ListView.separated(
+              itemCount: team.members.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final member = team.members[index];
+                return Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: TeamAdminPalette.border),
+                  ),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              member.name,
+                      CircleAvatar(
+                        backgroundColor: member.isActive
+                            ? TeamAdminPalette.accent
+                            : TeamAdminPalette.warning,
+                        foregroundColor: TeamAdminPalette.primary,
+                        child: Text(member.name.substring(0, 1)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    member.name,
+                                    style: const TextStyle(
+                                      color: TeamAdminPalette.text,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                _Pill(
+                                  label: member.isActive
+                                      ? member.status
+                                      : 'Inactive',
+                                  color: member.isActive
+                                      ? _statusColor(member.status)
+                                      : TeamAdminPalette.warning,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${member.email} | ${member.phone}',
                               style: const TextStyle(
-                                color: TeamAdminPalette.text,
-                                fontWeight: FontWeight.w700,
+                                color: TeamAdminPalette.textSoft,
                               ),
                             ),
-                          ),
-                          _Pill(
-                            label: member.isActive ? member.status : 'Inactive',
-                            color: member.isActive
-                                ? _statusColor(member.status)
-                                : TeamAdminPalette.warning,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${member.email} | ${member.phone}',
-                        style: const TextStyle(
-                          color: TeamAdminPalette.textSoft,
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final role in member.roles)
+                                  _Pill(
+                                    label: role,
+                                    color: role == 'team_admin'
+                                        ? TeamAdminPalette.accent
+                                        : role == 'dispatcher'
+                                        ? TeamAdminPalette.success
+                                        : TeamAdminPalette.secondaryAccent,
+                                  ),
+                                _Pill(
+                                  label:
+                                      '${member.devicePlatform} | ${member.deviceHealth}',
+                                  color: member.deviceHealth == 'Healthy'
+                                      ? TeamAdminPalette.success
+                                      : TeamAdminPalette.secondaryAccent,
+                                ),
+                                _Pill(
+                                  label: 'Last seen ${member.lastSeen}',
+                                  color: TeamAdminPalette.warning,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                      const SizedBox(width: 12),
+                      Column(
                         children: [
-                          for (final role in member.roles)
-                            _Pill(
-                              label: role,
-                              color: role == 'team_admin'
-                                  ? TeamAdminPalette.accent
-                                  : role == 'dispatcher'
-                                  ? TeamAdminPalette.success
-                                  : TeamAdminPalette.secondaryAccent,
-                            ),
-                          _Pill(
-                            label:
-                                '${member.devicePlatform} | ${member.deviceHealth}',
-                            color: member.deviceHealth == 'Healthy'
-                                ? TeamAdminPalette.success
-                                : TeamAdminPalette.secondaryAccent,
+                          IconButton(
+                            onPressed: memberCrudSupported
+                                ? () => onEditMember(member)
+                                : null,
+                            icon: const Icon(Icons.edit_outlined),
+                            color: TeamAdminPalette.text,
                           ),
-                          _Pill(
-                            label: 'Last seen ${member.lastSeen}',
-                            color: TeamAdminPalette.warning,
+                          IconButton(
+                            onPressed: memberCrudSupported
+                                ? () => onToggleMember(member)
+                                : null,
+                            icon: Icon(
+                              member.isActive
+                                  ? Icons.person_off_outlined
+                                  : Icons.person_add_alt_1_rounded,
+                            ),
+                            color: member.isActive
+                                ? TeamAdminPalette.warning
+                                : TeamAdminPalette.success,
                           ),
                         ],
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  children: [
-                    IconButton(
-                      onPressed: () => onEditMember(member),
-                      icon: const Icon(Icons.edit_outlined),
-                      color: TeamAdminPalette.text,
-                    ),
-                    IconButton(
-                      onPressed: () => onToggleMember(member),
-                      icon: Icon(
-                        member.isActive
-                            ? Icons.person_off_outlined
-                            : Icons.person_add_alt_1_rounded,
-                      ),
-                      color: member.isActive
-                          ? TeamAdminPalette.warning
-                          : TeamAdminPalette.success,
-                    ),
-                  ],
-                ),
-              ],
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }

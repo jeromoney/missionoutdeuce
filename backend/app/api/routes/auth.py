@@ -1,16 +1,20 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
-from app.schemas.auth import AuthUserRead, GoogleAuthRequest
+from app.db.session import get_db
+from app.models.team_management import TeamMembership, User
+from app.schemas.auth import AuthTeamMembershipRead, AuthUserRead, GoogleAuthRequest
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/google", response_model=AuthUserRead)
-def google_auth(payload: GoogleAuthRequest):
+def google_auth(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
     if not settings.google_client_id:
         raise HTTPException(
             status_code=500,
@@ -45,10 +49,32 @@ def google_auth(payload: GoogleAuthRequest):
     else:
         initials = "MO"
 
+    user = db.scalar(
+        select(User)
+        .options(selectinload(User.memberships).selectinload(TeamMembership.team))
+        .where(User.email == email)
+    )
+
+    team_memberships: list[AuthTeamMembershipRead] = []
+    if user is not None:
+        active_memberships = [
+            membership
+            for membership in user.memberships
+            if membership.is_active and membership.team.is_active
+        ]
+        team_memberships = [
+            AuthTeamMembershipRead(
+                team_id=membership.team_id,
+                team_name=membership.team.name,
+                roles=list(membership.roles),
+            )
+            for membership in sorted(active_memberships, key=lambda membership: membership.team_id)
+        ]
+
     return AuthUserRead(
         name=name,
         initials=initials,
         global_permissions=[],
-        team_memberships=[],
+        team_memberships=team_memberships,
         email=email,
     )

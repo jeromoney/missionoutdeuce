@@ -118,6 +118,10 @@ https://missionout-backend.onrender.com
 - `GET /`
 - `GET /health`
 - `GET /incidents`
+- `GET /teams/{team_id}/members`
+- `POST /teams/{team_id}/members`
+- `PATCH /teams/{team_id}/members/{membership_id}`
+- `GET /teams/{team_id}/devices`
 - `GET /events/delivery-feed`
 - `POST /auth/google`
 

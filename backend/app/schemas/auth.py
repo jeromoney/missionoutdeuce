@@ -1,10 +1,12 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
 # Keep these request and response shapes aligned with contracts/openapi.json.
 class GoogleAuthRequest(BaseModel):
     id_token: str
-    requested_client: str
+    requested_client: Literal["responder", "dispatcher", "team_admin"]
 
 
 class AuthTeamMembershipRead(BaseModel):
