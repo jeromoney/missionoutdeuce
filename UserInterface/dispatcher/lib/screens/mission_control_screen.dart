@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
-import '../models/incident_draft.dart';
 import '../models/dashboard_snapshot.dart';
+import '../models/incident_draft.dart';
 import '../models/incident_update.dart';
 import '../models/records.dart';
-import 'create_incident_screen.dart';
-import 'edit_incident_screen.dart';
 import '../services/mission_out_api.dart';
+import '../widgets/common_widgets.dart';
 import '../widgets/delivery_feed_panel.dart';
 import '../widgets/incident_board.dart';
 import '../widgets/incident_detail_panel.dart';
-import '../widgets/common_widgets.dart';
 import '../widgets/summary_card.dart';
+import 'create_incident_screen.dart';
+import 'edit_incident_screen.dart';
 
 class MissionControlScreen extends StatefulWidget {
-  const MissionControlScreen({
-    super.key,
-    required this.auth,
-  });
+  const MissionControlScreen({super.key, required this.auth});
 
   final AuthController auth;
 
@@ -35,6 +33,9 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
   var selected = 0;
   var loading = true;
   String? statusMessage;
+  String connectionLabel = 'Connecting';
+  String connectionDetail = '';
+  bool usingFallback = false;
 
   @override
   void initState() {
@@ -48,14 +49,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
     final compact = width < 1150;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppPalette.gradientTop, AppPalette.gradientBottom],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+      body: MissionOutBackdrop(
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -64,23 +58,27 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
                 _Header(
                   role: widget.auth.roleLabel,
                   userInitials: widget.auth.currentUser?.initials ?? '--',
+                  connectionLabel: connectionLabel,
+                  connectionDetail: connectionDetail,
+                  usingFallback: usingFallback,
+                  incidents: incidents,
                   onLogout: widget.auth.logout,
                 ),
-                const SizedBox(height: 16),
                 if (statusMessage != null) ...[
-                  _StatusBanner(message: statusMessage!),
                   const SizedBox(height: 16),
+                  _StatusBanner(message: statusMessage!),
                 ],
+                const SizedBox(height: 18),
                 _SummaryStrip(incidents: incidents),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 Expanded(
                   child: loading
                       ? const Center(child: CircularProgressIndicator())
                       : incidents.isEmpty
-                          ? _EmptyIncidentState(
-                              onCreateIncident: _openCreateIncident,
-                            )
-                          : _buildDashboardLayout(compact),
+                      ? _EmptyIncidentState(
+                          onCreateIncident: _openCreateIncident,
+                        )
+                      : _buildDashboardLayout(compact),
                 ),
               ],
             ),
@@ -97,7 +95,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       return ListView(
         children: [
           SizedBox(
-            height: 420,
+            height: 440,
             child: IncidentBoard(
               incidents: incidents,
               selectedIndex: selected,
@@ -107,22 +105,20 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 560,
+            height: 580,
             child: IncidentDetailPanel(
               incident: incident,
               onEditIncident: _openEditIncident,
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 360,
-            child: DeliveryFeedPanel(events: events),
-          ),
+          SizedBox(height: 380, child: DeliveryFeedPanel(events: events)),
         ],
       );
     }
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           flex: 7,
@@ -142,10 +138,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
           ),
         ),
         const SizedBox(width: 16),
-        SizedBox(
-          width: 340,
-          child: DeliveryFeedPanel(events: events),
-        ),
+        SizedBox(width: 340, child: DeliveryFeedPanel(events: events)),
       ],
     );
   }
@@ -167,35 +160,29 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       events = snapshot.events;
       selected = 0;
       loading = false;
-      if (snapshot.usingFallback) {
-        statusMessage =
-            'FastAPI unavailable. Showing demo data from local fallback.';
-      } else {
-        statusMessage = 'Connected to FastAPI at runtime.';
-      }
+      usingFallback = snapshot.usingFallback;
+      connectionLabel = snapshot.connectionLabel;
+      connectionDetail = snapshot.baseUrl;
+      statusMessage = snapshot.usingFallback
+          ? 'Could not reach $connectionDetail. Showing fallback demo data instead.'
+          : 'Connected to $connectionLabel at $connectionDetail.';
     });
   }
 
   void _selectIncident(int index) {
-    setState(() {
-      selected = index;
-    });
+    setState(() => selected = index);
   }
 
   Future<void> _openCreateIncident() async {
     final draft = await Navigator.of(context).push<IncidentDraft>(
-      MaterialPageRoute(
-        builder: (_) => const CreateIncidentScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const CreateIncidentScreen()),
     );
 
     if (!mounted || draft == null) {
       return;
     }
 
-      setState(() {
-        statusMessage = 'Creating incident...';
-      });
+    setState(() => statusMessage = 'Creating incident...');
 
     try {
       final newIncident = await api.createIncident(draft);
@@ -212,10 +199,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       if (!mounted) {
         return;
       }
-
-      setState(() {
-        statusMessage = 'Could not create incident: $error';
-      });
+      setState(() => statusMessage = 'Could not create incident: $error');
     }
   }
 
@@ -234,15 +218,11 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       return;
     }
 
-    setState(() {
-      statusMessage = 'Saving incident changes...';
-    });
-
-    final selectedIncident = incidents[selected];
+    setState(() => statusMessage = 'Saving incident changes...');
 
     try {
       final updatedIncident = await api.updateIncident(
-        selectedIncident.id,
+        incidents[selected].id,
         update,
       );
       if (!mounted) {
@@ -260,102 +240,8 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       if (!mounted) {
         return;
       }
-
-      setState(() {
-        statusMessage = 'Could not save incident changes: $error';
-      });
+      setState(() => statusMessage = 'Could not save incident changes: $error');
     }
-  }
-}
-
-class _EmptyIncidentState extends StatelessWidget {
-  const _EmptyIncidentState({
-    required this.onCreateIncident,
-  });
-
-  final VoidCallback onCreateIncident;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.94),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: AppPalette.border),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.campaign_outlined,
-              size: 44,
-              color: AppPalette.info,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'No incidents yet',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppPalette.text,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Create the first incident to start the dispatcher workflow and populate the response board.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppPalette.textSoft,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: onCreateIncident,
-              icon: const Icon(Icons.add_rounded),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppPalette.info,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 16,
-                ),
-              ),
-              label: const Text('Create incident'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBanner extends StatelessWidget {
-  const _StatusBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppPalette.border),
-      ),
-      child: Text(
-        message,
-        style: const TextStyle(
-          color: AppPalette.textSoft,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
   }
 }
 
@@ -363,90 +249,117 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.role,
     required this.userInitials,
+    required this.connectionLabel,
+    required this.connectionDetail,
+    required this.usingFallback,
+    required this.incidents,
     required this.onLogout,
   });
 
   final String role;
   final String userInitials;
+  final String connectionLabel;
+  final String connectionDetail;
+  final bool usingFallback;
+  final List<Incident> incidents;
   final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppPalette.primary,
-        borderRadius: BorderRadius.circular(28),
-      ),
+    final active = incidents.where((incident) => incident.active).length;
+    final responders = incidents.fold<int>(
+      0,
+      (sum, incident) =>
+          sum +
+          incident.responses
+              .where((response) => response.status == 'Responding')
+              .length,
+    );
+
+    return SectionShell(
+      padding: const EdgeInsets.all(24),
       child: Wrap(
-        spacing: 16,
-        runSpacing: 16,
+        spacing: 18,
+        runSpacing: 18,
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'MissionOut',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
+          SizedBox(
+            width: 620,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const MissionOutBrandLockup(
+                  subtitle:
+                      'Mission control for dispatch, team visibility, and live responder coordination.',
+                  logoSize: 60,
                 ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Web mission board for dispatch, team visibility, and live SAR response tracking.',
-                style: TextStyle(
-                  color: AppPalette.headerText,
-                  fontSize: 16,
+                const SizedBox(height: 20),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    StatusPill(
+                      label: usingFallback ? 'Fallback data' : connectionLabel,
+                      color: usingFallback
+                          ? AppPalette.muted
+                          : AppPalette.success,
+                    ),
+                    StatusPill(label: role, color: AppPalette.info),
+                    if (connectionDetail.isNotEmpty)
+                      StatusPill(
+                        label: connectionDetail,
+                        color: AppPalette.muted,
+                      ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              PopupMenuButton<String>(
-                tooltip: 'Account',
-                color: Colors.white,
-                onSelected: (value) {
-                  if (value == 'logout') {
-                    onLogout();
-                  }
-                },
-                itemBuilder: (context) => const [
-                  PopupMenuItem<String>(
-                    value: 'logout',
-                    child: Text('Log out'),
-                  ),
-                ],
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    userInitials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MetricBadge(label: 'Active', value: '$active'),
+                  const SizedBox(width: 12),
+                  MetricBadge(label: 'Responding', value: '$responders'),
+                  const SizedBox(width: 12),
+                  PopupMenuButton<String>(
+                    tooltip: 'Account',
+                    color: AppPalette.panelSoft,
+                    onSelected: (value) {
+                      if (value == 'logout') {
+                        onLogout();
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem<String>(
+                        value: 'logout',
+                        child: Text('Log out'),
+                      ),
+                    ],
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: AppPalette.border),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        userInitials,
+                        style: const TextStyle(
+                          color: AppPalette.text,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(width: 12),
-              const StatusPill(
-                label: 'System Healthy',
-                color: Color(0xFF2F8F63),
-              ),
-              const SizedBox(width: 12),
-              StatusPill(label: role, color: AppPalette.muted),
             ],
           ),
         ],
@@ -485,27 +398,101 @@ class _SummaryStrip extends StatelessWidget {
       runSpacing: 16,
       children: [
         SummaryCard(
-          title: 'Active incidents',
+          title: 'Active',
           value: '$active',
-          subtitle: 'mission windows currently open',
-          icon: Icons.campaign_rounded,
+          subtitle: 'Mission windows currently open across dispatch.',
+          icon: Icons.radar_rounded,
           color: AppPalette.info,
         ),
         SummaryCard(
           title: 'Responding',
           value: '$responding',
-          subtitle: 'confirmed field responders',
+          subtitle: 'Confirmed field responders already moving.',
           icon: Icons.hiking_rounded,
           color: AppPalette.success,
         ),
         SummaryCard(
           title: 'Pending',
           value: '$pending',
-          subtitle: 'still awaiting acknowledgement',
-          icon: Icons.timer_outlined,
+          subtitle: 'Still awaiting acknowledgement from assigned members.',
+          icon: Icons.notifications_active_outlined,
           color: AppPalette.muted,
         ),
       ],
+    );
+  }
+}
+
+class _StatusBanner extends StatelessWidget {
+  const _StatusBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionShell(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Row(
+        children: [
+          const Icon(Icons.wifi_tethering_rounded, color: AppPalette.info),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: AppPalette.textSoft,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyIncidentState extends StatelessWidget {
+  const _EmptyIncidentState({required this.onCreateIncident});
+
+  final VoidCallback onCreateIncident;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 620),
+        child: SectionShell(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MissionOutLogo(size: 78),
+              const SizedBox(height: 20),
+              const Text(
+                'No active incidents yet',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.8,
+                  color: AppPalette.text,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Create the first dispatch to open the mission board, start responder acknowledgements, and begin tracking delivery activity.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppPalette.textSoft, height: 1.5),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: onCreateIncident,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Create incident'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -3,8 +3,9 @@
 FastAPI + PostgreSQL backend for MissionOut.
 
 This folder should not depend on code inside `UserInterface/`.
-Its public surface area for the UI is the documented HTTP contract in:
+Its public surface area for the UI is the shared contract:
 
+- [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json)
 - [docs/boundaries.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/boundaries.md)
 - [docs/api-contracts.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/api-contracts.md)
 - [docs/data-model.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/data-model.md)
@@ -43,6 +44,22 @@ python -m app.seed
 ```powershell
 python run.py
 ```
+
+## Contract Workflow
+
+Export the current OpenAPI contract:
+
+```powershell
+python scripts/export_openapi.py
+```
+
+Verify the checked-in contract is current:
+
+```powershell
+python scripts/check_openapi.py
+```
+
+CI also runs the same verification through [.github/workflows/contract-check.yml](/C:/Users/justi/OneDrive/Documents/Projects/missionout/.github/workflows/contract-check.yml).
 
 ## External Secrets File
 
@@ -88,6 +105,14 @@ If you want both local and deployed frontends to work during testing, use a comm
 ALLOWED_ORIGINS=https://<your-admin-web-domain>,http://localhost:3000,http://127.0.0.1:3000
 ```
 
+The backend also allows localhost and `127.0.0.1` on arbitrary ports by default through `ALLOWED_ORIGIN_REGEX`, which keeps Flutter web development working when the local port changes between runs.
+
+Your current deployed API base URL is:
+
+```text
+https://missionout-backend.onrender.com
+```
+
 ## Available Routes
 
 - `GET /`
@@ -110,6 +135,12 @@ For Google auth, also pass the Google web client id:
 flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000 --dart-define=GOOGLE_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
 ```
 
+For the deployed backend instead:
+
+```powershell
+flutter run -d chrome --dart-define=API_BASE_URL=https://missionout-backend.onrender.com
+```
+
 ## Contract Rule
 
-If a route or payload changes here, update `docs/` in the same change.
+If a route or payload changes here, regenerate [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json) in the same change and update `docs/` when the semantics changed.

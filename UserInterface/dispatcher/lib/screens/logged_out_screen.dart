@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../widgets/common_widgets.dart';
 
 class LoggedOutScreen extends StatefulWidget {
   const LoggedOutScreen({
@@ -10,9 +12,7 @@ class LoggedOutScreen extends StatefulWidget {
     this.roleLabel = 'Dispatcher',
   });
 
-  final void Function({
-    required String email,
-  }) onMagicLinkLogin;
+  final void Function({required String email}) onMagicLinkLogin;
   final Future<void> Function() onGoogleLogin;
   final String roleLabel;
 
@@ -36,183 +36,40 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppPalette.gradientTop, AppPalette.gradientBottom],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Container(
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: AppPalette.border),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'MissionOut Admin',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: AppPalette.text,
+      body: MissionOutBackdrop(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Wrap(
+                  spacing: 20,
+                  runSpacing: 20,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 500,
+                      child: _HeroPanel(roleLabel: widget.roleLabel),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Dispatcher and administrative controls for incidents, response visibility, and alert operations.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppPalette.textSoft,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDCE8F4),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      widget.roleLabel,
-                      style: const TextStyle(
-                        color: AppPalette.text,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _fieldLabel('Email'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: _inputDecoration(
-                      hintText: 'justin@missionout.test',
-                      errorText: errorText,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Enter your email and we will send you a sign-in link.',
-                      style: TextStyle(color: AppPalette.textSoft),
-                    ),
-                  ),
-                  if (successText != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE4F3EB),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF94C7A8)),
-                      ),
-                      child: Text(
-                        successText!,
-                        style: const TextStyle(
-                          color: Color(0xFF246B45),
-                          fontWeight: FontWeight.w600,
-                        ),
+                    SizedBox(
+                      width: 420,
+                      child: _LoginPanel(
+                        emailController: emailController,
+                        errorText: errorText,
+                        successText: successText,
+                        isSubmitting: isSubmitting,
+                        onMagicLinkLogin: _submitMagicLink,
+                        onGoogleLogin: _submitGoogle,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: isSubmitting ? null : _submitMagicLink,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppPalette.info,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 16,
-                        ),
-                      ),
-                      child: Text(
-                        isSubmitting ? 'Sending link...' : 'Email me a sign-in link',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: isSubmitting ? null : _submitGoogle,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppPalette.text,
-                        side: const BorderSide(color: AppPalette.border),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 16,
-                        ),
-                      ),
-                      icon: const Icon(Icons.login_rounded),
-                      label: const Text('Continue with Google'),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String hintText,
-    String? errorText,
-  }) {
-    return InputDecoration(
-      hintText: hintText,
-      errorText: errorText,
-      filled: true,
-      fillColor: const Color(0xFFF7FAFD),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: AppPalette.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: AppPalette.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(
-          color: AppPalette.info,
-          width: 1.4,
-        ),
-      ),
-    );
-  }
-
-  Widget _fieldLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontWeight: FontWeight.w700,
-        color: AppPalette.text,
       ),
     );
   }
@@ -236,7 +93,8 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
 
     widget.onMagicLinkLogin(email: email);
     setState(() {
-      successText = 'Sign-in link sent to $email. For this mock flow, you are now signed in.';
+      successText =
+          'Sign-in link sent to $email. For this mock flow, you are now signed in.';
       isSubmitting = false;
     });
   }
@@ -259,9 +117,185 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     }
 
     if (mounted) {
-      setState(() {
-        isSubmitting = false;
-      });
+      setState(() => isSubmitting = false);
     }
+  }
+}
+
+class _HeroPanel extends StatelessWidget {
+  const _HeroPanel({required this.roleLabel});
+
+  final String roleLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionShell(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const MissionOutBrandLockup(
+            subtitle:
+                'Dispatch workspace built for fast launch, calm decision-making, and auditable live operations.',
+            logoSize: 70,
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            'See the mission board, launch incidents fast, and track acknowledgements without losing context.',
+            style: TextStyle(
+              fontSize: 36,
+              height: 1.05,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1.4,
+              color: AppPalette.text,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'MissionOut keeps dispatch centered on the signal that matters: who has the alert, who is moving, and where response is stalling.',
+            style: TextStyle(
+              color: AppPalette.textSoft,
+              fontSize: 15,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: const [
+              StatusPill(label: 'Dispatcher workflow', color: AppPalette.info),
+              StatusPill(
+                label: 'Responder visibility',
+                color: AppPalette.success,
+              ),
+              StatusPill(
+                label: 'Audit-friendly activity',
+                color: AppPalette.muted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              MetricBadge(label: 'Role', value: roleLabel),
+              const MetricBadge(label: 'Mode', value: 'Web-first'),
+              const MetricBadge(label: 'Priority', value: 'Reliability'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginPanel extends StatelessWidget {
+  const _LoginPanel({
+    required this.emailController,
+    required this.errorText,
+    required this.successText,
+    required this.isSubmitting,
+    required this.onMagicLinkLogin,
+    required this.onGoogleLogin,
+  });
+
+  final TextEditingController emailController;
+  final String? errorText;
+  final String? successText;
+  final bool isSubmitting;
+  final VoidCallback onMagicLinkLogin;
+  final Future<void> Function() onGoogleLogin;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionShell(
+      padding: const EdgeInsets.all(26),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionEyebrow(label: 'Access'),
+          const SizedBox(height: 8),
+          const Text(
+            'Sign in to mission control',
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.8,
+              color: AppPalette.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Use a sign-in link or Google to continue into the dispatcher workspace.',
+            style: TextStyle(color: AppPalette.textSoft, height: 1.5),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Email',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppPalette.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              hintText: 'justin@missionout.test',
+              errorText: errorText,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'We will send a sign-in link for this dispatcher account.',
+            style: TextStyle(color: AppPalette.textSoft),
+          ),
+          if (successText != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppPalette.success.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppPalette.success.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Text(
+                successText!,
+                style: const TextStyle(
+                  color: AppPalette.success,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: isSubmitting ? null : onMagicLinkLogin,
+              child: Text(
+                isSubmitting ? 'Sending link...' : 'Email me a sign-in link',
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: isSubmitting ? null : onGoogleLogin,
+              icon: const Icon(Icons.login_rounded),
+              label: const Text('Continue with Google'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

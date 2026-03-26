@@ -5,10 +5,7 @@ import '../models/records.dart';
 import 'panel.dart';
 
 class DeliveryFeedPanel extends StatelessWidget {
-  const DeliveryFeedPanel({
-    super.key,
-    required this.events,
-  });
+  const DeliveryFeedPanel({super.key, required this.events});
 
   final List<EventRecord> events;
 
@@ -26,15 +23,23 @@ class DeliveryFeedPanel extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
+              color: Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppPalette.border),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(event.icon, color: event.color),
-                const SizedBox(width: 10),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: event.color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(event.icon, color: event.color),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,11 +62,12 @@ class DeliveryFeedPanel extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 12),
                 Text(
                   event.time,
                   style: const TextStyle(
                     color: AppPalette.textMuted,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],

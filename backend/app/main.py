@@ -8,6 +8,7 @@ from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
 from app.models import DeliveryEvent, Incident, ResponseRecord
+from app.schemas.meta import RootRead
 
 
 @asynccontextmanager
@@ -19,12 +20,18 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
+    description=(
+        "MissionOut API contract for dispatcher and responder clients. "
+        "The exported OpenAPI document in contracts/openapi.json is the "
+        "cross-stack source of truth."
+    ),
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
+    allow_origin_regex=settings.allowed_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,7 +43,7 @@ app.include_router(incidents.router)
 app.include_router(events.router)
 
 
-@app.get("/", tags=["meta"])
+@app.get("/", tags=["meta"], response_model=RootRead)
 def root():
     return {
         "name": settings.app_name,

@@ -106,10 +106,7 @@ class EventRecord {
       detail: json['detail'] as String? ?? '',
       time: json['time'] as String? ?? 'now',
       icon: _iconFromName(json['icon'] as String?),
-      color: _colorFromHex(
-        json['color'] as String?,
-        const Color(0xFF4F6F95),
-      ),
+      color: _colorFromHex(json['color'] as String?, const Color(0xFF4F6F95)),
     );
   }
 }

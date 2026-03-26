@@ -7,9 +7,8 @@ import '../models/incident.dart';
 import 'browser_notification_gateway.dart';
 
 class BackupNotificationService extends ChangeNotifier {
-  BackupNotificationService({
-    BrowserNotificationGateway? gateway,
-  }) : _gateway = gateway ?? createBrowserNotificationGateway();
+  BackupNotificationService({BrowserNotificationGateway? gateway})
+    : _gateway = gateway ?? createBrowserNotificationGateway();
 
   final BrowserNotificationGateway _gateway;
   final StreamController<BackupAlert> _alertsController =

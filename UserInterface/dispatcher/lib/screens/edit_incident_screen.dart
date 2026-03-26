@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
 import '../models/incident_update.dart';
 import '../models/records.dart';
+import '../widgets/common_widgets.dart';
 
 class EditIncidentScreen extends StatefulWidget {
-  const EditIncidentScreen({
-    super.key,
-    required this.incident,
-  });
+  const EditIncidentScreen({super.key, required this.incident});
 
   final Incident incident;
 
@@ -43,154 +42,127 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppPalette.scaffold,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        foregroundColor: AppPalette.text,
-        title: const Text('Edit Incident'),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 860),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: AppPalette.border),
-              ),
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  children: [
-                    const Text(
-                      'Update incident details',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: AppPalette.text,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Use this view to keep dispatch information current as conditions change.',
-                      style: TextStyle(
-                        color: AppPalette.textSoft,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _LabeledField(
-                      label: 'Incident title',
-                      child: TextFormField(
-                        controller: _titleController,
-                        decoration: _inputDecoration('Incident title'),
-                        validator: _requiredField,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _LabeledField(
-                      label: 'Location',
-                      child: TextFormField(
-                        controller: _locationController,
-                        decoration: _inputDecoration('Location'),
-                        validator: _requiredField,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _LabeledField(
-                      label: 'Dispatch notes',
-                      child: TextFormField(
-                        controller: _notesController,
-                        minLines: 5,
-                        maxLines: 7,
-                        decoration: _inputDecoration('Updated incident notes'),
-                        validator: _requiredField,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      value: _active,
-                      activeThumbColor: AppPalette.success,
-                      title: const Text(
-                        'Incident active',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppPalette.text,
-                        ),
-                      ),
-                      subtitle: const Text(
-                        'Turn this off when the incident is resolved or no longer needs live response tracking.',
-                        style: TextStyle(color: AppPalette.textSoft),
-                      ),
-                      onChanged: (value) {
-                        setState(() => _active = value);
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      alignment: WrapAlignment.end,
+      body: MissionOutBackdrop(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 920),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: SectionShell(
+                  padding: const EdgeInsets.all(28),
+                  child: Form(
+                    key: _formKey,
+                    child: ListView(
                       children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppPalette.text,
-                            side: const BorderSide(color: AppPalette.border),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 16,
-                            ),
+                        const SectionEyebrow(label: 'Update incident'),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Edit live mission details',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.9,
+                            color: AppPalette.text,
                           ),
-                          child: const Text('Cancel'),
                         ),
-                        FilledButton.icon(
-                          onPressed: _submit,
-                          icon: const Icon(Icons.save_outlined),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppPalette.info,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 16,
-                            ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Keep dispatch information current as access, hazards, and mission status change.',
+                          style: TextStyle(
+                            color: AppPalette.textSoft,
+                            height: 1.5,
                           ),
-                          label: const Text('Save changes'),
+                        ),
+                        const SizedBox(height: 26),
+                        _LabeledField(
+                          label: 'Incident title',
+                          child: TextFormField(
+                            controller: _titleController,
+                            decoration: const InputDecoration(
+                              hintText: 'Incident title',
+                            ),
+                            validator: _requiredField,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        _LabeledField(
+                          label: 'Location',
+                          child: TextFormField(
+                            controller: _locationController,
+                            decoration: const InputDecoration(
+                              hintText: 'Location',
+                            ),
+                            validator: _requiredField,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        _LabeledField(
+                          label: 'Dispatch notes',
+                          child: TextFormField(
+                            controller: _notesController,
+                            minLines: 5,
+                            maxLines: 7,
+                            decoration: const InputDecoration(
+                              hintText: 'Updated incident notes',
+                            ),
+                            validator: _requiredField,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppPalette.panelSoft,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppPalette.border),
+                          ),
+                          child: SwitchListTile.adaptive(
+                            value: _active,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            title: const Text(
+                              'Incident active',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppPalette.text,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Turn this off when the incident is resolved or no longer needs live response tracking.',
+                              style: TextStyle(color: AppPalette.textSoft),
+                            ),
+                            onChanged: (value) {
+                              setState(() => _active = value);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          alignment: WrapAlignment.end,
+                          children: [
+                            OutlinedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton.icon(
+                              onPressed: _submit,
+                              icon: const Icon(Icons.save_outlined),
+                              label: const Text('Save changes'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hintText) {
-    return InputDecoration(
-      hintText: hintText,
-      filled: true,
-      fillColor: const Color(0xFFF7FAFD),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: AppPalette.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: AppPalette.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: AppPalette.info, width: 1.4),
       ),
     );
   }
@@ -219,10 +191,7 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
 }
 
 class _LabeledField extends StatelessWidget {
-  const _LabeledField({
-    required this.label,
-    required this.child,
-  });
+  const _LabeledField({required this.label, required this.child});
 
   final String label;
   final Widget child;

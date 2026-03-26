@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_palette.dart';
+import 'common_widgets.dart';
 
 class Panel extends StatelessWidget {
   const Panel({
@@ -22,79 +23,57 @@ class Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppPalette.border),
-      ),
+    return SectionShell(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Wrap(
-            spacing: 12,
-            runSpacing: 8,
+            spacing: 14,
+            runSpacing: 12,
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppPalette.text,
+              SizedBox(
+                width: 420,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SectionEyebrow(label: title),
+                    const SizedBox(height: 8),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.8,
+                        color: AppPalette.text,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  SizedBox(
-                    width: 420,
-                    child: Text(
+                    const SizedBox(height: 6),
+                    Text(
                       subtitle,
                       style: const TextStyle(
                         color: AppPalette.textSoft,
-                        height: 1.4,
+                        height: 1.45,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               if (action != null)
                 primaryAction
                     ? FilledButton.icon(
                         onPressed: onActionPressed,
                         icon: const Icon(Icons.add_rounded),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppPalette.info,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 16,
-                          ),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
                         label: Text(action!),
                       )
-                    : FilledButton.tonal(
+                    : OutlinedButton(
                         onPressed: onActionPressed,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFDCE8F4),
-                          foregroundColor: AppPalette.text,
-                        ),
                         child: Text(action!),
                       ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 22),
           Expanded(child: child),
         ],
       ),

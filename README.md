@@ -1,31 +1,35 @@
 # MissionOut
 
-MissionOut is organized into two implementation areas and one shared contract area:
+MissionOut is organized into two implementation areas and two contract layers:
 
-- `backend/` for the API and persistence layer
+- `backend/` for the FastAPI API and persistence layer
 - `UserInterface/` for Flutter client applications and UI-only shared packages
-- `docs/` for the contract both sides use to coordinate
+- `contracts/` for the machine-readable API contract
+- `docs/` for human-readable boundary, workflow, and data semantics
 
 ## Boundary Rule
 
-Backend and UI only talk to each other through the documents in `docs/`.
-That means:
+Backend and UI only talk to each other through the shared contract.
+That contract has two forms:
 
-- route shapes live in [docs/api-contracts.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/api-contracts.md)
-- shared entity definitions live in [docs/data-model.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/data-model.md)
-- boundary expectations live in [docs/boundaries.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/boundaries.md)
+- canonical HTTP contract: [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json)
+- human-readable boundary notes: [docs/api-contracts.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/api-contracts.md), [docs/data-model.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/data-model.md), and [docs/boundaries.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/boundaries.md)
+
+Neither side should import source files from the other side.
 
 ## Layout
 
 - `backend/`
 - `UserInterface/`
+- `contracts/`
 - `docs/`
 
 ## Working Agreement
 
-When a backend route or a UI expectation changes:
+When a route, payload, or shared meaning changes:
 
-1. Update `docs/`.
-2. Update backend implementation.
-3. Update UI implementation.
-4. Verify both still match.
+1. Update backend route/schema metadata.
+2. Regenerate [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
+3. Update `docs/` if the meaning, ownership, or workflow changed.
+4. Update backend and UI implementation against the exported contract.
+5. Verify the contract export is current.

@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-# Keep these request and response shapes aligned with docs/api-contracts.md.
+# Keep these request and response shapes aligned with contracts/openapi.json.
 class ResponseRecordRead(BaseModel):
     name: str
     status: str

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_theme/shared_theme.dart';
 
 import 'app_config.dart';
 import 'app_palette.dart';
@@ -34,28 +35,15 @@ class _MissionOutAppState extends State<MissionOutApp> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: AppPalette.seed,
-      brightness: Brightness.light,
-      primary: AppPalette.primary,
-      secondary: AppPalette.secondary,
-    );
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'MissionOut',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: scheme,
-        scaffoldBackgroundColor: AppPalette.scaffold,
-      ),
+      theme: buildMissionOutTheme(accent: AppPalette.secondary),
       home: ListenableBuilder(
         listenable: auth,
         builder: (context, _) {
           return auth.isLoggedIn
-              ? MissionControlScreen(
-                  auth: auth,
-                )
+              ? MissionControlScreen(auth: auth)
               : LoggedOutScreen(
                   onMagicLinkLogin: auth.loginWithMagicLink,
                   onGoogleLogin: auth.loginWithGoogle,

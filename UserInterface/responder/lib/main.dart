@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_theme/shared_theme.dart';
 
 import 'app_palette.dart';
 import 'screens/logged_out_screen.dart';
@@ -19,7 +20,7 @@ class MissionOutResponderApp extends StatefulWidget {
 class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:8000',
+    defaultValue: 'https://missionout-backend.onrender.com',
   );
   static const googleClientId = String.fromEnvironment(
     'GOOGLE_CLIENT_ID',
@@ -40,28 +41,15 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: ResponderPalette.accent,
-      brightness: Brightness.light,
-      primary: ResponderPalette.primary,
-      secondary: ResponderPalette.accent,
-    );
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'MissionOut Responder',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: scheme,
-        scaffoldBackgroundColor: ResponderPalette.surface,
-      ),
+      theme: buildMissionOutTheme(accent: ResponderPalette.accent),
       home: ListenableBuilder(
         listenable: auth,
         builder: (context, _) {
           return auth.isLoggedIn
-              ? ResponderHomeScreen(
-                  auth: auth,
-                )
+              ? ResponderHomeScreen(auth: auth)
               : LoggedOutScreen(
                   onMagicLinkLogin: auth.loginWithMagicLink,
                   onGoogleLogin: auth.loginWithGoogle,

@@ -1,23 +1,34 @@
 # MissionOut API Contracts
 
-This document is the contract boundary between:
+This document explains the contract boundary between:
 
 - `backend/`
 - `UserInterface/dispatcher/`
 - `UserInterface/responder/`
 
-The backend and UI should only coordinate through the contracts documented here and in [data-model.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/data-model.md).
-Changes to routes, payloads, or meanings should be proposed here first and then implemented on both sides.
+The canonical machine-readable contract lives in [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
+This file exists to explain the intent, ownership, and usage of that contract alongside [data-model.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/data-model.md).
 
 ## Principles
 
-- Backend responses should be stable and explicit.
+- Backend responses should be stable, explicit, and exported into `contracts/openapi.json`.
 - Field names should be consistent across clients.
 - UI clients should not invent alternate schema shapes when the contract already exists.
 - Backend implementation details should not leak into UI code.
-- A route is not complete until this document reflects its request and response shape.
+- A route change is not complete until the exported OpenAPI contract is regenerated.
 
-## Current Routes
+## Contract-First Workflow
+
+1. Propose or implement the route/schema change in FastAPI metadata.
+2. Regenerate [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
+3. Review the contract diff.
+4. Update UI code and backend implementation to satisfy the new contract.
+5. Update this document only when semantics, examples, or guidance need clarification.
+
+## Current Route Summary
+
+The full request and response schema, status codes, and component definitions are in [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
+This section is a quick human summary of the routes the clients currently rely on.
 
 ## `POST /auth/google`
 
@@ -55,7 +66,8 @@ Response:
 
 ```json
 {
-  "status": "ok"
+  "status": "ok",
+  "database": "connected"
 }
 ```
 
@@ -240,7 +252,7 @@ Suggested payload shape:
 
 ## Ownership
 
-- This document owns the cross-stack contract.
-- Backend owns validation and persistence behind the contract.
+- [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json) owns the cross-stack HTTP contract.
+- Backend owns validation and persistence behind the contract and exports the OpenAPI artifact.
 - `UserInterface/dispatcher/` and `UserInterface/responder/` should mirror these contracts in their Dart models.
-- This document should be updated whenever route shapes change in a meaningful way.
+- This document should be updated whenever the semantics, examples, or workflow guidance change in a meaningful way.

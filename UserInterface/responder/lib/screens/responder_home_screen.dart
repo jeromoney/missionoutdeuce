@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
 import '../data/demo_data.dart';
@@ -11,10 +12,7 @@ import '../services/backup_notification_service.dart';
 import '../services/browser_notification_gateway.dart';
 
 class ResponderHomeScreen extends StatefulWidget {
-  const ResponderHomeScreen({
-    super.key,
-    required this.auth,
-  });
+  const ResponderHomeScreen({super.key, required this.auth});
 
   final AuthController auth;
 
@@ -56,17 +54,10 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final compact = width < 1000;
+    final compact = width < 1080;
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [ResponderPalette.surface, Color(0xFFDDE8F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+      body: MissionOutBackdrop(
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -98,56 +89,57 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                   onSendTestAlert: incidents.isEmpty
                       ? null
                       : () => backupNotifications.sendTestAlert(
-                            incidentIndex: selected,
-                            incident: incidents[selected],
-                          ),
+                          incidentIndex: selected,
+                          incident: incidents[selected],
+                        ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: incidents.isEmpty
                       ? const _NoMissionState()
                       : compact
-                          ? ListView(
-                              children: [
-                                SizedBox(
-                                  height: 320,
-                                  child: _MissionList(
-                                    incidents: incidents,
-                                    selected: selected,
-                                    onSelected: (index) {
-                                      setState(() => selected = index);
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                SizedBox(
-                                  height: 560,
-                                  child: _IncidentCard(
-                                    incident: incidents[selected],
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                SizedBox(
-                                  width: 360,
-                                  child: _MissionList(
-                                    incidents: incidents,
-                                    selected: selected,
-                                    onSelected: (index) {
-                                      setState(() => selected = index);
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _IncidentCard(
-                                    incident: incidents[selected],
-                                  ),
-                                ),
-                              ],
+                      ? ListView(
+                          children: [
+                            SizedBox(
+                              height: 340,
+                              child: _MissionList(
+                                incidents: incidents,
+                                selected: selected,
+                                onSelected: (index) {
+                                  setState(() => selected = index);
+                                },
+                              ),
                             ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 600,
+                              child: _IncidentCard(
+                                incident: incidents[selected],
+                              ),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(
+                              width: 370,
+                              child: _MissionList(
+                                incidents: incidents,
+                                selected: selected,
+                                onSelected: (index) {
+                                  setState(() => selected = index);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _IncidentCard(
+                                incident: incidents[selected],
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ],
             ),
@@ -188,6 +180,114 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   }
 }
 
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.userInitials,
+    required this.availability,
+    required this.onAvailabilityChanged,
+    required this.onLogout,
+  });
+
+  final String userInitials;
+  final String availability;
+  final ValueChanged<String> onAvailabilityChanged;
+  final VoidCallback onLogout;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: ResponderPalette.card.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: ResponderPalette.border),
+      ),
+      child: Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const SizedBox(
+            width: 620,
+            child: MissionOutBrandLockup(
+              subtitle:
+                  'Responder view for acknowledgements, readiness, and active mission context.',
+              logoSize: 58,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _StatusPill(
+                label: availability,
+                color: availability == 'Available'
+                    ? ResponderPalette.success
+                    : ResponderPalette.warning,
+              ),
+              const SizedBox(width: 12),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: availability,
+                  dropdownColor: ResponderPalette.cardAlt,
+                  style: const TextStyle(color: ResponderPalette.text),
+                  iconEnabledColor: ResponderPalette.text,
+                  items: const ['Available', 'Unavailable']
+                      .map(
+                        (status) => DropdownMenuItem<String>(
+                          value: status,
+                          child: Text(status),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      onAvailabilityChanged(value);
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              PopupMenuButton<String>(
+                tooltip: 'Account',
+                color: ResponderPalette.cardAlt,
+                onSelected: (value) {
+                  if (value == 'logout') {
+                    onLogout();
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Text('Log out'),
+                  ),
+                ],
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: ResponderPalette.border),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    userInitials,
+                    style: const TextStyle(
+                      color: ResponderPalette.text,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BackupNotificationBanner extends StatelessWidget {
   const _BackupNotificationBanner({
     required this.service,
@@ -219,20 +319,20 @@ class _BackupNotificationBanner extends StatelessWidget {
 
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(22),
+            color: ResponderPalette.card.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(28),
             border: Border.all(color: ResponderPalette.border),
           ),
           child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 14,
+            runSpacing: 14,
             alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               SizedBox(
-                width: 480,
+                width: 520,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -240,14 +340,14 @@ class _BackupNotificationBanner extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
-                          'Web Backup Notifications',
+                          'Backup notifications',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
                             color: ResponderPalette.text,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         _StatusPill(
                           label: permissionLabel,
                           color: service.isGranted
@@ -263,7 +363,7 @@ class _BackupNotificationBanner extends StatelessWidget {
                           : 'Browser notifications are supplemental only. Use them for backup awareness and testing, not primary paging.',
                       style: const TextStyle(
                         color: ResponderPalette.textSoft,
-                        height: 1.4,
+                        height: 1.45,
                       ),
                     ),
                   ],
@@ -288,10 +388,6 @@ class _BackupNotificationBanner extends StatelessWidget {
                           BrowserNotificationPermissionState.unsupported)
                     FilledButton(
                       onPressed: onEnableNotifications,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: ResponderPalette.accent,
-                        foregroundColor: Colors.white,
-                      ),
                       child: const Text('Enable notifications'),
                     ),
                   if (onSendTestAlert != null)
@@ -325,7 +421,7 @@ class _MissionList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: ResponderPalette.card.withValues(alpha: 0.95),
+        color: ResponderPalette.card.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: ResponderPalette.border),
       ),
@@ -333,10 +429,11 @@ class _MissionList extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Active Missions',
+            'Active missions',
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.7,
               color: ResponderPalette.text,
             ),
           ),
@@ -355,15 +452,16 @@ class _MissionList extends StatelessWidget {
                 final isSelected = index == selected;
 
                 return InkWell(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(22),
                   onTap: () => onSelected(index),
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFFDDE8F3)
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                          ? ResponderPalette.cardAlt
+                          : Colors.white.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(22),
                       border: Border.all(
                         color: isSelected
                             ? ResponderPalette.accent
@@ -376,7 +474,7 @@ class _MissionList extends StatelessWidget {
                         Text(
                           incident.title,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             color: ResponderPalette.text,
                           ),
                         ),
@@ -401,7 +499,7 @@ class _MissionList extends StatelessWidget {
                               incident.timeLabel,
                               style: const TextStyle(
                                 color: ResponderPalette.textSoft,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -419,196 +517,6 @@ class _MissionList extends StatelessWidget {
   }
 }
 
-class _NoMissionState extends StatelessWidget {
-  const _NoMissionState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 540),
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: ResponderPalette.card.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: ResponderPalette.border),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F0F8),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Icon(
-                Icons.notifications_off_outlined,
-                size: 36,
-                color: ResponderPalette.accent,
-              ),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'No active mission',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: ResponderPalette.text,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'You are currently clear. When a new incident is dispatched, it will appear here with your responder actions and mission notes.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: ResponderPalette.textSoft,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: ResponderPalette.success.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Text(
-                'Standing by',
-                style: TextStyle(
-                  color: ResponderPalette.success,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.userInitials,
-    required this.availability,
-    required this.onAvailabilityChanged,
-    required this.onLogout,
-  });
-
-  final String userInitials;
-  final String availability;
-  final ValueChanged<String> onAvailabilityChanged;
-  final VoidCallback onLogout;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: ResponderPalette.primary,
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'MissionOut Responder',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Responder view for acknowledgements, readiness, and active mission context.',
-                style: TextStyle(
-                  color: Color(0xFFD9E7F5),
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              PopupMenuButton<String>(
-                tooltip: 'Account',
-                color: Colors.white,
-                onSelected: (value) {
-                  if (value == 'logout') {
-                    onLogout();
-                  }
-                },
-                itemBuilder: (context) => const [
-                  PopupMenuItem<String>(
-                    value: 'logout',
-                    child: Text('Log out'),
-                  ),
-                ],
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    userInitials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              _StatusPill(
-                label: availability,
-                color: availability == 'Available'
-                    ? ResponderPalette.success
-                    : ResponderPalette.warning,
-              ),
-              const SizedBox(width: 12),
-              DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: availability,
-                  dropdownColor: ResponderPalette.primary,
-                  style: const TextStyle(color: Colors.white),
-                  iconEnabledColor: Colors.white,
-                  items: const ['Available', 'Unavailable']
-                      .map(
-                        (status) => DropdownMenuItem<String>(
-                          value: status,
-                          child: Text(status),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      onAvailabilityChanged(value);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _IncidentCard extends StatelessWidget {
   const _IncidentCard({required this.incident});
 
@@ -617,38 +525,63 @@ class _IncidentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: ResponderPalette.card.withValues(alpha: 0.95),
+        color: ResponderPalette.card.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: ResponderPalette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            incident.title,
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              color: ResponderPalette.text,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [ResponderPalette.primary, ResponderPalette.cardAlt],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _MetaChip(icon: Icons.place_outlined, text: incident.location),
-              _MetaChip(icon: Icons.schedule_rounded, text: incident.timeLabel),
-            ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  incident.title,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1.0,
+                    color: ResponderPalette.text,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _MetaChip(
+                      icon: Icons.place_outlined,
+                      text: incident.location,
+                    ),
+                    _MetaChip(
+                      icon: Icons.schedule_rounded,
+                      text: incident.timeLabel,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
           const Text(
-            'Mission Notes',
+            'Mission notes',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
               color: ResponderPalette.text,
             ),
           ),
@@ -660,7 +593,7 @@ class _IncidentCard extends StatelessWidget {
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 24),
+          const Spacer(),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -669,11 +602,6 @@ class _IncidentCard extends StatelessWidget {
                 onPressed: () {},
                 style: FilledButton.styleFrom(
                   backgroundColor: ResponderPalette.success,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 16,
-                  ),
                 ),
                 icon: const Icon(Icons.directions_run_rounded),
                 label: const Text('Responding'),
@@ -682,11 +610,6 @@ class _IncidentCard extends StatelessWidget {
                 onPressed: () {},
                 style: OutlinedButton.styleFrom(
                   foregroundColor: ResponderPalette.danger,
-                  side: const BorderSide(color: ResponderPalette.border),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 16,
-                  ),
                 ),
                 icon: const Icon(Icons.close_rounded),
                 label: const Text('Not Available'),
@@ -699,11 +622,56 @@ class _IncidentCard extends StatelessWidget {
   }
 }
 
+class _NoMissionState extends StatelessWidget {
+  const _NoMissionState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: ResponderPalette.card.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: ResponderPalette.border),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MissionOutLogo(size: 74),
+              const SizedBox(height: 18),
+              const Text(
+                'No active mission',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.7,
+                  color: ResponderPalette.text,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'You are currently clear. When a new incident is dispatched, it will appear here with your responder actions and mission notes.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: ResponderPalette.textSoft, height: 1.5),
+              ),
+              const SizedBox(height: 20),
+              _StatusPill(
+                label: 'Standing by',
+                color: ResponderPalette.success,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({
-    required this.label,
-    required this.color,
-  });
+  const _StatusPill({required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -711,10 +679,11 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
@@ -729,10 +698,7 @@ class _StatusPill extends StatelessWidget {
 }
 
 class _MetaChip extends StatelessWidget {
-  const _MetaChip({
-    required this.icon,
-    required this.text,
-  });
+  const _MetaChip({required this.icon, required this.text});
 
   final IconData icon;
   final String text;
@@ -742,9 +708,9 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F8FB),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: ResponderPalette.border),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

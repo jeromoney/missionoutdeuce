@@ -42,6 +42,7 @@ class Settings(BaseSettings):
         "http://localhost:8000",
         "http://127.0.0.1:8000",
     ]
+    allowed_origin_regex: str = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
 
     @field_validator("database_url", mode="before")
     @classmethod

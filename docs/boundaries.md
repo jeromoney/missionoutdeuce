@@ -4,22 +4,30 @@ MissionOut is organized around a hard boundary:
 
 - `backend/` owns persistence, validation, and HTTP delivery
 - `UserInterface/` owns user-facing experiences and client-side state
-- `docs/` is the only shared contract surface between them
+- `contracts/` owns the machine-readable API contract
+- `docs/` owns the human-readable explanation of that contract
 
 ## Rules
 
-- Backend and UI communicate only through documented HTTP contracts.
-- Cross-stack field names, route paths, and entity meanings belong in `docs/`.
+- Backend and UI communicate only through the shared contract.
+- Cross-stack route paths and payload shapes belong in [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
+- Cross-stack field meanings, ownership rules, and workflow expectations belong in `docs/`.
 - Internal code structure on either side is private unless it is explicitly documented as part of a contract.
-- When a contract changes, update `docs/` before or alongside implementation changes.
+- When a contract changes, regenerate `contracts/openapi.json` before or alongside implementation changes.
 
 ## What Belongs In Docs
 
-- Route paths and methods
-- Request and response payloads
 - Shared entity definitions
 - Allowed enum values and status meanings
 - Realtime event names and payloads
+- Ownership and change-management rules
+
+## What Belongs In Contracts
+
+- Route paths and methods
+- Request and response payload shapes
+- Response status codes
+- Schema definitions used by multiple endpoints
 
 ## What Does Not Belong In Docs
 
@@ -31,7 +39,8 @@ MissionOut is organized around a hard boundary:
 
 ## Change Flow
 
-1. Update the relevant file in `docs/`.
-2. Update backend schemas and routes to match.
-3. Update UI models and API clients to match.
-4. Verify both sides still agree on the documented contract.
+1. Update backend schemas and route metadata intentionally.
+2. Regenerate [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
+3. Update the relevant file in `docs/` if semantics or workflow changed.
+4. Update UI models and API clients to match.
+5. Verify the exported contract is current.

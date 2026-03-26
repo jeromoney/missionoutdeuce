@@ -23,7 +23,8 @@ class IncidentBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Panel(
       title: 'Dispatch Board',
-      subtitle: 'Incidents, team coverage, and responder status.',
+      subtitle:
+          'Open missions, team load, and responder acknowledgement state.',
       action: 'Create incident',
       primaryAction: true,
       onActionPressed: onCreateIncident,
@@ -42,15 +43,18 @@ class IncidentBoard extends StatelessWidget {
 
           return InkWell(
             onTap: () => onSelect(index),
-            borderRadius: BorderRadius.circular(22),
-            child: Container(
+            borderRadius: BorderRadius.circular(24),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: selected ? AppPalette.selectedSurface : Colors.white,
-                borderRadius: BorderRadius.circular(22),
+                color: selected
+                    ? AppPalette.panelSoft
+                    : Colors.white.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: selected ? AppPalette.info : AppPalette.border,
-                  width: selected ? 1.5 : 1,
+                  width: selected ? 1.4 : 1,
                 ),
               ),
               child: Column(
@@ -63,7 +67,8 @@ class IncidentBoard extends StatelessWidget {
                           incident.title,
                           style: const TextStyle(
                             fontSize: 22,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.6,
                             color: AppPalette.text,
                           ),
                         ),
@@ -72,26 +77,34 @@ class IncidentBoard extends StatelessWidget {
                         label: incident.active ? 'Active' : 'Resolved',
                         color: incident.active
                             ? AppPalette.success
-                            : const Color(0xFF6D8197),
+                            : AppPalette.muted,
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${incident.team} - ${incident.location}',
+                    incident.team,
                     style: const TextStyle(
-                      color: AppPalette.textSoft,
-                      fontSize: 16,
+                      color: AppPalette.info,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 4),
+                  Text(
+                    incident.location,
+                    style: const TextStyle(
+                      color: AppPalette.textSoft,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Wrap(
-                    spacing: 16,
+                    spacing: 10,
                     runSpacing: 10,
                     children: [
-                      MetricText(label: 'Responding', value: '$responding'),
-                      MetricText(label: 'Pending', value: '$pending'),
-                      MetricText(label: 'Created', value: incident.created),
+                      MetricBadge(label: 'Responding', value: '$responding'),
+                      MetricBadge(label: 'Pending', value: '$pending'),
+                      MetricBadge(label: 'Created', value: incident.created),
                     ],
                   ),
                 ],

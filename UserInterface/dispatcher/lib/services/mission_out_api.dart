@@ -10,14 +10,31 @@ import '../models/incident_update.dart';
 import '../models/records.dart';
 
 class MissionOutApi {
-  MissionOutApi({
-    http.Client? client,
-    String? baseUrl,
-  })  : _client = client ?? http.Client(),
-        _baseUrl = baseUrl ?? resolveApiBaseUrl();
+  MissionOutApi({http.Client? client, String? baseUrl})
+    : _client = client ?? http.Client(),
+      _baseUrl = baseUrl ?? resolveApiBaseUrl();
 
   final http.Client _client;
   final String _baseUrl;
+
+  String get baseUrl => _baseUrl;
+
+  bool get isLiveRenderBackend =>
+      Uri.tryParse(_baseUrl)?.host == 'missionout-backend.onrender.com';
+
+  String get connectionLabel {
+    if (isLiveRenderBackend) {
+      return 'Live Render backend';
+    }
+
+    final uri = Uri.tryParse(_baseUrl);
+    final host = uri?.host ?? _baseUrl;
+    if (host == '127.0.0.1' || host == 'localhost') {
+      return 'Local FastAPI backend';
+    }
+
+    return 'Custom backend';
+  }
 
   // The UI/backend contract for these routes lives in docs/api-contracts.md.
   Future<DashboardSnapshot> fetchDashboard() async {
@@ -37,12 +54,16 @@ class MissionOutApi {
         incidents: incidents,
         events: events,
         usingFallback: false,
+        baseUrl: _baseUrl,
+        connectionLabel: connectionLabel,
       );
     } catch (error) {
       return DashboardSnapshot(
         incidents: demoIncidentsNull,
         events: demoEvents,
         usingFallback: true,
+        baseUrl: _baseUrl,
+        connectionLabel: 'Fallback demo data',
         errorMessage: error.toString(),
       );
     }

@@ -8,6 +8,8 @@ const googleClientId = String.fromEnvironment(
   defaultValue: '',
 );
 
+const _deployedApiBaseUrl = 'https://missionout-backend.onrender.com';
+
 String resolveApiBaseUrl() {
   if (_apiBaseUrlFromEnv.isNotEmpty) {
     return _trimTrailingSlash(_apiBaseUrlFromEnv);
@@ -21,7 +23,7 @@ String resolveApiBaseUrl() {
     return 'http://127.0.0.1:8000';
   }
 
-  return _trimTrailingSlash(baseUri.origin);
+  return _deployedApiBaseUrl;
 }
 
 String _trimTrailingSlash(String value) {

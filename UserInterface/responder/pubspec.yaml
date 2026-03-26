@@ -12,6 +12,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   shared_auth:
     path: ../shared_auth
+  shared_theme:
+    path: ../shared_theme
 
 dev_dependencies:
   flutter_test:

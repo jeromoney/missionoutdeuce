@@ -11,10 +11,7 @@ enum BrowserNotificationPermissionState {
 abstract class BrowserNotificationGateway {
   BrowserNotificationPermissionState get permissionState;
   Future<BrowserNotificationPermissionState> requestPermission();
-  Future<void> showNotification({
-    required String title,
-    required String body,
-  });
+  Future<void> showNotification({required String title, required String body});
 }
 
 BrowserNotificationGateway createBrowserNotificationGateway() =>

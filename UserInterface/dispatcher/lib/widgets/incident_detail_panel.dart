@@ -22,17 +22,22 @@ class IncidentDetailPanel extends StatelessWidget {
 
     return Panel(
       title: 'Incident Detail',
-      subtitle: 'Dispatch notes, response roster, and mission context.',
+      subtitle: 'Dispatch notes, responder roster, and mission context.',
       action: 'Edit incident',
       onActionPressed: onEditIncident,
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: AppPalette.primary,
-              borderRadius: BorderRadius.circular(22),
+              gradient: const LinearGradient(
+                colors: [AppPalette.primary, AppPalette.panelSoft],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,20 +45,21 @@ class IncidentDetailPanel extends StatelessWidget {
                 Text(
                   incident.title,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
+                    color: AppPalette.text,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.9,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   incident.notes,
                   style: const TextStyle(
                     color: AppPalette.headerText,
-                    height: 1.4,
+                    height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -62,10 +68,7 @@ class IncidentDetailPanel extends StatelessWidget {
                       icon: Icons.place_outlined,
                       text: incident.location,
                     ),
-                    DarkChip(
-                      icon: Icons.groups_rounded,
-                      text: incident.team,
-                    ),
+                    DarkChip(icon: Icons.groups_rounded, text: incident.team),
                     DarkChip(
                       icon: Icons.schedule_rounded,
                       text: incident.created,
@@ -83,20 +86,21 @@ class IncidentDetailPanel extends StatelessWidget {
               itemBuilder: (context, index) {
                 final response = ordered[index];
                 final responseColor = _responseColor(response.status);
+
                 return Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: responseColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(18),
+                    color: responseColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: responseColor.withValues(alpha: 0.18),
+                      color: responseColor.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(
                     children: [
                       CircleAvatar(
                         backgroundColor: responseColor,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppPalette.primary,
                         child: Text(response.name.substring(0, 1)),
                       ),
                       const SizedBox(width: 12),
@@ -116,11 +120,13 @@ class IncidentDetailPanel extends StatelessWidget {
                               response.detail,
                               style: const TextStyle(
                                 color: AppPalette.textSoft,
+                                height: 1.4,
                               ),
                             ),
                           ],
                         ),
                       ),
+                      const SizedBox(width: 12),
                       StatusPill(label: response.status, color: responseColor),
                     ],
                   ),
@@ -138,9 +144,9 @@ class IncidentDetailPanel extends StatelessWidget {
       case 'Responding':
         return AppPalette.success;
       case 'Not Available':
-        return const Color(0xFF7A8EA5);
-      default:
         return AppPalette.muted;
+      default:
+        return AppPalette.info;
     }
   }
 }

@@ -37,6 +37,8 @@ dependencies:
   http: ^1.5.0
   shared_auth:
     path: ../shared_auth
+  shared_theme:
+    path: ../shared_theme
 
 dev_dependencies:
   flutter_test:

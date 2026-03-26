@@ -166,7 +166,8 @@ Likely fields:
 
 ## Source of Truth
 
-- Human-readable shared contract: this file and [api-contracts.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/api-contracts.md)
+- Machine-readable HTTP contract: [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json)
+- Human-readable shared semantics: this file and [api-contracts.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/api-contracts.md)
 - Backend validation source: backend Pydantic schemas
 - Backend persistence source: SQLAlchemy models and database schema
 - Frontend mapping source: Dart models in each client app

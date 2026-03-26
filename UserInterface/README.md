@@ -4,8 +4,9 @@ MissionOut is a SAR alerting platform organized as a monorepo with separate apps
 
 `UserInterface/` owns the client applications only.
 It should not depend on backend source code directly.
-Its integration surface with `backend/` is the documented contract in:
+Its integration surface with `backend/` is the shared contract:
 
+- [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json)
 - [docs/boundaries.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/boundaries.md)
 - [docs/api-contracts.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/api-contracts.md)
 - [docs/data-model.md](/C:/Users/justi/OneDrive/Documents/Projects/missionout/docs/data-model.md)
@@ -60,6 +61,10 @@ GOOGLE_CLIENT_ID
 
 The shared env file can also contain backend-only settings. The dispatcher only uses the Dart defines it reads at build time.
 
+For the deployed backend, set `API_BASE_URL=https://missionout-backend.onrender.com`.
+
+For local backend testing instead, set `API_BASE_URL=http://127.0.0.1:8000`.
+
 ## Run The Backend
 
 ```powershell
@@ -75,4 +80,4 @@ python run.py
 ## Notes
 
 - `agents.md` at the repo root describes the system roles and architecture.
-- Contract changes should start in `docs/` before UI and backend diverge.
+- Contract changes should start with [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json), with `docs/` explaining the meaning and workflow around that contract.
