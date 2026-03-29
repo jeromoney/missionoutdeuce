@@ -5,7 +5,6 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_models/shared_models.dart';
 
 import '../app_config.dart';
-import '../data/demo_team_admin_data.dart';
 import '../models/team_admin_models.dart';
 
 class TeamAdminRepository {
@@ -17,6 +16,7 @@ class TeamAdminRepository {
   final String _baseUrl;
   int? _currentTeamId;
   String? _currentTeamName;
+  String? _currentUserEmail;
 
   String get baseUrl => _baseUrl;
 
@@ -31,13 +31,17 @@ class TeamAdminRepository {
 
   Future<TeamAdminWorkspace> loadWorkspace({
     List<AuthTeamMembership> memberships = const [],
+    String? userEmail,
   }) async {
+    _currentUserEmail = userEmail;
+    final teamId = memberships.isNotEmpty ? memberships.first.teamId : 0;
+    final preferredTeamName = memberships.isNotEmpty
+        ? memberships.first.teamName
+        : 'Unassigned team';
+
     try {
       final healthFuture = _getMap('/health');
-      final incidentsFuture = _getList('/incidents');
-      final teamId = memberships.isNotEmpty
-          ? memberships.first.teamId
-          : demoManagedTeam.id;
+      final incidentsFuture = _getList('/incidents', userEmail: userEmail);
       final membersFuture = _getOptionalList('/teams/$teamId/members');
       final devicesFuture = _getOptionalList('/teams/$teamId/devices');
 
@@ -53,16 +57,7 @@ class TeamAdminRepository {
       final memberJson = results[2] as List<Map<String, dynamic>>?;
       final deviceJson = results[3] as List<Map<String, dynamic>>?;
 
-      final preferredTeamName = memberships.isNotEmpty
-          ? memberships.first.teamName
-          : demoManagedTeam.name;
-
-      final filteredIncidents = incidentJson
-          .where((incident) => incident['team'] == preferredTeamName)
-          .toList();
-      final teamIncidents = filteredIncidents.isNotEmpty
-          ? filteredIncidents
-          : incidentJson;
+      final teamIncidents = incidentJson;
 
       final resolvedTeamName = teamIncidents.isNotEmpty
           ? teamIncidents.first['team'] as String? ?? preferredTeamName
@@ -116,9 +111,9 @@ class TeamAdminRepository {
                 )
                 .toList();
 
-      final liveTeam = demoManagedTeam.copyWith(
-        id: teamId,
-        name: resolvedTeamName,
+      final liveTeam = _buildTeam(
+        teamId: teamId,
+        teamName: resolvedTeamName,
         members: members,
         incidents: incidents,
         responses: responsesList,
@@ -140,15 +135,20 @@ class TeamAdminRepository {
         usingLiveData: true,
         statusMessage: statusMessage,
       );
-    } catch (_) {
+    } catch (error) {
       return TeamAdminWorkspace(
-        team: demoManagedTeam,
-        connectionLabel: 'Fallback demo data',
+        team: _buildTeam(
+          teamId: teamId,
+          teamName: preferredTeamName,
+          members: const [],
+          incidents: const [],
+          responses: const [],
+        ),
+        connectionLabel: 'API unavailable',
         connectionDetail: _baseUrl,
         memberCrudSupported: false,
         usingLiveData: false,
-        statusMessage:
-            'Could not reach $_baseUrl. Showing fallback Team Admin demo data instead.',
+        statusMessage: 'Could not load team data from $_baseUrl. Error: $error',
       );
     }
   }
@@ -209,8 +209,15 @@ class TeamAdminRepository {
     return _reloadTeam(teamId);
   }
 
-  Future<List<Map<String, dynamic>>> _getList(String path) async {
-    final response = await _client.get(Uri.parse('$_baseUrl$path'));
+  Future<List<Map<String, dynamic>>> _getList(
+    String path, {
+    String? userEmail,
+  }) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final response = await _client.get(
+      uri,
+      headers: _headers(userEmail: userEmail),
+    );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Request failed for $path (${response.statusCode})');
     }
@@ -290,10 +297,11 @@ class TeamAdminRepository {
       memberships: [
         AuthTeamMembership(
           teamId: teamId,
-          teamName: _currentTeamName ?? demoManagedTeam.name,
+          teamName: _currentTeamName ?? 'Unknown team',
           roles: const [],
         ),
       ],
+      userEmail: _currentUserEmail,
     );
     return workspace.team;
   }
@@ -324,5 +332,35 @@ class TeamAdminRepository {
       return 'Inactive';
     }
     return 'Needs review';
+  }
+
+  Map<String, String> _headers({String? userEmail}) {
+    final trimmedEmail = userEmail?.trim();
+    if (trimmedEmail == null || trimmedEmail.isEmpty) {
+      return const {};
+    }
+
+    return {'X-MissionOut-User-Email': trimmedEmail};
+  }
+
+  TeamAdminTeam _buildTeam({
+    required int teamId,
+    required String teamName,
+    required List<TeamAdminMember> members,
+    required List<TeamIncidentSummary> incidents,
+    required List<TeamResponseSummary> responses,
+  }) {
+    return TeamAdminTeam(
+      id: teamId,
+      name: teamName,
+      organization: 'MissionOut',
+      region: 'Current team scope',
+      dispatchChannel: 'API-managed',
+      notes:
+          'Team Admin manages memberships, roles, device readiness, and team visibility for one existing operational team.',
+      members: members,
+      incidents: incidents,
+      responses: responses,
+    );
   }
 }

@@ -11,12 +11,18 @@ class Incident(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(255))
-    team: Mapped[str] = mapped_column(String(255))
+    legacy_team_name: Mapped[str] = mapped_column("team", String(255))
+    team_id: Mapped[int | None] = mapped_column(
+        ForeignKey("teams.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     location: Mapped[str] = mapped_column(String(255))
     notes: Mapped[str] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
+    team_ref: Mapped["Team | None"] = relationship()
     responses: Mapped[list["ResponseRecord"]] = relationship(
         back_populates="incident",
         cascade="all, delete-orphan",

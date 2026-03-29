@@ -3,7 +3,6 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
-import '../data/demo_team_admin_data.dart';
 import '../models/team_admin_models.dart';
 import '../services/team_admin_repository.dart';
 
@@ -18,7 +17,18 @@ class TeamAdminHomeScreen extends StatefulWidget {
 
 class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
   final repository = TeamAdminRepository();
-  TeamAdminTeam team = demoManagedTeam;
+  TeamAdminTeam team = const TeamAdminTeam(
+    id: 0,
+    name: 'Loading team',
+    organization: 'MissionOut',
+    region: 'Current team scope',
+    dispatchChannel: 'API-managed',
+    notes:
+        'Team Admin manages memberships, roles, device readiness, and team visibility for one existing operational team.',
+    members: [],
+    incidents: [],
+    responses: [],
+  );
   bool loading = true;
   bool memberCrudSupported = false;
   bool usingLiveData = false;
@@ -99,7 +109,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
                       title: 'Active responses',
                       value: '$responding',
                       subtitle:
-                          'Recent acknowledgement activity across team incidents.',
+                          'Acknowledgement activity across this team\'s last-7-days incident feed.',
                       icon: Icons.assignment_turned_in_outlined,
                       color: TeamAdminPalette.warning,
                     ),
@@ -194,6 +204,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
 
     final workspace = await repository.loadWorkspace(
       memberships: widget.auth.currentUser?.teamMemberships ?? const [],
+      userEmail: widget.auth.currentUser?.email,
     );
 
     if (!mounted) {
@@ -403,9 +414,7 @@ class _Header extends StatelessWidget {
                   runSpacing: 12,
                   children: [
                     _Pill(
-                      label: usingLiveData
-                          ? connectionLabel
-                          : 'Fallback demo data',
+                      label: connectionLabel,
                       color: usingLiveData
                           ? TeamAdminPalette.success
                           : TeamAdminPalette.warning,
@@ -674,7 +683,7 @@ class _IncidentsPanel extends StatelessWidget {
     return _Panel(
       title: 'Team incidents',
       subtitle:
-          'Read-only team-level visibility into incident and response history for this managed team.',
+          'Read-only visibility into this team\'s recent incident feed and response history.',
       child: ListView.separated(
         itemCount: incidents.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),
@@ -733,7 +742,7 @@ class _ResponsesPanel extends StatelessWidget {
     return _Panel(
       title: 'Recent responses',
       subtitle:
-          'Read-only acknowledgement history for incidents involving this managed team.',
+          'Read-only acknowledgement history for incidents in this team\'s recent feed.',
       child: ListView.separated(
         itemCount: responses.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),

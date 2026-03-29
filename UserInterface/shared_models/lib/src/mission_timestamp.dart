@@ -57,12 +57,12 @@ String _formatRecentDuration(Duration duration) {
   }
   if (duration.inHours < 1) {
     final minutes = duration.inMinutes;
-    return '$minutes ${minutes == 1 ? 'minute' : 'minutes'}';
+    return '$minutes ${minutes == 1 ? 'minute ago' : 'minutes ago'}';
   }
   if (duration.inDays < 1) {
     final hours = duration.inHours;
-    return '$hours ${hours == 1 ? 'hour' : 'hours'}';
+    return '$hours ${hours == 1 ? 'hour ago' : 'hours ago'}';
   }
   final days = duration.inDays;
-  return '$days ${days == 1 ? 'day' : 'days'}';
+  return '$days ${days == 1 ? 'day ago' : 'days ago'}';
 }

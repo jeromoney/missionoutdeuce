@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
 
+import 'app_config.dart';
 import 'app_palette.dart';
 import 'screens/logged_out_screen.dart';
 import 'screens/responder_home_screen.dart';
@@ -18,10 +19,6 @@ class MissionOutResponderApp extends StatefulWidget {
 }
 
 class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
-  static const apiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:8000',
-  );
   static const googleClientId = String.fromEnvironment(
     'GOOGLE_CLIENT_ID',
     defaultValue: '',
@@ -36,9 +33,7 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
       role: 'Responder',
       email: 'justin@missionout.test',
     ),
-    backendBaseUrl: apiBaseUrl.endsWith('/')
-        ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
-        : apiBaseUrl,
+    backendBaseUrl: resolveApiBaseUrl(),
     googleClientId: googleClientId.isEmpty ? null : googleClientId,
   );
 
@@ -56,6 +51,7 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
               : LoggedOutScreen(
                   onMagicLinkLogin: auth.loginWithMagicLink,
                   onGoogleLogin: auth.loginWithGoogle,
+                  googleLoginEnabled: auth.canUseGoogleLogin,
                   roleLabel: auth.roleLabel,
                 );
         },

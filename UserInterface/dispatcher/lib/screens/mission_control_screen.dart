@@ -33,6 +33,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
   List<EventRecord> events = const [];
   var selected = 0;
   var loading = true;
+  String? loadError;
 
   @override
   void initState() {
@@ -58,6 +59,10 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
                   incidents: incidents,
                   onLogout: widget.auth.logout,
                 ),
+                if (loadError != null) ...[
+                  const SizedBox(height: 16),
+                  _LoadErrorBanner(message: loadError!),
+                ],
                 const SizedBox(height: 18),
                 _SummaryStrip(incidents: incidents),
                 const SizedBox(height: 18),
@@ -66,6 +71,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : incidents.isEmpty
                       ? _EmptyIncidentState(
+                          message: loadError,
                           onCreateIncident: _openCreateIncident,
                         )
                       : _buildDashboardLayout(compact),
@@ -134,26 +140,48 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
   }
 
   Future<void> _loadDashboard() async {
-    setState(() => loading = true);
-
-    final DashboardSnapshot snapshot = await api.fetchDashboard();
-
-    debugPrint(
-      '[Dispatcher] Dashboard load: label=${snapshot.connectionLabel}, '
-      'baseUrl=${snapshot.baseUrl}, usingFallback=${snapshot.usingFallback}, '
-      'error=${snapshot.errorMessage ?? 'none'}',
-    );
-
-    if (!mounted) {
-      return;
-    }
-
     setState(() {
-      incidents = snapshot.incidents;
-      events = snapshot.events;
-      selected = 0;
-      loading = false;
+      loading = true;
+      loadError = null;
     });
+
+    try {
+      final DashboardSnapshot snapshot = await api.fetchDashboard(
+        userEmail: widget.auth.currentUser?.email,
+      );
+
+      debugPrint(
+        '[Dispatcher] Dashboard load: label=${snapshot.connectionLabel}, '
+        'baseUrl=${snapshot.baseUrl}, error=none',
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        incidents = snapshot.incidents;
+        events = snapshot.events;
+        selected = 0;
+        loading = false;
+      });
+    } catch (error) {
+      debugPrint(
+        '[Dispatcher] Dashboard load failed: baseUrl=${api.baseUrl}, error=$error',
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        incidents = const [];
+        events = const [];
+        selected = 0;
+        loading = false;
+        loadError = 'Could not load incident data from ${api.connectionLabel}.';
+      });
+    }
   }
 
   void _selectIncident(int index) {
@@ -272,7 +300,7 @@ class _Header extends StatelessWidget {
               children: [
                 const MissionOutBrandLockup(
                   subtitle:
-                      'Mission control for dispatch, team visibility, and live responder coordination.',
+                      'Mission control for recent dispatch activity, team visibility, and live responder coordination.',
                   logoSize: 60,
                 ),
                 const SizedBox(height: 20),
@@ -368,21 +396,23 @@ class _SummaryStrip extends StatelessWidget {
         SummaryCard(
           title: 'Active',
           value: '$active',
-          subtitle: 'Mission windows currently open across dispatch.',
+          subtitle: 'Open incidents from the last 7 days in the current feed.',
           icon: Icons.radar_rounded,
           color: AppPalette.info,
         ),
         SummaryCard(
           title: 'Responding',
           value: '$responding',
-          subtitle: 'Confirmed field responders already moving.',
+          subtitle:
+              'Confirmed field responders across the recent incident feed.',
           icon: Icons.hiking_rounded,
           color: AppPalette.success,
         ),
         SummaryCard(
           title: 'Pending',
           value: '$pending',
-          subtitle: 'Still awaiting acknowledgement from assigned members.',
+          subtitle:
+              'Awaiting acknowledgement in the last-7-days incident feed.',
           icon: Icons.notifications_active_outlined,
           color: AppPalette.muted,
         ),
@@ -392,9 +422,10 @@ class _SummaryStrip extends StatelessWidget {
 }
 
 class _EmptyIncidentState extends StatelessWidget {
-  const _EmptyIncidentState({required this.onCreateIncident});
+  const _EmptyIncidentState({required this.onCreateIncident, this.message});
 
   final VoidCallback onCreateIncident;
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
@@ -418,10 +449,11 @@ class _EmptyIncidentState extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Create the first dispatch to open the mission board, start responder acknowledgements, and begin tracking delivery activity.',
+              Text(
+                message ??
+                    'Create the first dispatch to open the recent-activity mission board, start responder acknowledgements, and begin tracking delivery activity.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppPalette.textSoft, height: 1.5),
+                style: const TextStyle(color: AppPalette.textSoft, height: 1.5),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
@@ -432,6 +464,34 @@ class _EmptyIncidentState extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _LoadErrorBanner extends StatelessWidget {
+  const _LoadErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionShell(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline_rounded, color: AppPalette.info),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: AppPalette.textSoft,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

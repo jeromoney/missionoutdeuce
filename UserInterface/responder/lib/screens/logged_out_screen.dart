@@ -8,11 +8,13 @@ class LoggedOutScreen extends StatefulWidget {
     super.key,
     required this.onMagicLinkLogin,
     required this.onGoogleLogin,
+    this.googleLoginEnabled = true,
     this.roleLabel = 'Responder',
   });
 
   final void Function({required String email}) onMagicLinkLogin;
   final Future<void> Function() onGoogleLogin;
+  final bool googleLoginEnabled;
   final String roleLabel;
 
   @override
@@ -59,6 +61,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
                         errorText: errorText,
                         successText: successText,
                         isSubmitting: isSubmitting,
+                        googleLoginEnabled: widget.googleLoginEnabled,
                         onMagicLinkLogin: _submitMagicLink,
                         onGoogleLogin: _submitGoogle,
                       ),
@@ -187,6 +190,7 @@ class _LoginPanel extends StatelessWidget {
     required this.errorText,
     required this.successText,
     required this.isSubmitting,
+    required this.googleLoginEnabled,
     required this.onMagicLinkLogin,
     required this.onGoogleLogin,
   });
@@ -195,6 +199,7 @@ class _LoginPanel extends StatelessWidget {
   final String? errorText;
   final String? successText;
   final bool isSubmitting;
+  final bool googleLoginEnabled;
   final VoidCallback onMagicLinkLogin;
   final Future<void> Function() onGoogleLogin;
 
@@ -282,9 +287,15 @@ class _LoginPanel extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: isSubmitting ? null : onGoogleLogin,
+              onPressed: isSubmitting || !googleLoginEnabled
+                  ? null
+                  : onGoogleLogin,
               icon: const Icon(Icons.login_rounded),
-              label: const Text('Continue with Google'),
+              label: Text(
+                googleLoginEnabled
+                    ? 'Continue with Google'
+                    : 'Google login not configured',
+              ),
             ),
           ),
         ],

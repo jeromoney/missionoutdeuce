@@ -151,9 +151,27 @@
       },
       "GoogleAuthRequest": {
         "properties": {
+          "access_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Token"
+          },
           "id_token": {
-            "title": "Id Token",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Token"
           },
           "requested_client": {
             "enum": [
@@ -166,7 +184,6 @@
           }
         },
         "required": [
-          "id_token",
           "requested_client"
         ],
         "title": "GoogleAuthRequest",

@@ -48,6 +48,7 @@ class _MissionOutAppState extends State<MissionOutApp> {
               : LoggedOutScreen(
                   onMagicLinkLogin: auth.loginWithMagicLink,
                   onGoogleLogin: auth.loginWithGoogle,
+                  googleLoginEnabled: auth.canUseGoogleLogin,
                   roleLabel: auth.roleLabel,
                 );
         },

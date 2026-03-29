@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../app_config.dart';
-import '../data/demo_data.dart';
 import '../models/dashboard_snapshot.dart';
 import '../models/incident_draft.dart';
 import '../models/incident_update.dart';
@@ -37,36 +36,24 @@ class MissionOutApi {
   }
 
   // The UI/backend contract for these routes lives in docs/api-contracts.md.
-  Future<DashboardSnapshot> fetchDashboard() async {
-    try {
-      final incidentsFuture = _getList('/incidents');
-      final eventsFuture = _getList('/events/delivery-feed');
+  Future<DashboardSnapshot> fetchDashboard({String? userEmail}) async {
+    final incidentsFuture = _getList('/incidents', userEmail: userEmail);
+    final eventsFuture = _getList('/events/delivery-feed');
 
-      final responses = await Future.wait([incidentsFuture, eventsFuture]);
-      final incidents = responses[0]
-          .map((item) => Incident.fromJson(item))
-          .toList();
-      final events = responses[1]
-          .map((item) => EventRecord.fromJson(item))
-          .toList();
+    final responses = await Future.wait([incidentsFuture, eventsFuture]);
+    final incidents = responses[0]
+        .map((item) => Incident.fromJson(item))
+        .toList();
+    final events = responses[1]
+        .map((item) => EventRecord.fromJson(item))
+        .toList();
 
-      return DashboardSnapshot(
-        incidents: incidents,
-        events: events,
-        usingFallback: false,
-        baseUrl: _baseUrl,
-        connectionLabel: connectionLabel,
-      );
-    } catch (error) {
-      return DashboardSnapshot(
-        incidents: demoIncidentsNull,
-        events: demoEvents,
-        usingFallback: true,
-        baseUrl: _baseUrl,
-        connectionLabel: 'Fallback demo data',
-        errorMessage: error.toString(),
-      );
-    }
+    return DashboardSnapshot(
+      incidents: incidents,
+      events: events,
+      baseUrl: _baseUrl,
+      connectionLabel: connectionLabel,
+    );
   }
 
   Future<Incident> createIncident(IncidentDraft draft) async {
@@ -100,8 +87,15 @@ class MissionOutApi {
     return _decodeIncidentResponse(response, 'update incident');
   }
 
-  Future<List<Map<String, dynamic>>> _getList(String path) async {
-    final response = await _client.get(Uri.parse('$_baseUrl$path'));
+  Future<List<Map<String, dynamic>>> _getList(
+    String path, {
+    String? userEmail,
+  }) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final response = await _client.get(
+      uri,
+      headers: _headers(userEmail: userEmail),
+    );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Request failed for $path (${response.statusCode})');
     }
@@ -132,5 +126,14 @@ class MissionOutApi {
     }
 
     throw Exception('Expected a JSON object when attempting to $action');
+  }
+
+  Map<String, String> _headers({String? userEmail}) {
+    final trimmedEmail = userEmail?.trim();
+    if (trimmedEmail == null || trimmedEmail.isEmpty) {
+      return const {};
+    }
+
+    return {'X-MissionOut-User-Email': trimmedEmail};
   }
 }

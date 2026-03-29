@@ -61,5 +61,11 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
+    @property
+    def google_client_ids(self) -> list[str]:
+        if not self.google_client_id:
+            return []
+        return [client_id.strip() for client_id in self.google_client_id.split(",") if client_id.strip()]
+
 
 settings = Settings()

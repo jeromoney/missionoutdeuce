@@ -45,6 +45,8 @@ Notes:
 
 - `title`, `location`, `notes`, and `active` may change over time.
 - `created` should be exposed as a real timestamp and formatted per client.
+- `GET /incidents` exposes only incidents whose `created` timestamp falls within the last 7 calendar days. Historical incident access, if added later, should use a separate route or explicit query contract.
+- Incident visibility for that route is derived from the authenticated user's team memberships and global permissions rather than a client-provided `team_id` filter.
 
 ## ResponseRecord
 

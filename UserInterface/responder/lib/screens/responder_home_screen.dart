@@ -5,11 +5,11 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
-import '../data/demo_data.dart';
 import '../models/backup_alert.dart';
 import '../models/incident.dart';
 import '../services/backup_notification_service.dart';
 import '../services/browser_notification_gateway.dart';
+import '../services/responder_api.dart';
 
 class ResponderHomeScreen extends StatefulWidget {
   const ResponderHomeScreen({super.key, required this.auth});
@@ -21,10 +21,13 @@ class ResponderHomeScreen extends StatefulWidget {
 }
 
 class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
-  final incidents = responderIncidents;
+  final api = ResponderApi();
   final backupNotifications = BackupNotificationService();
+  List<ResponderIncident> incidents = const [];
   int selected = 0;
   String availability = 'Available';
+  bool loading = true;
+  String? loadError;
   StreamSubscription<BackupAlert>? alertSubscription;
   BackupAlert? activeBackupAlert;
 
@@ -32,13 +35,16 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   void initState() {
     super.initState();
     backupNotifications.initialize();
+    _loadIncidents();
     alertSubscription = backupNotifications.alerts.listen((alert) {
       if (!mounted) {
         return;
       }
 
       setState(() {
-        selected = alert.incidentIndex;
+        selected = incidents.isEmpty
+            ? 0
+            : alert.incidentIndex.clamp(0, incidents.length - 1) as int;
         activeBackupAlert = alert;
       });
     });
@@ -70,6 +76,10 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                   onLogout: widget.auth.logout,
                 ),
                 const SizedBox(height: 16),
+                if (loadError != null) ...[
+                  _LoadErrorBanner(message: loadError!),
+                  const SizedBox(height: 16),
+                ],
                 _BackupNotificationBanner(
                   service: backupNotifications,
                   alert: activeBackupAlert,
@@ -95,7 +105,9 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                 ),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: incidents.isEmpty
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : incidents.isEmpty
                       ? const _NoMissionState()
                       : compact
                       ? ListView(
@@ -177,6 +189,43 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     }
 
     setState(() => availability = value);
+  }
+
+  Future<void> _loadIncidents() async {
+    setState(() {
+      loading = true;
+      loadError = null;
+    });
+
+    try {
+      final loadedIncidents = await api.fetchIncidents(
+        userEmail: widget.auth.currentUser?.email,
+        userName: widget.auth.currentUser?.name,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        incidents = loadedIncidents;
+        selected = loadedIncidents.isEmpty
+            ? 0
+            : selected.clamp(0, loadedIncidents.length - 1) as int;
+        loading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        incidents = const [];
+        selected = 0;
+        loading = false;
+        loadError = 'Could not load missions from the API.';
+      });
+    }
   }
 }
 
@@ -665,6 +714,43 @@ class _NoMissionState extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _LoadErrorBanner extends StatelessWidget {
+  const _LoadErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: ResponderPalette.card.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: ResponderPalette.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: ResponderPalette.warning,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: ResponderPalette.textSoft,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

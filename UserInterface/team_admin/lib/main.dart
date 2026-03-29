@@ -46,6 +46,7 @@ class _MissionOutTeamAdminAppState extends State<MissionOutTeamAdminApp> {
               : LoggedOutScreen(
                   onMagicLinkLogin: auth.loginWithMagicLink,
                   onGoogleLogin: auth.loginWithGoogle,
+                  googleLoginEnabled: auth.canUseGoogleLogin,
                   roleLabel: auth.roleLabel,
                 );
         },

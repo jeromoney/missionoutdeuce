@@ -23,7 +23,7 @@ Its public surface area for the UI is the shared contract:
 2. Choose one local config approach:
    - Copy `.env.example` to `.env` and update `DATABASE_URL` if needed.
    - Or keep secrets outside the repo in `..\Secrets\missionout-backend.env`.
-   Set `GOOGLE_CLIENT_ID` to your Google web client id.
+   Set `GOOGLE_CLIENT_ID` to your Google web client id. If you have more than one web client that should be accepted by the backend, you can provide a comma-separated list.
 3. Install dependencies:
 
 ```powershell

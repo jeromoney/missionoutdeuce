@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import delete, text
 
 from app.db.base import Base
+from app.db.bootstrap import ensure_incident_team_fk
 from app.db.session import SessionLocal
 from app.models.event import DeliveryEvent
 from app.models.incident import Incident, ResponseRecord
@@ -12,6 +13,7 @@ from app.db.session import engine
 
 def seed() -> None:
     Base.metadata.create_all(bind=engine)
+    ensure_incident_team_fk(engine)
 
     with SessionLocal() as db:
         if db.bind is not None and db.bind.dialect.name == "postgresql":
@@ -38,157 +40,87 @@ def seed() -> None:
         four_weeks_ago = now - timedelta(weeks=4)
         one_year_ago = now - timedelta(days=365)
 
-        chaffee_team = Team(name="Chaffee SAR", is_active=True)
-        summit_team = Team(name="Summit County Rescue", is_active=True)
+        quiet_team = Team(name="North Rim SAR", is_active=True)
+        one_team = Team(name="Cinder Valley Rescue", is_active=True)
+        many_team = Team(name="Pine Ridge Search", is_active=True)
 
-        justin = User(
-            name="Justin Mercer",
-            email="justin@example.com",
-            phone="555-0101",
+        zero_user = User(
+            name="Zane Ortega",
+            email="zero@gmail.com",
+            phone="555-1000",
             is_active=True,
         )
-        sarah = User(
-            name="Sarah Keller",
-            email="sarah@example.com",
-            phone="555-0102",
+        one_user = User(
+            name="Nora Ellison",
+            email="one@gmail.com",
+            phone="555-1001",
             is_active=True,
         )
-        mike = User(
-            name="Mike Donnelly",
-            email="mike@example.com",
-            phone="555-0103",
-            is_active=True,
-        )
-        team_manager = User(
-            name="Avery Teamlead",
-            email="avery@example.com",
-            phone="555-0110",
-            is_active=True,
-        )
-        taylor = User(
-            name="Taylor Price",
-            email="taylor@example.com",
-            phone="555-0201",
-            is_active=True,
-        )
-        chris = User(
-            name="Chris Everett",
-            email="chris@example.com",
-            phone="555-0202",
-            is_active=True,
-        )
-        summit_admin = User(
-            name="Jordan Summit",
-            email="jordan@example.com",
-            phone="555-0210",
+        many_user = User(
+            name="Miles Avery",
+            email="many@gmail.com",
+            phone="555-1002",
             is_active=True,
         )
 
         db.add_all(
             [
-                chaffee_team,
-                summit_team,
-                justin,
-                sarah,
-                mike,
-                team_manager,
-                taylor,
-                chris,
-                summit_admin,
+                quiet_team,
+                one_team,
+                many_team,
+                zero_user,
+                one_user,
+                many_user,
             ]
         )
         db.flush()
 
         memberships = [
             TeamMembership(
-                user_id=justin.id,
-                team_id=chaffee_team.id,
-                roles=["responder", "dispatcher"],
+                user_id=zero_user.id,
+                team_id=quiet_team.id,
+                roles=["responder", "dispatcher", "team_admin"],
                 is_active=True,
                 granted_at=within_one_day,
             ),
             TeamMembership(
-                user_id=sarah.id,
-                team_id=chaffee_team.id,
-                roles=["responder"],
+                user_id=one_user.id,
+                team_id=one_team.id,
+                roles=["responder", "dispatcher", "team_admin"],
                 is_active=True,
                 granted_at=four_days_ago,
             ),
             TeamMembership(
-                user_id=mike.id,
-                team_id=chaffee_team.id,
-                roles=["responder"],
-                is_active=True,
-                granted_at=four_weeks_ago,
-            ),
-            TeamMembership(
-                user_id=team_manager.id,
-                team_id=chaffee_team.id,
-                roles=["team_admin"],
+                user_id=many_user.id,
+                team_id=many_team.id,
+                roles=["responder", "dispatcher", "team_admin"],
                 is_active=True,
                 granted_at=one_year_ago,
-            ),
-            TeamMembership(
-                user_id=taylor.id,
-                team_id=summit_team.id,
-                roles=["responder", "dispatcher"],
-                is_active=True,
-                granted_at=within_one_day - timedelta(hours=2),
-            ),
-            TeamMembership(
-                user_id=chris.id,
-                team_id=summit_team.id,
-                roles=["responder"],
-                is_active=True,
-                granted_at=four_days_ago - timedelta(hours=3),
-            ),
-            TeamMembership(
-                user_id=summit_admin.id,
-                team_id=summit_team.id,
-                roles=["team_admin"],
-                is_active=True,
-                granted_at=one_year_ago - timedelta(days=14),
             ),
         ]
 
         devices = [
             Device(
-                user_id=justin.id,
+                user_id=zero_user.id,
                 platform="android",
-                push_token="fcm-token-justin",
+                push_token="fcm-token-zero",
                 last_seen=within_one_day,
                 is_active=True,
                 is_verified=True,
             ),
             Device(
-                user_id=sarah.id,
+                user_id=one_user.id,
                 platform="ios",
-                push_token="apns-token-sarah",
+                push_token="apns-token-one",
                 last_seen=four_days_ago,
                 is_active=True,
                 is_verified=True,
             ),
             Device(
-                user_id=mike.id,
+                user_id=many_user.id,
                 platform="android",
-                push_token="fcm-token-mike",
-                last_seen=four_weeks_ago,
-                is_active=False,
-                is_verified=False,
-            ),
-            Device(
-                user_id=taylor.id,
-                platform="ios",
-                push_token="apns-token-taylor",
-                last_seen=within_one_day - timedelta(hours=4),
-                is_active=True,
-                is_verified=True,
-            ),
-            Device(
-                user_id=chris.id,
-                platform="android",
-                push_token="fcm-token-chris",
-                last_seen=one_year_ago,
+                push_token="fcm-token-many",
+                last_seen=within_one_day - timedelta(hours=3),
                 is_active=True,
                 is_verified=True,
             ),
@@ -196,52 +128,87 @@ def seed() -> None:
 
         incidents = [
             Incident(
-                title="Injured Climber Extraction",
-                team="Chaffee SAR",
-                location="Mt. Princeton Southwest Gully",
-                notes="Subject reports lower-leg injury above treeline. Snowpack stable but wind increasing. Air asset on standby if ground extraction stalls.",
-                active=True,
-                created_at=within_one_day,
+                title="Winter Trailhead Welfare Check",
+                legacy_team_name=quiet_team.name,
+                team_id=quiet_team.id,
+                location="Echo Basin Upper Lot",
+                notes="Historical training incident retained for audit and timeline testing. No operational activity in the last 7 days for this team.",
+                active=False,
+                created_at=four_weeks_ago,
                 responses=[
                     ResponseRecord(
-                        name="Justin M.",
-                        status="Responding",
-                        detail="En route from Buena Vista with litter trailer.",
+                        name="Zane O.",
+                        status="Not Available",
+                        detail="Archived training call used for seeded test history.",
                         rank=0,
-                    ),
-                    ResponseRecord(
-                        name="Sarah K.",
-                        status="Responding",
-                        detail="Switching to radio channel SAR-2 at trailhead.",
-                        rank=0,
-                    ),
-                    ResponseRecord(
-                        name="Mike D.",
-                        status="Pending",
-                        detail="Push delivered to Android device, no acknowledgement yet.",
-                        rank=1,
                     ),
                 ],
             ),
             Incident(
-                title="Overdue Snowmobiler",
-                team="Summit County Rescue",
-                location="Georgia Pass East Approach",
-                notes="Family lost contact after sunset. Last device ping near the pass. Team requested beacon cache and UTV support for rapid sweep.",
+                title="Lost Day Hiker",
+                legacy_team_name=one_team.name,
+                team_id=one_team.id,
+                location="Cinder Valley South Fork",
+                notes="Single recent mission for the one@gmail.com account. Team should show exactly one incident within the last 7 days.",
+                active=True,
+                created_at=within_one_day,
+                responses=[
+                    ResponseRecord(
+                        name="Nora E.",
+                        status="Responding",
+                        detail="Confirmed availability and is heading to the trailhead.",
+                        rank=0,
+                    ),
+                ],
+            ),
+            Incident(
+                title="Overdue Climber",
+                legacy_team_name=many_team.name,
+                team_id=many_team.id,
+                location="Pine Ridge North Face",
+                notes="Recent mission one of several for many@gmail.com.",
+                active=True,
+                created_at=within_one_day - timedelta(hours=2),
+                responses=[
+                    ResponseRecord(
+                        name="Miles A.",
+                        status="Responding",
+                        detail="Departed staging area with technical gear cache.",
+                        rank=0,
+                    ),
+                ],
+            ),
+            Incident(
+                title="Riverbank Evidence Search",
+                legacy_team_name=many_team.name,
+                team_id=many_team.id,
+                location="Pine Ridge Lower Narrows",
+                notes="Recent mission two of several for many@gmail.com.",
                 active=True,
                 created_at=four_days_ago,
                 responses=[
                     ResponseRecord(
-                        name="Taylor P.",
+                        name="Miles A.",
                         status="Responding",
-                        detail="Trailer loaded and meeting command at lot B.",
+                        detail="Assigned to grid sector Bravo for sweep coverage.",
                         rank=0,
                     ),
+                ],
+            ),
+            Incident(
+                title="Storm Shelter Evacuation",
+                legacy_team_name=many_team.name,
+                team_id=many_team.id,
+                location="Pine Ridge High Meadow",
+                notes="Recent mission three of several for many@gmail.com, still within the last 7 days.",
+                active=False,
+                created_at=now - timedelta(days=6),
+                responses=[
                     ResponseRecord(
-                        name="Chris E.",
-                        status="Pending",
-                        detail="Primary push sent, SMS escalation queued in 4 minutes.",
-                        rank=1,
+                        name="Miles A.",
+                        status="Responding",
+                        detail="Handled evacuation transport coordination before stand-down.",
+                        rank=0,
                     ),
                 ],
             ),
@@ -249,20 +216,20 @@ def seed() -> None:
 
         events = [
             DeliveryEvent(
-                title="Primary FCM burst completed",
-                detail="12 Android devices received the first-wave push for Injured Climber Extraction.",
+                title="Single-team dispatch acknowledged",
+                detail="Nora Ellison acknowledged the Lost Day Hiker alert from Cinder Valley Rescue.",
                 time_label="2m",
                 icon="notifications",
                 color="#4F6F95",
-                created_at=four_weeks_ago,
+                created_at=within_one_day,
             ),
             DeliveryEvent(
-                title="Responder acknowledged on lock screen",
-                detail="Sarah K. marked Responding from the native alert screen before opening the app.",
+                title="Multi-mission team burst delivered",
+                detail="Pine Ridge Search received another recent alert, keeping many@gmail.com in a high-activity test state.",
                 time_label="4m",
                 icon="task_alt",
                 color="#3F6D91",
-                created_at=one_year_ago,
+                created_at=four_days_ago,
             ),
         ]
 

@@ -91,6 +91,12 @@ Response:
 Purpose:
 
 - Returns incidents for the dispatcher board and authorized team-management or super-admin views.
+- The collection is limited to incidents created within the last 7 calendar days.
+- Team scope is derived from the signed-in user's authenticated memberships and permissions, not from a client-supplied team identifier.
+
+Query parameters:
+
+- None. Clients call `GET /incidents` without a `team_id` filter.
 
 Response shape:
 
@@ -120,12 +126,18 @@ Field definitions:
 
 - `id`: numeric incident identifier
 - `title`: short incident name
-- `team`: primary responsible team
+- `team`: primary responsible team display name
 - `location`: human-readable location
 - `created`: canonical incident creation timestamp
 - `notes`: dispatcher notes
 - `active`: incident active/resolved state
 - `responses`: ordered responder states
+
+Backend note:
+
+- Incidents are normalized to a team foreign key in backend storage, while the API continues returning `team` as the display name for client compatibility.
+- `GET /incidents` is intentionally a recent-activity feed, not a full historical export. Older incidents fall out of this route once their `created` timestamp is more than 7 calendar days old.
+- The backend should derive team visibility from the authenticated user's memberships and global permissions. Clients should not send a team selector for this route.
 
 ## `GET /events/delivery-feed`
 
