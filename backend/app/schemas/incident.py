@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -23,7 +25,7 @@ class IncidentRead(BaseModel):
     title: str
     team: str
     location: str
-    created: str
+    created: datetime
     notes: str
     active: bool
     responses: list[ResponseRecordRead]

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_models/shared_models.dart';
 
 import '../app_config.dart';
 import '../data/demo_team_admin_data.dart';
@@ -75,7 +76,10 @@ class TeamAdminRepository {
               state: (incident['active'] as bool? ?? false)
                   ? 'Active'
                   : 'Resolved',
-              time: incident['created'] as String? ?? 'Unknown',
+              time: formatMissionTimestamp(
+                incident['created'] as String? ?? '',
+                fallback: 'Unknown',
+              ),
             ),
           )
           .toList();
@@ -90,7 +94,10 @@ class TeamAdminRepository {
               incidentTitle:
                   incident['title'] as String? ?? 'Untitled incident',
               status: response['status'] as String? ?? 'Pending',
-              time: incident['created'] as String? ?? 'Unknown',
+              time: formatMissionTimestamp(
+                incident['created'] as String? ?? '',
+                fallback: 'Unknown',
+              ),
             ),
       ];
 
@@ -267,7 +274,7 @@ class TeamAdminRepository {
       phone: json['phone'] as String? ?? '',
       roles: roles,
       status: isActive ? 'Available' : 'Inactive',
-      lastSeen: _formatLastSeen(lastSeenRaw),
+      lastSeen: formatMissionTimestamp(lastSeenRaw ?? '', fallback: 'Unknown'),
       devicePlatform: device?['platform'] as String? ?? 'Unknown',
       deviceHealth: _deviceHealthLabel(
         isVerified: isVerified,
@@ -297,30 +304,6 @@ class TeamAdminRepository {
       throw Exception('Team context is not loaded yet.');
     }
     return teamId;
-  }
-
-  String _formatLastSeen(String? raw) {
-    if (raw == null || raw.isEmpty) {
-      return 'Unknown';
-    }
-
-    final parsed = DateTime.tryParse(raw);
-    if (parsed == null) {
-      return raw;
-    }
-
-    final now = DateTime.now().toUtc();
-    final difference = now.difference(parsed.toUtc());
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    }
-    if (difference.inHours < 1) {
-      return '${difference.inMinutes} min ago';
-    }
-    if (difference.inDays < 1) {
-      return '${difference.inHours} hr ago';
-    }
-    return '${difference.inDays} day ago';
   }
 
   String _deviceHealthLabel({

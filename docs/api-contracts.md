@@ -101,7 +101,7 @@ Response shape:
     "title": "Injured Climber Extraction",
     "team": "Chaffee SAR",
     "location": "Mt. Princeton Southwest Gully",
-    "created": "8 min ago",
+    "created": "2026-03-26T17:24:41.760280",
     "notes": "Subject reports lower-leg injury above treeline.",
     "active": true,
     "responses": [
@@ -122,7 +122,7 @@ Field definitions:
 - `title`: short incident name
 - `team`: primary responsible team
 - `location`: human-readable location
-- `created`: formatted client-facing time label
+- `created`: canonical incident creation timestamp
 - `notes`: dispatcher notes
 - `active`: incident active/resolved state
 - `responses`: ordered responder states
@@ -140,7 +140,7 @@ Response shape:
   {
     "title": "Primary FCM burst completed",
     "detail": "12 Android devices received the first-wave push.",
-    "time": "2m",
+    "time": "2026-03-26T17:24:41.755484",
     "icon": "notifications",
     "color": "#4F6F95"
   }
@@ -151,7 +151,7 @@ Field definitions:
 
 - `title`: short event label
 - `detail`: explanatory event message
-- `time`: formatted time label
+- `time`: canonical event timestamp
 - `icon`: icon key understood by clients
 - `color`: UI hint color
 
@@ -181,7 +181,7 @@ Response shape:
   "title": "Injured Climber Extraction",
   "team": "Chaffee SAR",
   "location": "Mt. Princeton Southwest Gully",
-  "created": "Just now",
+  "created": "2026-03-26T17:24:41.760280",
   "notes": "Subject reports lower-leg injury above treeline.",
   "active": true,
   "responses": []
@@ -213,7 +213,7 @@ Response shape:
   "title": "Updated Incident Title",
   "team": "Chaffee SAR",
   "location": "Updated Location",
-  "created": "8 min ago",
+  "created": "2026-03-26T17:24:41.760280",
   "notes": "Updated notes",
   "active": true,
   "responses": []

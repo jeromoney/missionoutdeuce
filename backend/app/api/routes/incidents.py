@@ -11,7 +11,6 @@ from app.schemas.incident import (
     ResponseRecordCreate,
     ResponseRecordRead,
 )
-from app.services.formatters import relative_time_label
 
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
@@ -23,7 +22,7 @@ def _serialize_incident(incident: Incident) -> IncidentRead:
         title=incident.title,
         team=incident.team,
         location=incident.location,
-        created=relative_time_label(incident.created_at),
+        created=incident.created_at,
         notes=incident.notes,
         active=incident.active,
         responses=[

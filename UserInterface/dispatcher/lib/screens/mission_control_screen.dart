@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
@@ -32,10 +33,6 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
   List<EventRecord> events = const [];
   var selected = 0;
   var loading = true;
-  String? statusMessage;
-  String connectionLabel = 'Connecting';
-  String connectionDetail = '';
-  bool usingFallback = false;
 
   @override
   void initState() {
@@ -58,16 +55,9 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
                 _Header(
                   role: widget.auth.roleLabel,
                   userInitials: widget.auth.currentUser?.initials ?? '--',
-                  connectionLabel: connectionLabel,
-                  connectionDetail: connectionDetail,
-                  usingFallback: usingFallback,
                   incidents: incidents,
                   onLogout: widget.auth.logout,
                 ),
-                if (statusMessage != null) ...[
-                  const SizedBox(height: 16),
-                  _StatusBanner(message: statusMessage!),
-                ],
                 const SizedBox(height: 18),
                 _SummaryStrip(incidents: incidents),
                 const SizedBox(height: 18),
@@ -144,12 +134,15 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
   }
 
   Future<void> _loadDashboard() async {
-    setState(() {
-      loading = true;
-      statusMessage = null;
-    });
+    setState(() => loading = true);
 
     final DashboardSnapshot snapshot = await api.fetchDashboard();
+
+    debugPrint(
+      '[Dispatcher] Dashboard load: label=${snapshot.connectionLabel}, '
+      'baseUrl=${snapshot.baseUrl}, usingFallback=${snapshot.usingFallback}, '
+      'error=${snapshot.errorMessage ?? 'none'}',
+    );
 
     if (!mounted) {
       return;
@@ -160,12 +153,6 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       events = snapshot.events;
       selected = 0;
       loading = false;
-      usingFallback = snapshot.usingFallback;
-      connectionLabel = snapshot.connectionLabel;
-      connectionDetail = snapshot.baseUrl;
-      statusMessage = snapshot.usingFallback
-          ? 'Could not reach $connectionDetail. Showing fallback demo data instead.'
-          : 'Connected to $connectionLabel at $connectionDetail.';
     });
   }
 
@@ -182,10 +169,11 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       return;
     }
 
-    setState(() => statusMessage = 'Creating incident...');
-
     try {
       final newIncident = await api.createIncident(draft);
+      debugPrint(
+        '[Dispatcher] Incident created: id=${newIncident.id}, title=${newIncident.title}',
+      );
       if (!mounted) {
         return;
       }
@@ -193,13 +181,12 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       setState(() {
         incidents = [newIncident, ...incidents];
         selected = 0;
-        statusMessage = 'Incident created and saved to the backend.';
       });
     } catch (error) {
+      debugPrint('[Dispatcher] Could not create incident: $error');
       if (!mounted) {
         return;
       }
-      setState(() => statusMessage = 'Could not create incident: $error');
     }
   }
 
@@ -218,12 +205,13 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       return;
     }
 
-    setState(() => statusMessage = 'Saving incident changes...');
-
     try {
       final updatedIncident = await api.updateIncident(
         incidents[selected].id,
         update,
+      );
+      debugPrint(
+        '[Dispatcher] Incident updated: id=${updatedIncident.id}, title=${updatedIncident.title}',
       );
       if (!mounted) {
         return;
@@ -234,13 +222,12 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
           for (var index = 0; index < incidents.length; index++)
             if (index == selected) updatedIncident else incidents[index],
         ];
-        statusMessage = 'Incident changes saved to the backend.';
       });
     } catch (error) {
+      debugPrint('[Dispatcher] Could not save incident changes: $error');
       if (!mounted) {
         return;
       }
-      setState(() => statusMessage = 'Could not save incident changes: $error');
     }
   }
 }
@@ -249,18 +236,12 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.role,
     required this.userInitials,
-    required this.connectionLabel,
-    required this.connectionDetail,
-    required this.usingFallback,
     required this.incidents,
     required this.onLogout,
   });
 
   final String role;
   final String userInitials;
-  final String connectionLabel;
-  final String connectionDetail;
-  final bool usingFallback;
   final List<Incident> incidents;
   final VoidCallback onLogout;
 
@@ -298,20 +279,7 @@ class _Header extends StatelessWidget {
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
-                  children: [
-                    StatusPill(
-                      label: usingFallback ? 'Fallback data' : connectionLabel,
-                      color: usingFallback
-                          ? AppPalette.muted
-                          : AppPalette.success,
-                    ),
-                    StatusPill(label: role, color: AppPalette.info),
-                    if (connectionDetail.isNotEmpty)
-                      StatusPill(
-                        label: connectionDetail,
-                        color: AppPalette.muted,
-                      ),
-                  ],
+                  children: [StatusPill(label: role, color: AppPalette.info)],
                 ),
               ],
             ),
@@ -419,34 +387,6 @@ class _SummaryStrip extends StatelessWidget {
           color: AppPalette.muted,
         ),
       ],
-    );
-  }
-}
-
-class _StatusBanner extends StatelessWidget {
-  const _StatusBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return SectionShell(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      child: Row(
-        children: [
-          const Icon(Icons.wifi_tethering_rounded, color: AppPalette.info),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: AppPalette.textSoft,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -223,6 +223,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  shared_models:
+    dependency: "direct main"
+    description:
+      path: "../shared_models"
+      relative: true
+    source: path
+    version: "0.1.0"
   shared_theme:
     dependency: "direct main"
     description:

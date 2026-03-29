@@ -35,7 +35,7 @@ Fields:
 - `notes`
   Dispatcher notes, hazards, updates, and mission context.
 - `created`
-  Client-facing relative or formatted timestamp string.
+  Canonical creation timestamp.
 - `active`
   Boolean indicating whether the incident is still operationally active.
 - `responses`
@@ -44,7 +44,7 @@ Fields:
 Notes:
 
 - `title`, `location`, `notes`, and `active` may change over time.
-- `created` may be represented internally as a timestamp and formatted per client.
+- `created` should be exposed as a real timestamp and formatted per client.
 
 ## ResponseRecord
 
@@ -84,7 +84,7 @@ Fields:
 - `detail`
   Longer explanation of what happened.
 - `time`
-  UI-facing time label.
+  Canonical event timestamp.
 - `icon`
   Event icon key for clients.
 - `color`

@@ -13,6 +13,8 @@ dependencies:
   http: ^1.2.2
   shared_auth:
     path: ../shared_auth
+  shared_models:
+    path: ../shared_models
   shared_theme:
     path: ../shared_theme
 

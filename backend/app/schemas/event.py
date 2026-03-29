@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -5,6 +7,6 @@ from pydantic import BaseModel
 class DeliveryEventRead(BaseModel):
     title: str
     detail: str
-    time: str
+    time: datetime
     icon: str
     color: str

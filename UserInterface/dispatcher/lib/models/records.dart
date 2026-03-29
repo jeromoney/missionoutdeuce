@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_models/shared_models.dart';
 
 class Incident {
   const Incident({
@@ -54,7 +55,10 @@ class Incident {
       title: json['title'] as String? ?? 'Untitled incident',
       team: json['team'] as String? ?? 'Unknown team',
       location: json['location'] as String? ?? 'Unknown location',
-      created: json['created'] as String? ?? 'Just now',
+      created: formatMissionTimestamp(
+        json['created'] as String? ?? '',
+        fallback: 'Just now',
+      ),
       notes: json['notes'] as String? ?? '',
       responses: responsesJson,
       active: json['active'] as bool? ?? true,
@@ -104,7 +108,10 @@ class EventRecord {
     return EventRecord(
       title: json['title'] as String? ?? 'Event',
       detail: json['detail'] as String? ?? '',
-      time: json['time'] as String? ?? 'now',
+      time: formatMissionTimestamp(
+        json['time'] as String? ?? '',
+        fallback: 'Now',
+      ),
       icon: _iconFromName(json['icon'] as String?),
       color: _colorFromHex(json['color'] as String?, const Color(0xFF4F6F95)),
     );

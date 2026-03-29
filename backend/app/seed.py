@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from sqlalchemy import delete, text
 
 from app.db.base import Base
@@ -29,6 +31,12 @@ def seed() -> None:
             db.execute(delete(ResponseRecord))
             db.execute(delete(Incident))
             db.execute(delete(DeliveryEvent))
+
+        now = datetime.utcnow()
+        within_one_day = now - timedelta(hours=12)
+        four_days_ago = now - timedelta(days=4)
+        four_weeks_ago = now - timedelta(weeks=4)
+        one_year_ago = now - timedelta(days=365)
 
         chaffee_team = Team(name="Chaffee SAR", is_active=True)
         summit_team = Team(name="Summit County Rescue", is_active=True)
@@ -97,42 +105,49 @@ def seed() -> None:
                 team_id=chaffee_team.id,
                 roles=["responder", "dispatcher"],
                 is_active=True,
+                granted_at=within_one_day,
             ),
             TeamMembership(
                 user_id=sarah.id,
                 team_id=chaffee_team.id,
                 roles=["responder"],
                 is_active=True,
+                granted_at=four_days_ago,
             ),
             TeamMembership(
                 user_id=mike.id,
                 team_id=chaffee_team.id,
                 roles=["responder"],
                 is_active=True,
+                granted_at=four_weeks_ago,
             ),
             TeamMembership(
                 user_id=team_manager.id,
                 team_id=chaffee_team.id,
                 roles=["team_admin"],
                 is_active=True,
+                granted_at=one_year_ago,
             ),
             TeamMembership(
                 user_id=taylor.id,
                 team_id=summit_team.id,
                 roles=["responder", "dispatcher"],
                 is_active=True,
+                granted_at=within_one_day - timedelta(hours=2),
             ),
             TeamMembership(
                 user_id=chris.id,
                 team_id=summit_team.id,
                 roles=["responder"],
                 is_active=True,
+                granted_at=four_days_ago - timedelta(hours=3),
             ),
             TeamMembership(
                 user_id=summit_admin.id,
                 team_id=summit_team.id,
                 roles=["team_admin"],
                 is_active=True,
+                granted_at=one_year_ago - timedelta(days=14),
             ),
         ]
 
@@ -141,6 +156,7 @@ def seed() -> None:
                 user_id=justin.id,
                 platform="android",
                 push_token="fcm-token-justin",
+                last_seen=within_one_day,
                 is_active=True,
                 is_verified=True,
             ),
@@ -148,6 +164,7 @@ def seed() -> None:
                 user_id=sarah.id,
                 platform="ios",
                 push_token="apns-token-sarah",
+                last_seen=four_days_ago,
                 is_active=True,
                 is_verified=True,
             ),
@@ -155,6 +172,7 @@ def seed() -> None:
                 user_id=mike.id,
                 platform="android",
                 push_token="fcm-token-mike",
+                last_seen=four_weeks_ago,
                 is_active=False,
                 is_verified=False,
             ),
@@ -162,6 +180,7 @@ def seed() -> None:
                 user_id=taylor.id,
                 platform="ios",
                 push_token="apns-token-taylor",
+                last_seen=within_one_day - timedelta(hours=4),
                 is_active=True,
                 is_verified=True,
             ),
@@ -169,6 +188,7 @@ def seed() -> None:
                 user_id=chris.id,
                 platform="android",
                 push_token="fcm-token-chris",
+                last_seen=one_year_ago,
                 is_active=True,
                 is_verified=True,
             ),
@@ -181,6 +201,7 @@ def seed() -> None:
                 location="Mt. Princeton Southwest Gully",
                 notes="Subject reports lower-leg injury above treeline. Snowpack stable but wind increasing. Air asset on standby if ground extraction stalls.",
                 active=True,
+                created_at=within_one_day,
                 responses=[
                     ResponseRecord(
                         name="Justin M.",
@@ -208,6 +229,7 @@ def seed() -> None:
                 location="Georgia Pass East Approach",
                 notes="Family lost contact after sunset. Last device ping near the pass. Team requested beacon cache and UTV support for rapid sweep.",
                 active=True,
+                created_at=four_days_ago,
                 responses=[
                     ResponseRecord(
                         name="Taylor P.",
@@ -232,6 +254,7 @@ def seed() -> None:
                 time_label="2m",
                 icon="notifications",
                 color="#4F6F95",
+                created_at=four_weeks_ago,
             ),
             DeliveryEvent(
                 title="Responder acknowledged on lock screen",
@@ -239,6 +262,7 @@ def seed() -> None:
                 time_label="4m",
                 icon="task_alt",
                 color="#3F6D91",
+                created_at=one_year_ago,
             ),
         ]
 

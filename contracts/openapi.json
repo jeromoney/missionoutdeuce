@@ -81,6 +81,7 @@
             "type": "string"
           },
           "time": {
+            "format": "date-time",
             "title": "Time",
             "type": "string"
           },
@@ -242,6 +243,7 @@
             "type": "boolean"
           },
           "created": {
+            "format": "date-time",
             "title": "Created",
             "type": "string"
           },

@@ -20,7 +20,7 @@ def list_delivery_feed(db: Session = Depends(get_db)):
         DeliveryEventRead(
             title=event.title,
             detail=event.detail,
-            time=event.time_label,
+            time=event.created_at,
             icon=event.icon,
             color=event.color,
         )
