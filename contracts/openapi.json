@@ -149,6 +149,71 @@
         "title": "DeviceRead",
         "type": "object"
       },
+      "EmailLinkRequest": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "requested_client": {
+            "enum": [
+              "responder",
+              "dispatcher",
+              "team_admin"
+            ],
+            "title": "Requested Client",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "requested_client"
+        ],
+        "title": "EmailLinkRequest",
+        "type": "object"
+      },
+      "EmailLinkSentRead": {
+        "properties": {
+          "delivery": {
+            "const": "email_link",
+            "default": "email_link",
+            "title": "Delivery",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "expires_in_minutes": {
+            "title": "Expires In Minutes",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "expires_in_minutes",
+          "message"
+        ],
+        "title": "EmailLinkSentRead",
+        "type": "object"
+      },
+      "EmailLinkVerifyRequest": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "EmailLinkVerifyRequest",
+        "type": "object"
+      },
       "GoogleAuthRequest": {
         "properties": {
           "access_token": {
@@ -621,6 +686,90 @@
         "summary": "Root",
         "tags": [
           "meta"
+        ]
+      }
+    },
+    "/auth/email-link": {
+      "post": {
+        "description": "Starts email-based sign-in by asking the backend to send a sign-in link to the supplied email address. The emailed link should land on a MissionOut-controlled HTTPS callback that can continue in web or hand off to the appropriate native app for the requested client surface.",
+        "operationId": "request_email_link_auth_email_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailLinkSentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Email Sign-In Link",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/email-link/verify": {
+      "post": {
+        "description": "Completes email-link sign-in by exchanging a one-time emailed token for the authenticated MissionOut user payload. This endpoint is redeemed by whichever authorized client actually receives the callback link, such as web or a native app.",
+        "operationId": "verify_email_link_auth_email_link_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailLinkVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Email Sign-In Link",
+        "tags": [
+          "auth"
         ]
       }
     },

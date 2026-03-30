@@ -189,8 +189,12 @@ class _MissionOutLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final radius = size.width * 0.28;
-    final center = Offset(size.width * 0.5, size.height * 0.27);
+    final dispatchNode = Offset(size.width * 0.3, size.height * 0.3);
+    final responderNodes = <Offset>[
+      Offset(size.width * 0.68, size.height * 0.18),
+      Offset(size.width * 0.78, size.height * 0.34),
+      Offset(size.width * 0.62, size.height * 0.46),
+    ];
 
     final background = Paint()
       ..shader = const LinearGradient(
@@ -204,34 +208,38 @@ class _MissionOutLogoPainter extends CustomPainter {
       background,
     );
 
-    final glow = Paint()
-      ..color = MissionOutColors.signal.withValues(alpha: 0.24)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
-    canvas.drawCircle(center, radius * 1.45, glow);
+    final routeGlow = Paint()
+      ..color = MissionOutColors.signal.withValues(alpha: 0.14)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
+    canvas.drawCircle(dispatchNode, size.width * 0.18, routeGlow);
 
-    final beamPaint = Paint()
-      ..color = MissionOutColors.signal.withValues(alpha: 0.17)
-      ..strokeWidth = size.width * 0.055
+    final routePaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          MissionOutColors.signal.withValues(alpha: 0.95),
+          MissionOutColors.signalSoft.withValues(alpha: 0.9),
+        ],
+      ).createShader(Rect.fromPoints(dispatchNode, responderNodes.last))
+      ..strokeWidth = size.width * 0.04
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius * 1.32),
-      math.pi * 1.1,
-      math.pi * 0.8,
-      false,
-      beamPaint,
-    );
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius * 1.72),
-      math.pi * 1.1,
-      math.pi * 0.8,
-      false,
-      beamPaint,
-    );
+    for (final responderNode in responderNodes) {
+      canvas.drawLine(dispatchNode, responderNode, routePaint);
+    }
 
-    final beaconPaint = Paint()..color = MissionOutColors.signal;
-    canvas.drawCircle(center, size.width * 0.075, beaconPaint);
+    final dispatchPaint = Paint()..color = MissionOutColors.signal;
+    canvas.drawCircle(dispatchNode, size.width * 0.09, dispatchPaint);
+
+    final responderPaint = Paint()..color = MissionOutColors.ice;
+    final responderRingPaint = Paint()
+      ..color = MissionOutColors.signalSoft
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.028;
+    for (final responderNode in responderNodes) {
+      canvas.drawCircle(responderNode, size.width * 0.052, responderPaint);
+      canvas.drawCircle(responderNode, size.width * 0.075, responderRingPaint);
+    }
 
     final ridgePath = Path()
       ..moveTo(0, size.height * 0.8)

@@ -12,7 +12,7 @@ class LoggedOutScreen extends StatefulWidget {
     this.roleLabel = 'Team Admin',
   });
 
-  final void Function({required String email}) onMagicLinkLogin;
+  final Future<void> Function({required String email}) onMagicLinkLogin;
   final Future<void> Function() onGoogleLogin;
   final bool googleLoginEnabled;
   final String roleLabel;
@@ -61,7 +61,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     );
   }
 
-  void _submitMagicLink() {
+  Future<void> _submitMagicLink() async {
     final email = emailController.text.trim();
     setState(() {
       errorText = null;
@@ -75,12 +75,24 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
       });
       return;
     }
-    widget.onMagicLinkLogin(email: email);
-    setState(() {
-      successText =
-          'Sign-in link sent to $email. For this mock flow, you are now signed in.';
-      isSubmitting = false;
-    });
+    try {
+      await widget.onMagicLinkLogin(email: email);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        successText = 'Check your email for link';
+        isSubmitting = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        errorText = error.toString().replaceFirst('Exception: ', '');
+        isSubmitting = false;
+      });
+    }
   }
 
   Future<void> _submitGoogle() async {
@@ -121,7 +133,7 @@ class _LoginPanel extends StatelessWidget {
   final String? successText;
   final bool isSubmitting;
   final bool googleLoginEnabled;
-  final VoidCallback onMagicLinkLogin;
+  final Future<void> Function() onMagicLinkLogin;
   final Future<void> Function() onGoogleLogin;
   final String roleLabel;
 
@@ -208,9 +220,15 @@ class _LoginPanel extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: isSubmitting ? null : onMagicLinkLogin,
+              onPressed: isSubmitting || successText != null
+                  ? null
+                  : onMagicLinkLogin,
               child: Text(
-                isSubmitting ? 'Sending link...' : 'Email me a sign-in link',
+                isSubmitting
+                    ? 'Sending link...'
+                    : successText != null
+                    ? 'Check your email for link'
+                    : 'Email me a sign-in link',
               ),
             ),
           ),
@@ -218,7 +236,8 @@ class _LoginPanel extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: isSubmitting || !googleLoginEnabled
+              onPressed:
+                  isSubmitting || !googleLoginEnabled || successText != null
                   ? null
                   : onGoogleLogin,
               icon: const Icon(Icons.login_rounded),

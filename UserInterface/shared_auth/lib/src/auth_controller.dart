@@ -38,10 +38,16 @@ class AuthController extends ChangeNotifier {
     );
   }
 
-  void loginWithMagicLink({required String email, AuthUser? user}) {
-    final baseUser = user ?? defaultUser;
-    _currentUser = baseUser.copyWith(email: email);
-    notifyListeners();
+  Future<void> loginWithMagicLink({required String email}) async {
+    final response = await http.post(
+      Uri.parse('$backendBaseUrl/auth/email-link'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'requested_client': requestedClient}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(_buildEmailLinkError(response));
+    }
   }
 
   Future<void> loginWithGoogle() async {
@@ -117,6 +123,22 @@ class AuthController extends ChangeNotifier {
 
   String _buildBackendError(http.Response response) {
     final prefix = 'Google auth failed (${response.statusCode})';
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        final detail = decoded['detail'];
+        if (detail is String && detail.isNotEmpty) {
+          return '$prefix: $detail';
+        }
+      }
+    } catch (_) {
+      // Ignore malformed error payloads and fall back to the status code.
+    }
+    return prefix;
+  }
+
+  String _buildEmailLinkError(http.Response response) {
+    final prefix = 'Email link request failed (${response.statusCode})';
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {
