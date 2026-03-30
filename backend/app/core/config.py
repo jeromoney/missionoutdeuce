@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000, validation_alias=AliasChoices("API_PORT", "PORT"))
     debug: bool = False
     google_client_id: str | None = None
+    email_link_callback_base_url: str = "https://missionout.app/auth/email-link"
+    email_link_expires_in_minutes: int = 15
+    resend_api_key: str | None = None
+    resend_from_email: str | None = None
     allowed_origins: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",

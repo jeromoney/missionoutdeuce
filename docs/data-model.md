@@ -122,8 +122,14 @@ Likely fields:
 
 - `id`
 - `name`
+- `email`
 - `phone`
 - `is_active`
+
+Notes:
+
+- A user may authenticate through Google auth or an email sign-in link issued by the backend.
+- Email should be treated as a first-class identity field because it is used both for login and for team membership administration.
 
 ## Device
 

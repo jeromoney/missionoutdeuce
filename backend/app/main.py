@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.db.base import Base
 from app.db.bootstrap import ensure_incident_team_fk
 from app.db.session import engine
-from app.models import DeliveryEvent, Device, Incident, ResponseRecord, Team, TeamMembership, User
+from app.models import DeliveryEvent, Device, EmailLinkToken, Incident, ResponseRecord, Team, TeamMembership, User
 from app.schemas.meta import RootRead
 
 
