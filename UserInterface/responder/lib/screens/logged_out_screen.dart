@@ -41,32 +41,18 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1100),
+              constraints: const BoxConstraints(maxWidth: 440),
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Wrap(
-                  spacing: 20,
-                  runSpacing: 20,
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 460,
-                      child: _MissionPanel(roleLabel: widget.roleLabel),
-                    ),
-                    SizedBox(
-                      width: 400,
-                      child: _LoginPanel(
-                        emailController: emailController,
-                        errorText: errorText,
-                        successText: successText,
-                        isSubmitting: isSubmitting,
-                        googleLoginEnabled: widget.googleLoginEnabled,
-                        onMagicLinkLogin: _submitMagicLink,
-                        onGoogleLogin: _submitGoogle,
-                      ),
-                    ),
-                  ],
+                child: _LoginPanel(
+                  emailController: emailController,
+                  errorText: errorText,
+                  successText: successText,
+                  isSubmitting: isSubmitting,
+                  googleLoginEnabled: widget.googleLoginEnabled,
+                  onMagicLinkLogin: _submitMagicLink,
+                  onGoogleLogin: _submitGoogle,
+                  roleLabel: widget.roleLabel,
                 ),
               ),
             ),
@@ -124,66 +110,6 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
   }
 }
 
-class _MissionPanel extends StatelessWidget {
-  const _MissionPanel({required this.roleLabel});
-
-  final String roleLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: ResponderPalette.card.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: ResponderPalette.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const MissionOutBrandLockup(
-            subtitle:
-                'Alert acknowledgement, mission context, and backup awareness for field responders.',
-            logoSize: 68,
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'See the callout, answer fast, and keep the mission notes visible when every second is noisy.',
-            style: TextStyle(
-              fontSize: 34,
-              height: 1.06,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1.2,
-              color: ResponderPalette.text,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'The responder view stays stripped down on purpose: active missions, your status, and the actions that matter.',
-            style: TextStyle(color: ResponderPalette.textSoft, height: 1.55),
-          ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _SignalChip(label: roleLabel, color: ResponderPalette.accent),
-              _SignalChip(
-                label: 'High-stress clarity',
-                color: ResponderPalette.success,
-              ),
-              _SignalChip(
-                label: 'Backup alerts',
-                color: ResponderPalette.warning,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _LoginPanel extends StatelessWidget {
   const _LoginPanel({
     required this.emailController,
@@ -193,6 +119,7 @@ class _LoginPanel extends StatelessWidget {
     required this.googleLoginEnabled,
     required this.onMagicLinkLogin,
     required this.onGoogleLogin,
+    required this.roleLabel,
   });
 
   final TextEditingController emailController;
@@ -202,6 +129,7 @@ class _LoginPanel extends StatelessWidget {
   final bool googleLoginEnabled;
   final VoidCallback onMagicLinkLogin;
   final Future<void> Function() onGoogleLogin;
+  final String roleLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +144,20 @@ class _LoginPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const MissionOutBrandLockup(
+            subtitle: 'Secure sign-in for active MissionOut operations.',
+            logoSize: 60,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            roleLabel,
+            style: const TextStyle(
+              color: ResponderPalette.accent,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 8),
           const Text(
             'Sign in to responder view',
             style: TextStyle(
@@ -299,29 +241,6 @@ class _LoginPanel extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SignalChip extends StatelessWidget {
-  const _SignalChip({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700),
       ),
     );
   }

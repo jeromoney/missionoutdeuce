@@ -55,34 +55,11 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
                             color: AppPalette.text,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Capture the minimum information needed to launch the callout clearly and keep responders moving.',
-                          style: TextStyle(
-                            color: AppPalette.textSoft,
-                            height: 1.5,
-                          ),
-                        ),
                         const SizedBox(height: 26),
                         _LabeledField(
                           label: 'Incident title',
                           child: TextFormField(
-                            controller: _titleController,
-                            decoration: const InputDecoration(
-                              hintText: 'Injured climber extraction',
-                            ),
-                            textInputAction: TextInputAction.next,
-                            validator: _requiredField,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        _LabeledField(
-                          label: 'Team',
-                          child: TextFormField(
-                            controller: _teamController,
-                            decoration: const InputDecoration(
-                              hintText: 'Chaffee SAR',
-                            ),
+                            controller: _titleController,              
                             textInputAction: TextInputAction.next,
                             validator: _requiredField,
                           ),
@@ -92,10 +69,7 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
                           label: 'Location',
                           child: TextFormField(
                             controller: _locationController,
-                            decoration: const InputDecoration(
-                              hintText: 'Mt. Princeton Southwest Gully',
-                            ),
-                            validator: _requiredField,
+                             validator: _requiredField,
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -105,10 +79,6 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
                             controller: _notesController,
                             minLines: 5,
                             maxLines: 7,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Subject reports lower-leg injury above treeline. Include access notes, hazards, and requested resources.',
-                            ),
                             validator: _requiredField,
                           ),
                         ),

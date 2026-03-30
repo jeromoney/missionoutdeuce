@@ -7,23 +7,16 @@ def ensure_incident_team_fk(engine: Engine) -> None:
         return
 
     incident_columns = {column["name"] for column in inspector.get_columns("incidents")}
-    if "team_id" in incident_columns:
-        return
-
     with engine.begin() as connection:
-        connection.execute(text("ALTER TABLE incidents ADD COLUMN team_id INTEGER"))
-        connection.execute(
-            text(
-                "UPDATE incidents "
-                "SET team_id = teams.id "
-                "FROM teams "
-                "WHERE incidents.team = teams.name"
+        if "team_id" not in incident_columns:
+            connection.execute(text("ALTER TABLE incidents ADD COLUMN team_id INTEGER"))
+            connection.execute(
+                text(
+                    "ALTER TABLE incidents "
+                    "ADD CONSTRAINT fk_incidents_team_id "
+                    "FOREIGN KEY (team_id) REFERENCES teams(id)"
+                )
             )
-        )
-        connection.execute(
-            text(
-                "ALTER TABLE incidents "
-                "ADD CONSTRAINT fk_incidents_team_id "
-                "FOREIGN KEY (team_id) REFERENCES teams(id)"
-            )
-        )
+
+        if "team" in incident_columns:
+            connection.execute(text("ALTER TABLE incidents DROP COLUMN team"))

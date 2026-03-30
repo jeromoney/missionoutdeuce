@@ -129,7 +129,6 @@ def seed() -> None:
         incidents = [
             Incident(
                 title="Winter Trailhead Welfare Check",
-                legacy_team_name=quiet_team.name,
                 team_id=quiet_team.id,
                 location="Echo Basin Upper Lot",
                 notes="Historical training incident retained for audit and timeline testing. No operational activity in the last 7 days for this team.",
@@ -146,7 +145,6 @@ def seed() -> None:
             ),
             Incident(
                 title="Lost Day Hiker",
-                legacy_team_name=one_team.name,
                 team_id=one_team.id,
                 location="Cinder Valley South Fork",
                 notes="Single recent mission for the one@gmail.com account. Team should show exactly one incident within the last 7 days.",
@@ -163,7 +161,6 @@ def seed() -> None:
             ),
             Incident(
                 title="Overdue Climber",
-                legacy_team_name=many_team.name,
                 team_id=many_team.id,
                 location="Pine Ridge North Face",
                 notes="Recent mission one of several for many@gmail.com.",
@@ -180,7 +177,6 @@ def seed() -> None:
             ),
             Incident(
                 title="Riverbank Evidence Search",
-                legacy_team_name=many_team.name,
                 team_id=many_team.id,
                 location="Pine Ridge Lower Narrows",
                 notes="Recent mission two of several for many@gmail.com.",
@@ -197,7 +193,6 @@ def seed() -> None:
             ),
             Incident(
                 title="Storm Shelter Evacuation",
-                legacy_team_name=many_team.name,
                 team_id=many_team.id,
                 location="Pine Ridge High Meadow",
                 notes="Recent mission three of several for many@gmail.com, still within the last 7 days.",

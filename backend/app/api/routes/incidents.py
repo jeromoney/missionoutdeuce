@@ -20,7 +20,7 @@ router = APIRouter(prefix="/incidents", tags=["incidents"])
 
 
 def _serialize_incident(incident: Incident) -> IncidentRead:
-    team_name = incident.team_ref.name if incident.team_ref is not None else incident.legacy_team_name
+    team_name = incident.team_ref.name if incident.team_ref is not None else "Unknown Team"
     return IncidentRead(
         id=incident.id,
         title=incident.title,
@@ -88,7 +88,6 @@ def create_incident(payload: IncidentCreate, db: Session = Depends(get_db)):
 
     incident = Incident(
         title=payload.title,
-        legacy_team_name=team.name,
         team_id=team.id,
         location=payload.location,
         notes=payload.notes,
@@ -115,10 +114,6 @@ def update_incident(
         raise HTTPException(status_code=404, detail="Incident not found")
 
     incident.title = payload.title
-    team = db.scalar(select(Team).where(Team.name == incident.legacy_team_name))
-    if team is not None:
-        incident.team_id = team.id
-        incident.legacy_team_name = team.name
     incident.location = payload.location
     incident.notes = payload.notes
     incident.active = payload.active

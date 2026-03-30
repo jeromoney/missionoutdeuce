@@ -28,6 +28,8 @@ Fields:
 
 - `id`
   Unique identifier for the incident.
+  `team_id`
+  Foreign key unique identifier for the associated team
 - `title`
   Short dispatcher-facing incident name.
 - `location`

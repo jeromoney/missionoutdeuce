@@ -11,7 +11,6 @@ class Incident(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(255))
-    legacy_team_name: Mapped[str] = mapped_column("team", String(255))
     team_id: Mapped[int | None] = mapped_column(
         ForeignKey("teams.id", ondelete="RESTRICT"),
         nullable=True,

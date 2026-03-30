@@ -42,32 +42,18 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1180),
+              constraints: const BoxConstraints(maxWidth: 460),
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Wrap(
-                  spacing: 20,
-                  runSpacing: 20,
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 500,
-                      child: _HeroPanel(roleLabel: widget.roleLabel),
-                    ),
-                    SizedBox(
-                      width: 420,
-                      child: _LoginPanel(
-                        emailController: emailController,
-                        errorText: errorText,
-                        successText: successText,
-                        isSubmitting: isSubmitting,
-                        googleLoginEnabled: widget.googleLoginEnabled,
-                        onMagicLinkLogin: _submitMagicLink,
-                        onGoogleLogin: _submitGoogle,
-                      ),
-                    ),
-                  ],
+                child: _LoginPanel(
+                  emailController: emailController,
+                  errorText: errorText,
+                  successText: successText,
+                  isSubmitting: isSubmitting,
+                  googleLoginEnabled: widget.googleLoginEnabled,
+                  onMagicLinkLogin: _submitMagicLink,
+                  onGoogleLogin: _submitGoogle,
+                  roleLabel: widget.roleLabel,
                 ),
               ),
             ),
@@ -125,75 +111,6 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
   }
 }
 
-class _HeroPanel extends StatelessWidget {
-  const _HeroPanel({required this.roleLabel});
-
-  final String roleLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return SectionShell(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const MissionOutBrandLockup(
-            subtitle:
-                'Dispatch workspace built for fast launch, calm decision-making, and auditable live operations.',
-            logoSize: 70,
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'See the mission board, launch incidents fast, and track acknowledgements without losing context.',
-            style: TextStyle(
-              fontSize: 36,
-              height: 1.05,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1.4,
-              color: AppPalette.text,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'MissionOut keeps dispatch centered on the signal that matters: who has the alert, who is moving, and where response is stalling.',
-            style: TextStyle(
-              color: AppPalette.textSoft,
-              fontSize: 15,
-              height: 1.55,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: const [
-              StatusPill(label: 'Dispatcher workflow', color: AppPalette.info),
-              StatusPill(
-                label: 'Responder visibility',
-                color: AppPalette.success,
-              ),
-              StatusPill(
-                label: 'Audit-friendly activity',
-                color: AppPalette.muted,
-              ),
-            ],
-          ),
-          const SizedBox(height: 28),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              MetricBadge(label: 'Role', value: roleLabel),
-              const MetricBadge(label: 'Mode', value: 'Web-first'),
-              const MetricBadge(label: 'Priority', value: 'Reliability'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _LoginPanel extends StatelessWidget {
   const _LoginPanel({
     required this.emailController,
@@ -203,6 +120,7 @@ class _LoginPanel extends StatelessWidget {
     required this.googleLoginEnabled,
     required this.onMagicLinkLogin,
     required this.onGoogleLogin,
+    required this.roleLabel,
   });
 
   final TextEditingController emailController;
@@ -212,6 +130,7 @@ class _LoginPanel extends StatelessWidget {
   final bool googleLoginEnabled;
   final VoidCallback onMagicLinkLogin;
   final Future<void> Function() onGoogleLogin;
+  final String roleLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +140,21 @@ class _LoginPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionEyebrow(label: 'Access'),
+          const MissionOutBrandLockup(
+            subtitle: 'Secure sign-in for active MissionOut operations.',
+            logoSize: 62,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            roleLabel,
+            style: const TextStyle(
+              color: AppPalette.info,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SectionEyebrow(label: 'Access'),
           const SizedBox(height: 8),
           const Text(
             'Sign in to mission control',

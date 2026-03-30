@@ -449,12 +449,6 @@ class _EmptyIncidentState extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
-                message ??
-                    'Create the first dispatch to open the recent-activity mission board, start responder acknowledgements, and begin tracking delivery activity.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppPalette.textSoft, height: 1.5),
-              ),
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: onCreateIncident,
