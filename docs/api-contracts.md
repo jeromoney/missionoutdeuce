@@ -32,11 +32,11 @@ This file exists to explain the intent, ownership, and usage of that contract al
 The full request and response schema, status codes, and component definitions are in [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
 This section is a quick human summary of the routes the clients currently rely on.
 
-## `POST /auth/email-link`
+## `POST /auth/email-code`
 
 Purpose:
 
-- Start email-based sign-in by asking the backend to send a sign-in link to the user's email address.
+- Start email-based sign-in by asking the backend to send a one-time code to the user's email address.
 
 Request shape:
 
@@ -51,32 +51,32 @@ Response shape:
 
 ```json
 {
-  "delivery": "email_link",
+  "delivery": "email_code",
   "email": "justin@example.com",
   "expires_in_minutes": 15,
-  "message": "If the email is allowed to sign in, a sign-in link has been sent."
+  "code_length": 6,
+  "message": "If the email is allowed to sign in, a one-time code has been sent."
 }
 ```
 
 Notes:
 
 - This route initiates sign-in but does not return the authenticated user payload yet.
-- The backend is responsible for generating and emailing the sign-in link.
-- The email flow should use the same `requested_client` concept as other auth entry points so the link can return the user to the correct app surface.
-- The emailed link should target a MissionOut-owned HTTPS callback URL rather than assuming a single installed app.
-- Native apps may claim that HTTPS callback through platform link handling, while web remains the fallback when no native client takes over.
+- The backend is responsible for generating and emailing the one-time code.
+- The email flow should use the same `requested_client` concept as other auth entry points so the correct app surface can continue sign-in after code entry.
 
-## `POST /auth/email-link/verify`
+## `POST /auth/email-code/verify`
 
 Purpose:
 
-- Complete email-based sign-in by exchanging the one-time token from the emailed link for the authenticated MissionOut user payload.
+- Complete email-based sign-in by exchanging the one-time code from the emailed message for the authenticated MissionOut user payload.
 
 Request shape:
 
 ```json
 {
-  "token": "email-link-token"
+  "email": "justin@example.com",
+  "code": "123456"
 }
 ```
 
@@ -100,10 +100,9 @@ Response shape:
 
 Notes:
 
-- The token is expected to be short-lived and single-use.
+- The code is expected to be short-lived and single-use.
 - Once verified, this route returns the same authenticated user shape as other successful auth flows.
-- If the link is expired, malformed, or already consumed, the backend should reject the verification attempt.
-- This route is redeemed by whichever authorized MissionOut client actually receives the callback, such as the web app or a native responder app.
+- If the code is expired, malformed, or already consumed, the backend should reject the verification attempt.
 
 ## `POST /auth/google`
 
@@ -140,27 +139,24 @@ Response shape:
 
 Notes:
 
-- Users may authenticate with either email-link sign-in or Google auth.
+- Users may authenticate with either email-code sign-in or Google auth.
 - Authentication should return the caller's effective memberships and roles, not collapse them into a single role string.
 - Client selection such as `responder`, `dispatcher`, or `team_admin` determines the requested app surface, not the full authorization set.
 - The `team_admin` client surface represents the Team Management app, not a global admin console.
 
-## Email-Link Flow
+## Email-Code Flow
 
-1. The client calls `POST /auth/email-link` with the user's email address and requested client surface.
-2. The backend generates a short-lived one-time token, packages it into a MissionOut-owned HTTPS callback link, and sends that link by email.
-3. The user clicks the email link from their email app.
-4. The operating system may open a native MissionOut app that has claimed that HTTPS link, or it may continue in the web client if no native app takes over.
-5. The client that actually receives the callback extracts the token and calls `POST /auth/email-link/verify`.
-6. The backend validates the token, resolves the user identity and memberships, and returns the authenticated user payload.
+1. The client calls `POST /auth/email-code` with the user's email address and requested client surface.
+2. The backend generates a short-lived one-time code and sends that code by email.
+3. The user reads the code from their email app.
+4. The client submits the email address and code to `POST /auth/email-code/verify`.
+5. The backend validates the code, resolves the user identity and memberships, and returns the authenticated user payload.
 
 ## Multi-Client Routing
 
-- Email links should be backend-controlled HTTPS URLs so they work across desktop web, mobile web, and native apps.
-- The backend should not assume only one installed client version exists on the device.
-- `requested_client` selects the intended MissionOut surface such as `responder`, `dispatcher`, or `team_admin`, but the actual redeeming client is whichever authorized app or web session receives the callback.
-- When both web and native clients are present, native app links or universal links may capture the callback; otherwise the flow should complete in web.
-- Because the verify token is single-use, the first successful client to redeem it wins and later attempts should fail gracefully.
+- `requested_client` selects the intended MissionOut surface such as `responder`, `dispatcher`, or `team_admin`.
+- Because the email flow uses code entry rather than a link callback, it is less dependent on the user opening email in the same browser or on the same device.
+- The same email and code can be entered into the intended authorized MissionOut client surface, subject to expiry and single-use validation.
 
 ## `GET /health`
 

@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth_user.dart';
 
@@ -14,7 +15,9 @@ class AuthController extends ChangeNotifier {
     required this.backendBaseUrl,
     required this.requestedClient,
     this.googleClientId,
-  });
+  }) {
+    unawaited(_restoreSession());
+  }
 
   final String loggedOutRoleLabel;
   final AuthUser defaultUser;
@@ -24,12 +27,16 @@ class AuthController extends ChangeNotifier {
 
   AuthUser? _currentUser;
   GoogleSignIn? _googleSignIn;
+  bool _isRestoring = true;
 
   AuthUser? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null;
+  bool get isRestoring => _isRestoring;
   String get roleLabel => _currentUser?.role ?? loggedOutRoleLabel;
   bool get canUseGoogleLogin =>
       googleClientId != null && googleClientId!.trim().isNotEmpty;
+
+  String get _sessionStorageKey => 'missionout.auth.$requestedClient';
 
   GoogleSignIn _getGoogleSignIn() {
     return _googleSignIn ??= GoogleSignIn(
@@ -38,16 +45,44 @@ class AuthController extends ChangeNotifier {
     );
   }
 
-  Future<void> loginWithMagicLink({required String email}) async {
+  Future<void> loginWithEmailCode({required String email}) async {
     final response = await http.post(
-      Uri.parse('$backendBaseUrl/auth/email-link'),
+      Uri.parse('$backendBaseUrl/auth/email-code'),
       headers: const {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'requested_client': requestedClient}),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(_buildEmailLinkError(response));
+      throw Exception(_buildEmailCodeError(response));
     }
+  }
+
+  Future<void> verifyEmailCode({
+    required String email,
+    required String code,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$backendBaseUrl/auth/email-code/verify'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'code': code}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(_buildEmailCodeError(response));
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception('Invalid auth response.');
+    }
+
+    _currentUser = AuthUser.fromJson(
+      decoded,
+      requestedClient: requestedClient,
+      fallbackRole: loggedOutRoleLabel,
+    );
+    await _persistSession();
+    notifyListeners();
   }
 
   Future<void> loginWithGoogle() async {
@@ -86,6 +121,7 @@ class AuthController extends ChangeNotifier {
     }
 
     _currentUser = await _sendGoogleAuthRequest(body);
+    await _persistSession();
     notifyListeners();
   }
 
@@ -113,6 +149,7 @@ class AuthController extends ChangeNotifier {
   }
 
   void logout() {
+    unawaited(_clearSession());
     _currentUser = null;
     final googleSignIn = _googleSignIn;
     if (googleSignIn != null) {
@@ -137,8 +174,8 @@ class AuthController extends ChangeNotifier {
     return prefix;
   }
 
-  String _buildEmailLinkError(http.Response response) {
-    final prefix = 'Email link request failed (${response.statusCode})';
+  String _buildEmailCodeError(http.Response response) {
+    final prefix = 'Email code request failed (${response.statusCode})';
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {
@@ -151,5 +188,43 @@ class AuthController extends ChangeNotifier {
       // Ignore malformed error payloads and fall back to the status code.
     }
     return prefix;
+  }
+
+  Future<void> _restoreSession() async {
+    try {
+      final preferences = await SharedPreferences.getInstance();
+      final storedSession = preferences.getString(_sessionStorageKey);
+      if (storedSession != null && storedSession.isNotEmpty) {
+        final decoded = jsonDecode(storedSession);
+        if (decoded is Map<String, dynamic>) {
+          _currentUser = AuthUser.fromJson(
+            decoded,
+            requestedClient: requestedClient,
+            fallbackRole: loggedOutRoleLabel,
+          );
+        }
+      }
+    } catch (_) {
+      await _clearSession();
+      _currentUser = null;
+    } finally {
+      _isRestoring = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _persistSession() async {
+    final user = _currentUser;
+    if (user == null) {
+      return;
+    }
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_sessionStorageKey, jsonEncode(user.toJson()));
+  }
+
+  Future<void> _clearSession() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_sessionStorageKey);
   }
 }

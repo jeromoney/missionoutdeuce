@@ -1,11 +1,11 @@
 from app.models.event import DeliveryEvent
 from app.models.incident import Incident, ResponseRecord
-from app.models.team_management import Device, EmailLinkToken, Team, TeamMembership, User
+from app.models.team_management import Device, EmailCodeToken, Team, TeamMembership, User
 
 __all__ = [
     "DeliveryEvent",
     "Device",
-    "EmailLinkToken",
+    "EmailCodeToken",
     "Incident",
     "ResponseRecord",
     "Team",

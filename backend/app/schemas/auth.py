@@ -16,20 +16,22 @@ class GoogleAuthRequest(BaseModel):
         raise ValueError("Either id_token or access_token is required.")
 
 
-class EmailLinkRequest(BaseModel):
+class EmailCodeRequest(BaseModel):
     email: str
     requested_client: Literal["responder", "dispatcher", "team_admin"]
 
 
-class EmailLinkSentRead(BaseModel):
-    delivery: Literal["email_link"] = "email_link"
+class EmailCodeSentRead(BaseModel):
+    delivery: Literal["email_code"] = "email_code"
     email: str
     expires_in_minutes: int
+    code_length: int = 6
     message: str
 
 
-class EmailLinkVerifyRequest(BaseModel):
-    token: str
+class EmailCodeVerifyRequest(BaseModel):
+    email: str
+    code: str
 
 
 class AuthTeamMembershipRead(BaseModel):

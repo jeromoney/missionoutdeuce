@@ -149,7 +149,7 @@
         "title": "DeviceRead",
         "type": "object"
       },
-      "EmailLinkRequest": {
+      "EmailCodeRequest": {
         "properties": {
           "email": {
             "title": "Email",
@@ -169,14 +169,19 @@
           "email",
           "requested_client"
         ],
-        "title": "EmailLinkRequest",
+        "title": "EmailCodeRequest",
         "type": "object"
       },
-      "EmailLinkSentRead": {
+      "EmailCodeSentRead": {
         "properties": {
+          "code_length": {
+            "default": 6,
+            "title": "Code Length",
+            "type": "integer"
+          },
           "delivery": {
-            "const": "email_link",
-            "default": "email_link",
+            "const": "email_code",
+            "default": "email_code",
             "title": "Delivery",
             "type": "string"
           },
@@ -198,20 +203,25 @@
           "expires_in_minutes",
           "message"
         ],
-        "title": "EmailLinkSentRead",
+        "title": "EmailCodeSentRead",
         "type": "object"
       },
-      "EmailLinkVerifyRequest": {
+      "EmailCodeVerifyRequest": {
         "properties": {
-          "token": {
-            "title": "Token",
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
             "type": "string"
           }
         },
         "required": [
-          "token"
+          "email",
+          "code"
         ],
-        "title": "EmailLinkVerifyRequest",
+        "title": "EmailCodeVerifyRequest",
         "type": "object"
       },
       "GoogleAuthRequest": {
@@ -689,15 +699,15 @@
         ]
       }
     },
-    "/auth/email-link": {
+    "/auth/email-code": {
       "post": {
-        "description": "Starts email-based sign-in by asking the backend to send a sign-in link to the supplied email address. The emailed link should land on a MissionOut-controlled HTTPS callback that can continue in web or hand off to the appropriate native app for the requested client surface.",
-        "operationId": "request_email_link_auth_email_link_post",
+        "description": "Starts email-based sign-in by asking the backend to send a one-time verification code to the supplied email address. The code is entered directly into the MissionOut client for the requested surface.",
+        "operationId": "request_email_code_auth_email_code_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EmailLinkRequest"
+                "$ref": "#/components/schemas/EmailCodeRequest"
               }
             }
           },
@@ -708,7 +718,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EmailLinkSentRead"
+                  "$ref": "#/components/schemas/EmailCodeSentRead"
                 }
               }
             },
@@ -725,21 +735,21 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Request Email Sign-In Link",
+        "summary": "Request Email Sign-In Code",
         "tags": [
           "auth"
         ]
       }
     },
-    "/auth/email-link/verify": {
+    "/auth/email-code/verify": {
       "post": {
-        "description": "Completes email-link sign-in by exchanging a one-time emailed token for the authenticated MissionOut user payload. This endpoint is redeemed by whichever authorized client actually receives the callback link, such as web or a native app.",
-        "operationId": "verify_email_link_auth_email_link_verify_post",
+        "description": "Completes email-code sign-in by exchanging a one-time emailed code for the authenticated MissionOut user payload.",
+        "operationId": "verify_email_code_auth_email_code_verify_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EmailLinkVerifyRequest"
+                "$ref": "#/components/schemas/EmailCodeVerifyRequest"
               }
             }
           },
@@ -767,7 +777,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Verify Email Sign-In Link",
+        "summary": "Verify Email Sign-In Code",
         "tags": [
           "auth"
         ]

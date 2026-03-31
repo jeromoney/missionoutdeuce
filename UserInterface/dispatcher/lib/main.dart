@@ -43,15 +43,32 @@ class _MissionOutAppState extends State<MissionOutApp> {
       home: ListenableBuilder(
         listenable: auth,
         builder: (context, _) {
+          if (auth.isRestoring) {
+            return const _AuthLoadingScreen();
+          }
           return auth.isLoggedIn
               ? MissionControlScreen(auth: auth)
               : LoggedOutScreen(
-                  onMagicLinkLogin: auth.loginWithMagicLink,
+                  onRequestEmailCode: auth.loginWithEmailCode,
+                  onVerifyEmailCode: auth.verifyEmailCode,
                   onGoogleLogin: auth.loginWithGoogle,
                   googleLoginEnabled: auth.canUseGoogleLogin,
                   roleLabel: auth.roleLabel,
                 );
         },
+      ),
+    );
+  }
+}
+
+class _AuthLoadingScreen extends StatelessWidget {
+  const _AuthLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: MissionOutBackdrop(
+        child: Center(child: CircularProgressIndicator()),
       ),
     );
   }

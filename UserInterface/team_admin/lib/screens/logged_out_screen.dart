@@ -6,13 +6,16 @@ import '../app_palette.dart';
 class LoggedOutScreen extends StatefulWidget {
   const LoggedOutScreen({
     super.key,
-    required this.onMagicLinkLogin,
+    required this.onRequestEmailCode,
+    required this.onVerifyEmailCode,
     required this.onGoogleLogin,
     this.googleLoginEnabled = true,
     this.roleLabel = 'Team Admin',
   });
 
-  final Future<void> Function({required String email}) onMagicLinkLogin;
+  final Future<void> Function({required String email}) onRequestEmailCode;
+  final Future<void> Function({required String email, required String code})
+  onVerifyEmailCode;
   final Future<void> Function() onGoogleLogin;
   final bool googleLoginEnabled;
   final String roleLabel;
@@ -23,13 +26,17 @@ class LoggedOutScreen extends StatefulWidget {
 
 class _LoggedOutScreenState extends State<LoggedOutScreen> {
   final emailController = TextEditingController(text: 'justin@missionout.test');
+  final codeController = TextEditingController();
+
   String? errorText;
   String? successText;
   bool isSubmitting = false;
+  bool awaitingCode = false;
 
   @override
   void dispose() {
     emailController.dispose();
+    codeController.dispose();
     super.dispose();
   }
 
@@ -45,11 +52,13 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
                 padding: const EdgeInsets.all(24),
                 child: _LoginPanel(
                   emailController: emailController,
+                  codeController: codeController,
                   errorText: errorText,
                   successText: successText,
                   isSubmitting: isSubmitting,
+                  awaitingCode: awaitingCode,
                   googleLoginEnabled: widget.googleLoginEnabled,
-                  onMagicLinkLogin: _submitMagicLink,
+                  onSubmitEmailCode: _submitEmailCode,
                   onGoogleLogin: _submitGoogle,
                   roleLabel: widget.roleLabel,
                 ),
@@ -61,13 +70,16 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     );
   }
 
-  Future<void> _submitMagicLink() async {
+  Future<void> _submitEmailCode() async {
     final email = emailController.text.trim();
+    final code = codeController.text.trim();
+
     setState(() {
       errorText = null;
       successText = null;
       isSubmitting = true;
     });
+
     if (email.isEmpty || !email.contains('@')) {
       setState(() {
         errorText = 'Enter a valid email address.';
@@ -75,13 +87,28 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
       });
       return;
     }
+
+    if (awaitingCode && code.isEmpty) {
+      setState(() {
+        errorText = 'Enter the code from your email.';
+        isSubmitting = false;
+      });
+      return;
+    }
+
     try {
-      await widget.onMagicLinkLogin(email: email);
+      if (awaitingCode) {
+        await widget.onVerifyEmailCode(email: email, code: code);
+        return;
+      }
+
+      await widget.onRequestEmailCode(email: email);
       if (!mounted) {
         return;
       }
       setState(() {
-        successText = 'Check your email for link';
+        successText = 'Check your email for code';
+        awaitingCode = true;
         isSubmitting = false;
       });
     } catch (error) {
@@ -101,6 +128,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
       successText = null;
       isSubmitting = true;
     });
+
     try {
       await widget.onGoogleLogin();
     } catch (error) {
@@ -110,6 +138,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
       });
       return;
     }
+
     if (mounted) {
       setState(() => isSubmitting = false);
     }
@@ -119,21 +148,25 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
 class _LoginPanel extends StatelessWidget {
   const _LoginPanel({
     required this.emailController,
+    required this.codeController,
     required this.errorText,
     required this.successText,
     required this.isSubmitting,
+    required this.awaitingCode,
     required this.googleLoginEnabled,
-    required this.onMagicLinkLogin,
+    required this.onSubmitEmailCode,
     required this.onGoogleLogin,
     required this.roleLabel,
   });
 
   final TextEditingController emailController;
+  final TextEditingController codeController;
   final String? errorText;
   final String? successText;
   final bool isSubmitting;
+  final bool awaitingCode;
   final bool googleLoginEnabled;
-  final Future<void> Function() onMagicLinkLogin;
+  final Future<void> Function() onSubmitEmailCode;
   final Future<void> Function() onGoogleLogin;
   final String roleLabel;
 
@@ -175,7 +208,7 @@ class _LoginPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Use a sign-in link or Google to continue into your team-management workspace.',
+            'Use an emailed code or Google to continue into your team-management workspace.',
             style: TextStyle(color: TeamAdminPalette.textSoft, height: 1.5),
           ),
           const SizedBox(height: 22),
@@ -190,11 +223,35 @@ class _LoginPanel extends StatelessWidget {
           TextField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
+            readOnly: awaitingCode,
             decoration: InputDecoration(
               hintText: 'justin@missionout.test',
               errorText: errorText,
             ),
           ),
+          const SizedBox(height: 10),
+          Text(
+            awaitingCode
+                ? 'Enter the emailed code to finish Team Admin sign-in.'
+                : 'We will send a one-time code for this Team Admin account.',
+            style: const TextStyle(color: TeamAdminPalette.textSoft),
+          ),
+          if (awaitingCode) ...[
+            const SizedBox(height: 18),
+            const Text(
+              'Code',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: TeamAdminPalette.text,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: codeController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(hintText: '123456'),
+            ),
+          ],
           if (successText != null) ...[
             const SizedBox(height: 14),
             Container(
@@ -220,15 +277,13 @@ class _LoginPanel extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: isSubmitting || successText != null
-                  ? null
-                  : onMagicLinkLogin,
+              onPressed: isSubmitting ? null : onSubmitEmailCode,
               child: Text(
                 isSubmitting
-                    ? 'Sending link...'
-                    : successText != null
-                    ? 'Check your email for link'
-                    : 'Email me a sign-in link',
+                    ? (awaitingCode ? 'Verifying code...' : 'Sending code...')
+                    : awaitingCode
+                    ? 'Verify code'
+                    : 'Email me a sign-in code',
               ),
             ),
           ),
@@ -236,8 +291,7 @@ class _LoginPanel extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed:
-                  isSubmitting || !googleLoginEnabled || successText != null
+              onPressed: isSubmitting || !googleLoginEnabled || awaitingCode
                   ? null
                   : onGoogleLogin,
               icon: const Icon(Icons.login_rounded),
