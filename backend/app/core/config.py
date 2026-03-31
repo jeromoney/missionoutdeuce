@@ -35,8 +35,14 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000, validation_alias=AliasChoices("API_PORT", "PORT"))
     debug: bool = False
     google_client_id: str | None = None
-    email_link_callback_base_url: str = "https://missionout.app/auth/email-link"
-    email_link_expires_in_minutes: int = 15
+    email_code_length: int = 6
+    email_code_expires_in_minutes: int = Field(
+        default=15,
+        validation_alias=AliasChoices(
+            "EMAIL_CODE_EXPIRES_IN_MINUTES",
+            "EMAIL_LINK_EXPIRES_IN_MINUTES",
+        ),
+    )
     resend_api_key: str | None = None
     resend_from_email: str | None = None
     allowed_origins: list[str] = [

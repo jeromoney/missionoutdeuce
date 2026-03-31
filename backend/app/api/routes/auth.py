@@ -2,8 +2,6 @@ from datetime import datetime, timedelta
 import hashlib
 import logging
 import secrets
-from urllib.parse import urlencode
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
@@ -13,13 +11,13 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
 from app.db.session import get_db
-from app.models.team_management import EmailLinkToken, TeamMembership, User
+from app.models.team_management import EmailCodeToken, TeamMembership, User
 from app.schemas.auth import (
     AuthTeamMembershipRead,
     AuthUserRead,
-    EmailLinkRequest,
-    EmailLinkSentRead,
-    EmailLinkVerifyRequest,
+    EmailCodeRequest,
+    EmailCodeSentRead,
+    EmailCodeVerifyRequest,
     GoogleAuthRequest,
 )
 
@@ -96,32 +94,34 @@ def _load_or_create_user(*, db: Session, email: str, name: str) -> User:
     return user
 
 
-def _hash_email_link_token(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
 
 
-def _build_email_link_callback(token: str, requested_client: str) -> str:
-    query = urlencode({"token": token, "requested_client": requested_client})
-    return f"{settings.email_link_callback_base_url}?{query}"
+def _hash_email_code(*, email: str, code: str) -> str:
+    normalized_email = _normalize_email(email)
+    return hashlib.sha256(f"{normalized_email}:{code}".encode("utf-8")).hexdigest()
 
 
-def _send_email_link_via_resend(*, recipient_email: str, callback_url: str, requested_client: str):
+def _send_email_code_via_resend(*, recipient_email: str, code: str, requested_client: str):
     if not settings.resend_api_key or not settings.resend_from_email:
         raise HTTPException(
             status_code=500,
             detail="Resend email delivery is not configured on the backend.",
         )
 
-    subject = "Your MissionOut sign-in link"
+    subject = "Your MissionOut sign-in code"
     html = (
-        "<p>Use the secure link below to finish signing in to MissionOut.</p>"
-        f"<p><a href=\"{callback_url}\">Sign in to {requested_client}</a></p>"
-        f"<p>This link expires in {settings.email_link_expires_in_minutes} minutes and can only be used once.</p>"
+        "<p>Use the one-time code below to finish signing in to MissionOut.</p>"
+        f"<p style=\"font-size: 24px; font-weight: 700; letter-spacing: 0.2em;\">{code}</p>"
+        f"<p>Enter this code in the {requested_client} sign-in flow.</p>"
+        f"<p>This {settings.email_code_length}-digit code expires in {settings.email_code_expires_in_minutes} minutes and can only be used once.</p>"
     )
     text = (
-        "Use this secure MissionOut sign-in link:\n"
-        f"{callback_url}\n\n"
-        f"This link expires in {settings.email_link_expires_in_minutes} minutes and can only be used once."
+        "Use this one-time MissionOut sign-in code:\n"
+        f"{code}\n\n"
+        f"Enter it in the {requested_client} sign-in flow. "
+        f"This {settings.email_code_length}-digit code expires in {settings.email_code_expires_in_minutes} minutes and can only be used once."
     )
     payload = {
         "from": settings.resend_from_email,
@@ -241,68 +241,71 @@ def _verify_google_identity(payload: GoogleAuthRequest) -> dict:
 
 
 @router.post(
-    "/email-link",
-    response_model=EmailLinkSentRead,
+    "/email-code",
+    response_model=EmailCodeSentRead,
     status_code=status.HTTP_202_ACCEPTED,
-    summary="Request Email Sign-In Link",
+    summary="Request Email Sign-In Code",
     description=(
-        "Starts email-based sign-in by asking the backend to send a sign-in link "
-        "to the supplied email address. The emailed link should land on a "
-        "MissionOut-controlled HTTPS callback that can continue in web or hand "
-        "off to the appropriate native app for the requested client surface."
+        "Starts email-based sign-in by asking the backend to send a one-time "
+        "verification code to the supplied email address. The code is entered "
+        "directly into the MissionOut client for the requested surface."
     ),
 )
-def request_email_link(payload: EmailLinkRequest, db: Session = Depends(get_db)):
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.email_link_expires_in_minutes)
-    raw_token = secrets.token_urlsafe(32)
-    token_record = EmailLinkToken(
-        email=payload.email.strip().lower(),
-        token_hash=_hash_email_link_token(raw_token),
+def request_email_code(payload: EmailCodeRequest, db: Session = Depends(get_db)):
+    expires_at = datetime.utcnow() + timedelta(minutes=settings.email_code_expires_in_minutes)
+    normalized_email = _normalize_email(payload.email)
+    upper_bound = 10 ** settings.email_code_length
+    raw_code = f"{secrets.randbelow(upper_bound):0{settings.email_code_length}d}"
+    token_record = EmailCodeToken(
+        email=normalized_email,
+        code_hash=_hash_email_code(email=normalized_email, code=raw_code),
         requested_client=payload.requested_client,
         expires_at=expires_at,
     )
     db.add(token_record)
 
-    callback_url = _build_email_link_callback(raw_token, payload.requested_client)
-    _send_email_link_via_resend(
+    _send_email_code_via_resend(
         recipient_email=payload.email,
-        callback_url=callback_url,
+        code=raw_code,
         requested_client=payload.requested_client,
     )
     db.commit()
 
-    return EmailLinkSentRead(
+    return EmailCodeSentRead(
         email=payload.email,
-        expires_in_minutes=settings.email_link_expires_in_minutes,
-        message="If the email is allowed to sign in, a sign-in link has been sent.",
+        expires_in_minutes=settings.email_code_expires_in_minutes,
+        code_length=settings.email_code_length,
+        message="If the email is allowed to sign in, a one-time code has been sent.",
     )
 
 
 @router.post(
-    "/email-link/verify",
+    "/email-code/verify",
     response_model=AuthUserRead,
-    summary="Verify Email Sign-In Link",
+    summary="Verify Email Sign-In Code",
     description=(
-        "Completes email-link sign-in by exchanging a one-time emailed token for "
-        "the authenticated MissionOut user payload. This endpoint is redeemed by "
-        "whichever authorized client actually receives the callback link, such as "
-        "web or a native app."
+        "Completes email-code sign-in by exchanging a one-time emailed code for "
+        "the authenticated MissionOut user payload."
     ),
 )
-def verify_email_link(payload: EmailLinkVerifyRequest, db: Session = Depends(get_db)):
+def verify_email_code(payload: EmailCodeVerifyRequest, db: Session = Depends(get_db)):
+    normalized_email = _normalize_email(payload.email)
     token_record = db.scalar(
-        select(EmailLinkToken).where(
-            EmailLinkToken.token_hash == _hash_email_link_token(payload.token)
+        select(EmailCodeToken)
+        .where(
+            EmailCodeToken.email == normalized_email,
+            EmailCodeToken.code_hash == _hash_email_code(email=normalized_email, code=payload.code),
         )
+        .order_by(EmailCodeToken.created_at.desc())
     )
     if token_record is None:
-        raise HTTPException(status_code=401, detail="Invalid email sign-in link.")
+        raise HTTPException(status_code=401, detail="Invalid email sign-in code.")
 
     now = datetime.utcnow()
     if token_record.consumed_at is not None:
-        raise HTTPException(status_code=401, detail="Email sign-in link has already been used.")
+        raise HTTPException(status_code=401, detail="Email sign-in code has already been used.")
     if token_record.expires_at < now:
-        raise HTTPException(status_code=401, detail="Email sign-in link has expired.")
+        raise HTTPException(status_code=401, detail="Email sign-in code has expired.")
 
     email = token_record.email
     user = _load_or_create_user(

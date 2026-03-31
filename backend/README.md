@@ -24,8 +24,9 @@ Its public surface area for the UI is the shared contract:
    - Copy `.env.example` to `.env` and update `DATABASE_URL` if needed.
    - Or keep secrets outside the repo in `..\Secrets\missionout-backend.env`.
    Set `GOOGLE_CLIENT_ID` to your Google web client id. If you have more than one web client that should be accepted by the backend, you can provide a comma-separated list.
-   Set `EMAIL_LINK_CALLBACK_BASE_URL` to the MissionOut-owned HTTPS callback URL that emailed sign-in links should target.
-   Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` so the backend can send email-link sign-in messages through Resend.
+   Set `EMAIL_CODE_EXPIRES_IN_MINUTES` if you want a non-default expiry for one-time email sign-in codes.
+   Set `EMAIL_CODE_LENGTH` if you want a non-default code length. The current contract default is 6.
+   Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` so the backend can send one-time email-code sign-in messages through Resend.
 3. Install dependencies:
 
 ```powershell
@@ -125,8 +126,8 @@ https://missionout-backend.onrender.com
 - `PATCH /teams/{team_id}/members/{membership_id}`
 - `GET /teams/{team_id}/devices`
 - `GET /events/delivery-feed`
-- `POST /auth/email-link`
-- `POST /auth/email-link/verify`
+- `POST /auth/email-code`
+- `POST /auth/email-code/verify`
 - `POST /auth/google`
 
 ## Frontend Connection

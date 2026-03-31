@@ -9,6 +9,14 @@ class AuthTeamMembership {
   final String teamName;
   final List<String> roles;
 
+  Map<String, dynamic> toJson() {
+    return {
+      'team_id': teamId,
+      'team_name': teamName,
+      'roles': roles,
+    };
+  }
+
   factory AuthTeamMembership.fromJson(Map<String, dynamic> json) {
     final roles = (json['roles'] as List<dynamic>? ?? const [])
         .whereType<String>()
@@ -87,6 +95,17 @@ class AuthUser {
       globalPermissions: globalPermissions ?? this.globalPermissions,
       teamMemberships: teamMemberships ?? this.teamMemberships,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'initials': initials,
+      'role': role,
+      'email': email,
+      'global_permissions': globalPermissions,
+      'team_memberships': teamMemberships.map((membership) => membership.toJson()).toList(),
+    };
   }
 }
 

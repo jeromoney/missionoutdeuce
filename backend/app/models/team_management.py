@@ -70,12 +70,12 @@ class Device(Base):
     user: Mapped[User] = relationship(back_populates="devices")
 
 
-class EmailLinkToken(Base):
-    __tablename__ = "email_link_tokens"
+class EmailCodeToken(Base):
+    __tablename__ = "email_code_tokens"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String(255), index=True)
-    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    code_hash: Mapped[str] = mapped_column(String(64), index=True)
     requested_client: Mapped[str] = mapped_column(String(32))
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
