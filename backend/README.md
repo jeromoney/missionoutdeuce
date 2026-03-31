@@ -102,6 +102,12 @@ GOOGLE_CLIENT_ID=<your-google-web-client-id>
 ALLOWED_ORIGINS=https://<your-admin-web-domain>
 ```
 
+For the current deployed Workers frontend, the simplest correct value is:
+
+```text
+ALLOWED_ORIGINS=https://missionoutdeuce.justin-matis.workers.dev
+```
+
 If you want both local and deployed frontends to work during testing, use a comma-separated list:
 
 ```text
@@ -109,6 +115,12 @@ ALLOWED_ORIGINS=https://<your-admin-web-domain>,http://localhost:3000,http://127
 ```
 
 The backend also allows localhost and `127.0.0.1` on arbitrary ports by default through `ALLOWED_ORIGIN_REGEX`, which keeps Flutter web development working when the local port changes between runs.
+
+If you want to allow a family of Cloudflare Worker subdomains instead of one exact origin, set `ALLOWED_ORIGIN_REGEX` to a pattern such as:
+
+```text
+^https://[a-z0-9-]+\.justin-matis\.workers\.dev$
+```
 
 Your current deployed API base URL is:
 
