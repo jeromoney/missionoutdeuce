@@ -27,6 +27,7 @@ Its public surface area for the UI is the shared contract:
    Set `EMAIL_CODE_EXPIRES_IN_MINUTES` if you want a non-default expiry for one-time email sign-in codes.
    Set `EMAIL_CODE_LENGTH` if you want a non-default code length. The current contract default is 6.
    Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` so the backend can send one-time email-code sign-in messages through Resend.
+   Set `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, and `WEB_PUSH_SUBJECT` with a real VAPID keypair if you want browser push support.
 3. Install dependencies:
 
 ```powershell
@@ -133,6 +134,10 @@ https://missionout-backend.onrender.com
 - `GET /`
 - `GET /health`
 - `GET /incidents`
+- `GET /devices/web-push/public-key`
+- `POST /devices/web-push`
+- `DELETE /devices/web-push`
+- `GET /events/stream`
 - `GET /teams/{team_id}/members`
 - `POST /teams/{team_id}/members`
 - `PATCH /teams/{team_id}/members/{membership_id}`
@@ -161,6 +166,18 @@ For the deployed backend instead:
 ```powershell
 flutter run -d chrome --dart-define=API_BASE_URL=https://missionout-backend.onrender.com
 ```
+
+## Web Push
+
+The browser app should fetch the VAPID public key from:
+
+```text
+GET /devices/web-push/public-key
+```
+
+This endpoint returns the configured `WEB_PUSH_PUBLIC_KEY` and `WEB_PUSH_SUBJECT`.
+
+Do not invent a public key in the frontend. Generate a real VAPID keypair and keep `WEB_PUSH_PRIVATE_KEY` on the backend only.
 
 ## Contract Rule
 

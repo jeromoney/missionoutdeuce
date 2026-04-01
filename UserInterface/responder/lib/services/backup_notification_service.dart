@@ -39,17 +39,28 @@ class BackupNotificationService extends ChangeNotifier {
     required int incidentIndex,
     required ResponderIncident incident,
   }) async {
-    final alert = BackupAlert(
+    await presentAlert(
       incidentIndex: incidentIndex,
       title: incident.title,
-      body: '${incident.location} • ${incident.timeLabel}',
+      body: '${incident.location} - ${incident.timeLabel}',
+      showBrowserNotification: isGranted,
+    );
+  }
+
+  Future<void> presentAlert({
+    required int incidentIndex,
+    required String title,
+    required String body,
+    bool showBrowserNotification = false,
+  }) async {
+    final alert = BackupAlert(
+      incidentIndex: incidentIndex,
+      title: title,
+      body: body,
     );
 
-    if (kIsWeb && isGranted) {
-      await _gateway.showNotification(
-        title: incident.title,
-        body: '${incident.location} • ${incident.timeLabel}',
-      );
+    if (kIsWeb && showBrowserNotification && isGranted) {
+      await _gateway.showNotification(title: title, body: body);
     }
 
     _alertsController.add(alert);

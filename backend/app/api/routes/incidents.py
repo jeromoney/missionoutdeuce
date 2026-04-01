@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.db.session import get_db
 from app.models.incident import Incident, ResponseRecord
 from app.models.team_management import Team, TeamMembership, User
+from app.realtime import event_broker
 from app.schemas.incident import (
     IncidentCreate,
     IncidentRead,
@@ -36,8 +37,7 @@ def _serialize_incident(incident: Incident) -> IncidentRead:
     )
 
 
-@router.get("", response_model=list[IncidentRead])
-def list_incidents(request: Request, db: Session = Depends(get_db)):
+def _load_authenticated_user(*, request: Request, db: Session) -> User:
     user_email = request.headers.get("x-missionout-user-email", "").strip().lower()
     if not user_email:
         raise HTTPException(
@@ -56,6 +56,22 @@ def list_incidents(request: Request, db: Session = Depends(get_db)):
             detail="Authenticated user is not recognized.",
         )
 
+    return user
+
+
+def _authorized_dispatcher_memberships(user: User) -> list[TeamMembership]:
+    return [
+        membership
+        for membership in user.memberships
+        if membership.is_active
+        and membership.team.is_active
+        and "dispatcher" in membership.roles
+    ]
+
+
+@router.get("", response_model=list[IncidentRead])
+def list_incidents(request: Request, db: Session = Depends(get_db)):
+    user = _load_authenticated_user(request=request, db=db)
     visible_team_ids = sorted(
         {
             membership.team_id
@@ -81,10 +97,39 @@ def list_incidents(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=IncidentRead, status_code=201)
-def create_incident(payload: IncidentCreate, db: Session = Depends(get_db)):
-    team = db.scalar(select(Team).where(Team.name == payload.team))
-    if team is None:
-        raise HTTPException(status_code=400, detail="Unknown team")
+def create_incident(payload: IncidentCreate, request: Request, db: Session = Depends(get_db)):
+    team: Team | None = None
+    user_email = request.headers.get("x-missionout-user-email", "").strip()
+    if user_email:
+        user = _load_authenticated_user(request=request, db=db)
+        dispatcher_memberships = _authorized_dispatcher_memberships(user)
+        if not dispatcher_memberships:
+            raise HTTPException(
+                status_code=403,
+                detail="Authenticated user does not have dispatcher access for any team.",
+            )
+
+        matching_membership = next(
+            (
+                membership
+                for membership in dispatcher_memberships
+                if membership.team.name == payload.team
+            ),
+            None,
+        )
+        if matching_membership is not None:
+            team = matching_membership.team
+        elif len(dispatcher_memberships) == 1:
+            team = dispatcher_memberships[0].team
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Requested team is not available to the authenticated dispatcher.",
+            )
+    else:
+        team = db.scalar(select(Team).where(Team.name == payload.team))
+        if team is None:
+            raise HTTPException(status_code=400, detail="Unknown team")
 
     incident = Incident(
         title=payload.title,
@@ -96,6 +141,17 @@ def create_incident(payload: IncidentCreate, db: Session = Depends(get_db)):
     db.add(incident)
     db.commit()
     db.refresh(incident)
+    db.refresh(team)
+    event_broker.publish(
+        event_type="incident.created",
+        team_id=team.id,
+        payload={
+            "incident_id": incident.id,
+            "team_id": team.id,
+            "title": incident.title,
+            "created": incident.created_at.isoformat(),
+        },
+    )
     return _serialize_incident(incident)
 
 

@@ -3,12 +3,22 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, events, health, incidents, team_management
+from app.api.routes import auth, devices, events, health, incidents, team_management
 from app.core.config import settings
 from app.db.base import Base
 from app.db.bootstrap import ensure_incident_team_fk
 from app.db.session import engine
-from app.models import DeliveryEvent, Device, EmailCodeToken, Incident, ResponseRecord, Team, TeamMembership, User
+from app.models import (
+    DeliveryEvent,
+    Device,
+    EmailCodeToken,
+    Incident,
+    ResponseRecord,
+    Team,
+    TeamMembership,
+    User,
+    WebPushSubscription,
+)
 from app.schemas.meta import RootRead
 
 
@@ -43,6 +53,7 @@ app.include_router(auth.router)
 app.include_router(health.router)
 app.include_router(incidents.router)
 app.include_router(events.router)
+app.include_router(devices.router)
 app.include_router(team_management.router)
 
 
