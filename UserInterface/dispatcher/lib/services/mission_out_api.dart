@@ -56,10 +56,13 @@ class MissionOutApi {
     );
   }
 
-  Future<Incident> createIncident(IncidentDraft draft) async {
+  Future<Incident> createIncident(IncidentDraft draft, {String? userEmail}) async {
     final response = await _client.post(
       Uri.parse('$_baseUrl/incidents'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        ..._headers(userEmail: userEmail),
+      },
       body: jsonEncode({
         'title': draft.title,
         'team': draft.team,

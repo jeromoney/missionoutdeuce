@@ -7,7 +7,7 @@ from app.db.bootstrap import ensure_incident_team_fk
 from app.db.session import SessionLocal
 from app.models.event import DeliveryEvent
 from app.models.incident import Incident, ResponseRecord
-from app.models.team_management import Device, Team, TeamMembership, User
+from app.models.team_management import Device, Team, TeamMembership, User, WebPushSubscription
 from app.db.session import engine
 
 
@@ -21,11 +21,12 @@ def seed() -> None:
             db.execute(
                 text(
                     "TRUNCATE TABLE "
-                    "devices, team_memberships, users, teams, responses, incidents, delivery_events "
+                    "web_push_subscriptions, devices, team_memberships, users, teams, responses, incidents, delivery_events "
                     "RESTART IDENTITY CASCADE"
                 )
             )
         else:
+            db.execute(delete(WebPushSubscription))
             db.execute(delete(Device))
             db.execute(delete(TeamMembership))
             db.execute(delete(User))
@@ -43,6 +44,7 @@ def seed() -> None:
         quiet_team = Team(name="North Rim SAR", is_active=True)
         one_team = Team(name="Cinder Valley Rescue", is_active=True)
         many_team = Team(name="Pine Ridge Search", is_active=True)
+        test_team = Team(name="Test Team", is_active=True)
 
         zero_user = User(
             name="Zane Ortega",
@@ -62,15 +64,23 @@ def seed() -> None:
             phone="555-1002",
             is_active=True,
         )
+        justin_user = User(
+            name="Justin Matis",
+            email="justin.matis.com@gmail.com",
+            phone="555-1003",
+            is_active=True,
+        )
 
         db.add_all(
             [
                 quiet_team,
                 one_team,
                 many_team,
+                test_team,
                 zero_user,
                 one_user,
                 many_user,
+                justin_user,
             ]
         )
         db.flush()
@@ -96,6 +106,13 @@ def seed() -> None:
                 roles=["responder", "dispatcher", "team_admin"],
                 is_active=True,
                 granted_at=one_year_ago,
+            ),
+            TeamMembership(
+                user_id=justin_user.id,
+                team_id=test_team.id,
+                roles=["responder", "dispatcher", "team_admin"],
+                is_active=True,
+                granted_at=within_one_day,
             ),
         ]
 
@@ -123,6 +140,28 @@ def seed() -> None:
                 last_seen=within_one_day - timedelta(hours=3),
                 is_active=True,
                 is_verified=True,
+            ),
+            Device(
+                user_id=justin_user.id,
+                platform="web",
+                push_token="web-token-justin",
+                last_seen=within_one_day,
+                is_active=True,
+                is_verified=True,
+            ),
+        ]
+
+        web_push_subscriptions = [
+            WebPushSubscription(
+                user_id=one_user.id,
+                team_id=one_team.id,
+                endpoint="https://push.example.test/subscriptions/one",
+                p256dh="test-p256dh-one",
+                auth="test-auth-one",
+                user_agent="MissionOut Test Browser",
+                client="dispatcher",
+                last_seen=within_one_day,
+                is_active=True,
             ),
         ]
 
@@ -230,6 +269,7 @@ def seed() -> None:
 
         db.add_all(memberships)
         db.add_all(devices)
+        db.add_all(web_push_subscriptions)
         db.add_all(incidents)
         db.add_all(events)
         db.commit()

@@ -1,8 +1,9 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="256" height="256" rx="64" fill="#10283E"/>
-  <circle cx="128" cy="70" r="14" fill="#F06D4E"/>
-  <path d="M79 70C79 42.938 100.938 21 128 21C155.062 21 177 42.938 177 70" stroke="#F06D4E" stroke-opacity="0.28" stroke-width="10" stroke-linecap="round"/>
-  <path d="M61 70C61 33.549 91.549 3 128 3C164.451 3 195 33.549 195 70" stroke="#F06D4E" stroke-opacity="0.16" stroke-width="10" stroke-linecap="round"/>
+  <path d="M83 69C95.083 48.333 116.183 38 128 38C139.817 38 160.917 48.333 173 69" stroke="#F06D4E" stroke-opacity="0.34" stroke-width="10" stroke-linecap="round"/>
+  <path d="M56 63C73.667 32.333 103.867 15 128 15C152.133 15 182.333 32.333 200 63" stroke="#F06D4E" stroke-opacity="0.2" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="128" cy="79" r="14" fill="#F06D4E"/>
+  <circle cx="128" cy="79" r="24" stroke="#DDEAF4" stroke-opacity="0.12" stroke-width="5"/>
   <path d="M0 171.29L42.667 122L87.333 141.667L127.667 88L171 133.667L214.333 108L256 153.333V256H0V171.29Z" fill="#527490"/>
   <path d="M0 205.333L55 160L102.333 190.667L156 136L213.333 184L256 154.667V256H0V205.333Z" fill="#112536"/>
 </svg>

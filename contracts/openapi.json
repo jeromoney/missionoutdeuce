@@ -668,6 +668,155 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "WebPushKeys": {
+        "properties": {
+          "auth": {
+            "title": "Auth",
+            "type": "string"
+          },
+          "p256dh": {
+            "title": "P256Dh",
+            "type": "string"
+          }
+        },
+        "required": [
+          "p256dh",
+          "auth"
+        ],
+        "title": "WebPushKeys",
+        "type": "object"
+      },
+      "WebPushPublicKeyRead": {
+        "properties": {
+          "public_key": {
+            "title": "Public Key",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "public_key",
+          "subject"
+        ],
+        "title": "WebPushPublicKeyRead",
+        "type": "object"
+      },
+      "WebPushSubscriptionCreate": {
+        "properties": {
+          "client": {
+            "enum": [
+              "responder",
+              "dispatcher",
+              "team_admin"
+            ],
+            "title": "Client",
+            "type": "string"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "keys": {
+            "$ref": "#/components/schemas/WebPushKeys"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
+          },
+          "user_agent": {
+            "default": "",
+            "title": "User Agent",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endpoint",
+          "keys",
+          "client"
+        ],
+        "title": "WebPushSubscriptionCreate",
+        "type": "object"
+      },
+      "WebPushSubscriptionDelete": {
+        "properties": {
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "endpoint"
+        ],
+        "title": "WebPushSubscriptionDelete",
+        "type": "object"
+      },
+      "WebPushSubscriptionRead": {
+        "properties": {
+          "client": {
+            "title": "Client",
+            "type": "string"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "last_seen": {
+            "format": "date-time",
+            "title": "Last Seen",
+            "type": "string"
+          },
+          "platform": {
+            "const": "web",
+            "default": "web",
+            "title": "Platform",
+            "type": "string"
+          },
+          "team_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Id"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "team_id",
+          "endpoint",
+          "client",
+          "last_seen",
+          "is_active"
+        ],
+        "title": "WebPushSubscriptionRead",
+        "type": "object"
       }
     }
   },
@@ -824,6 +973,100 @@
         ]
       }
     },
+    "/devices/web-push": {
+      "delete": {
+        "operationId": "delete_web_push_subscription_devices_web_push_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebPushSubscriptionDelete"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Web Push Subscription",
+        "tags": [
+          "devices"
+        ]
+      },
+      "post": {
+        "operationId": "register_web_push_subscription_devices_web_push_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebPushSubscriptionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebPushSubscriptionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register Web Push Subscription",
+        "tags": [
+          "devices"
+        ]
+      }
+    },
+    "/devices/web-push/public-key": {
+      "get": {
+        "operationId": "get_web_push_public_key_devices_web_push_public_key_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebPushPublicKeyRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Web Push Public Key",
+        "tags": [
+          "devices"
+        ]
+      }
+    },
     "/events/delivery-feed": {
       "get": {
         "operationId": "list_delivery_feed_events_delivery_feed_get",
@@ -844,6 +1087,32 @@
           }
         },
         "summary": "List Delivery Feed",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/events/stream": {
+      "get": {
+        "description": "Streams supplemental open-tab event notifications over Server-Sent Events for authenticated web clients. Incident events are scoped to the caller's active team memberships.",
+        "operationId": "stream_events_events_stream_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/event-stream": {
+                "schema": {
+                  "example": "event: incident.created\ndata: {\"incident_id\":42,\"team_id\":1,\"title\":\"Injured Climber Extraction\"}\n\n",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Server-Sent Events stream."
+          }
+        },
+        "summary": "Stream Open-Tab Events",
         "tags": [
           "events"
         ]

@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     )
     resend_api_key: str | None = None
     resend_from_email: str | None = None
+    web_push_public_key: str | None = None
+    web_push_private_key: str | None = None
+    web_push_subject: str | None = None
     allowed_origins: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",

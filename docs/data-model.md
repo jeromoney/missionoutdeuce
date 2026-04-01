@@ -49,6 +49,8 @@ Notes:
 - `created` should be exposed as a real timestamp and formatted per client.
 - `GET /incidents` exposes only incidents whose `created` timestamp falls within the last 7 calendar days. Historical incident access, if added later, should use a separate route or explicit query contract.
 - Incident visibility for that route is derived from the authenticated user's team memberships and global permissions rather than a client-provided `team_id` filter.
+- Incident dispatch targeting is team-scoped: when an incident is created, it should get pushed to all active devices owned by active members of that incident's team.
+- Browser Web Push targeting follows the same team-scoped rule through active backend-owned subscriptions for active team members.
 
 ## ResponseRecord
 
@@ -99,6 +101,24 @@ Notes:
 - Delivery events are operational feed items, not the full alert-delivery audit model.
 - The long-term backend may also track lower-level delivery attempt records separately.
 
+## RealtimeEvent
+
+Represents a one-way live update delivered to open web clients over SSE.
+
+Likely fields:
+
+- `type`
+- `incident_id`
+- `team_id`
+- `created`
+- `data`
+
+Notes:
+
+- `RealtimeEvent` is a transport event for `GET /events/stream`, not the source-of-truth incident record.
+- It should be sufficient to prompt a web client to refresh or patch local state while the tab is open.
+- Closed-tab browser notifications should use a future Web Push model instead of SSE.
+
 ## Future Entities
 
 These are part of the intended MissionOut architecture even if they are not fully implemented in the current scaffold.
@@ -144,6 +164,35 @@ Likely fields:
 - `last_seen`
 - `is_active`
 
+Notes:
+
+- Devices are delivery targets, not just passive metadata.
+- Incident fanout should target active devices belonging to active users who are active members of the incident's team.
+
+## WebPushSubscription
+
+Represents a browser push subscription saved by the backend for future Web Push delivery.
+
+Likely fields:
+
+- `id`
+- `user_id`
+- `team_id`
+- `endpoint`
+- `p256dh`
+- `auth`
+- `user_agent`
+- `client`
+- `last_seen`
+- `is_active`
+
+Notes:
+
+- `WebPushSubscription` is separate from mobile `Device` records because browser subscriptions use Web Push endpoints and encryption keys rather than FCM or APNs device tokens directly.
+- The backend owns registration and cleanup through `POST /devices/web-push` and `DELETE /devices/web-push`.
+- Team scope should come from the authenticated user context and active memberships rather than a client claiming arbitrary ownership.
+- Web Push subscriptions participate in the same incident-delivery targeting rule as mobile devices for closed-tab browser alerts.
+
 ## TeamMembership
 
 Represents a user's membership and granted roles in a team.
@@ -183,6 +232,11 @@ Likely fields:
 - `status`
 - `attempt_count`
 - `last_attempt_at`
+
+Notes:
+
+- Alert delivery records should be created from the team-scoped targeting set for an incident.
+- That targeting set is all active devices and active browser Web Push subscriptions owned by active members of the incident's team.
 
 ## Source of Truth
 

@@ -2,6 +2,7 @@ import '../models/incident.dart';
 
 const responderIncidents = [
   ResponderIncident(
+    id: 1234,
     title: 'Injured Climber Extraction',
     location: 'Mt. Princeton Southwest Gully',
     team: 'Chaffee SAR',
@@ -11,6 +12,7 @@ const responderIncidents = [
     status: 'Responding',
   ),
   ResponderIncident(
+    id: 5678,
     title: 'Overdue Snowmobiler',
     location: 'Georgia Pass East Approach',
     team: 'Chaffee SAR',
@@ -20,6 +22,7 @@ const responderIncidents = [
     status: 'Pending',
   ),
   ResponderIncident(
+    id: 9012,
     title: 'Search Area Reassignment',
     location: 'Cottonwood Creek Drainage',
     team: 'Chaffee SAR',

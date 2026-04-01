@@ -198,7 +198,10 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
     }
 
     try {
-      final newIncident = await api.createIncident(draft);
+      final newIncident = await api.createIncident(
+        draft,
+        userEmail: widget.auth.currentUser?.email,
+      );
       debugPrint(
         '[Dispatcher] Incident created: id=${newIncident.id}, title=${newIncident.title}',
       );

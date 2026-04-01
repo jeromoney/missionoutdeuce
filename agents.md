@@ -157,6 +157,7 @@ Responsibilities:
 - Manage teams, memberships, incidents, and responses
 - Register devices and track tokens
 - Expose the same role-aware APIs for dispatcher web, the Team Management app, and mobile clients
+- Provide a supplemental SSE stream for open web clients during testing and lightweight browser alerting
 - Maintain authoritative system state
 
 Technology:
@@ -194,6 +195,7 @@ Tracks delivery targets and their health.
 
 Responsibilities:
 - Store push tokens and platform metadata
+- Store browser Web Push subscriptions for future closed-tab alerts
 - Track `last_seen` and verification state
 - Mark stale or inactive devices
 - Provide valid targets for delivery workers
@@ -223,5 +225,7 @@ Responsibilities:
 - The Team Management app is a dedicated web-only surface for Team Admin users on the same API.
 - Team Admin and Super Admin are intentionally separate roles with different scopes.
 - PostgreSQL is the source of truth for incidents, responses, teams, and permissions.
+- `GET /events/stream` is the planned supplemental SSE path for open web tabs only and is not the primary responder alert mechanism.
+- Closed-tab browser notifications should register through backend-owned Web Push subscription routes rather than client-only local storage.
 - Repository layout: `backend/`, `UserInterface/`, and `docs/` at the repo root.
 - Cross-stack coordination should happen through the documented contract in `docs/`, not through direct source dependencies.

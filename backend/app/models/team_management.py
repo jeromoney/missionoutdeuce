@@ -36,6 +36,10 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    web_push_subscriptions: Mapped[list["WebPushSubscription"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
 
 class TeamMembership(Base):
@@ -68,6 +72,24 @@ class Device(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=True)
 
     user: Mapped[User] = relationship(back_populates="devices")
+
+
+class WebPushSubscription(Base):
+    __tablename__ = "web_push_subscriptions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    team_id: Mapped[int | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    endpoint: Mapped[str] = mapped_column(Text, unique=True)
+    p256dh: Mapped[str] = mapped_column(Text)
+    auth: Mapped[str] = mapped_column(Text)
+    user_agent: Mapped[str] = mapped_column(Text, default="")
+    client: Mapped[str] = mapped_column(String(32))
+    last_seen: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    user: Mapped[User] = relationship(back_populates="web_push_subscriptions")
+    team: Mapped[Team | None] = relationship()
 
 
 class EmailCodeToken(Base):

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_theme/shared_theme.dart';
+import 'package:flutter/widget_previews.dart';
 
 import '../app_palette.dart';
+import '../widgets/responder_brand.dart';
 
 class LoggedOutScreen extends StatefulWidget {
   const LoggedOutScreen({
@@ -22,6 +24,17 @@ class LoggedOutScreen extends StatefulWidget {
 
   @override
   State<LoggedOutScreen> createState() => _LoggedOutScreenState();
+}
+
+@Preview(name: 'LoggedOutScreen'  )
+Widget LoggedOutScreenPreview() {
+  return LoggedOutScreen(
+      onRequestEmailCode: ({required String email}) async {},
+    onVerifyEmailCode: ({required String email, required String code}) async {},
+    onGoogleLogin: () async {},
+    googleLoginEnabled: true,
+    roleLabel: 'Preview Role',
+  );
 }
 
 class _LoggedOutScreenState extends State<LoggedOutScreen> {
@@ -183,7 +196,7 @@ class _LoginPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const MissionOutBrandLockup(
+          const ResponderBrandLockup(
             subtitle: 'Secure sign-in for active MissionOut operations.',
             logoSize: 60,
           ),

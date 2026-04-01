@@ -254,11 +254,126 @@ Field definitions:
 - `icon`: icon key understood by clients
 - `color`: UI hint color
 
+## `GET /events/stream`
+
+Purpose:
+
+- Provides a supplemental Server-Sent Events stream for open web clients.
+- Supports lightweight browser alert testing and live dispatcher updates while the web app tab is already open.
+- Does not replace native mobile alert delivery or future browser push for closed tabs.
+
+Transport:
+
+- `text/event-stream`
+- one-way backend-to-client updates over SSE
+
+Suggested event types:
+
+- `incident.created`
+- `incident.updated`
+- `incident.response_changed`
+- `delivery.event`
+
+Suggested event shape:
+
+```text
+event: incident.created
+data: {"incident_id":42,"team_id":1,"title":"Injured Climber Extraction","created":"2026-03-26T17:24:41.760280"}
+```
+
+Guidance:
+
+- This endpoint is intended as a simple open-tab alert path for testing and supplemental awareness.
+- Clients should reconnect when the stream drops and refresh authoritative state from standard REST routes as needed.
+- If the page is closed, this stream stops. Future closed-tab browser notifications should use Web Push and a service worker instead.
+
+## `POST /devices/web-push`
+
+Purpose:
+
+- Registers or refreshes a browser push subscription for the authenticated user.
+- Stores the subscription endpoint and encryption keys needed for future Web Push delivery when the page is closed.
+
+Suggested request shape:
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/abc123",
+  "keys": {
+    "p256dh": "base64-p256dh-key",
+    "auth": "base64-auth-key"
+  },
+  "user_agent": "Mozilla/5.0",
+  "client": "dispatcher"
+}
+```
+
+Suggested response shape:
+
+```json
+{
+  "id": 9,
+  "platform": "web",
+  "is_active": true,
+  "last_seen": "2026-03-26T17:24:41.760280"
+}
+```
+
+Notes:
+
+- In the current scaffold, authenticated user context is provided through the same `x-missionout-user-email` request header used by `GET /incidents`.
+- The backend owns the subscription record and should not trust a client-supplied user id.
+- The backend may scope subscriptions by authenticated membership or active client surface, but the registration entry point stays centralized.
+
+## `GET /devices/web-push/public-key`
+
+Purpose:
+
+- Returns the configured VAPID public key and subject for browser Web Push registration.
+
+Response shape:
+
+```json
+{
+  "public_key": "BMj...base64url-vapid-public-key...",
+  "subject": "mailto:justin.matis.com@gmail.com"
+}
+```
+
+Notes:
+
+- The frontend should fetch this value from the backend rather than hardcoding or inventing a key.
+- The matching VAPID private key must remain backend-only.
+
+## `DELETE /devices/web-push`
+
+Purpose:
+
+- Deactivates or removes a browser push subscription when the user logs out, disables notifications, or the service worker rotates subscriptions.
+
+Suggested request shape:
+
+```json
+{
+  "endpoint": "https://fcm.googleapis.com/fcm/send/abc123"
+}
+```
+
+Suggested response:
+
+- status `204`
+
+Notes:
+
+- The backend should allow idempotent unregister behavior so clients can safely retry cleanup.
+- This route is the companion to `POST /devices/web-push` and supports the browser Web Push path for closed browser tabs.
+
 ## `POST /incidents`
 
 Purpose:
 
 - Create a new incident from the dispatcher web UI.
+- Trigger dispatch targeting for the incident's team after the incident record is created.
 
 Request shape:
 
@@ -286,6 +401,13 @@ Response shape:
   "responses": []
 }
 ```
+
+Notes:
+
+- Creating an incident is expected to begin the dispatch flow, not just persist a row.
+- When an incident is created, it should get pushed to all active devices owned by active members of that incident's team.
+- Closed-tab browser delivery follows the same team-targeting rule through active backend-owned Web Push subscriptions for active team members.
+- Delivery fanout and retry behavior may be handled asynchronously by workers, but the targeting rule is part of the shared contract semantics.
 
 ## `PATCH /incidents/{id}`
 
@@ -446,6 +568,13 @@ Recommended future event types:
 - `incident.resolved`
 - `delivery.event`
 - `team.membership_changed`
+
+Recommended transport split:
+
+- `GET /events/stream` for open-tab SSE updates in dispatcher and Team Management web clients
+- `POST /devices/web-push` and `DELETE /devices/web-push` for browser push subscription registration
+- Web Push plus a service worker for closed-tab browser notifications
+- Native FCM and APNs remain the primary responder alert path
 
 Suggested payload shape:
 

@@ -5,11 +5,17 @@ import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../app_config.dart';
 import '../models/backup_alert.dart';
 import '../models/incident.dart';
+import '../models/open_tab_event.dart';
 import '../services/backup_notification_service.dart';
 import '../services/browser_notification_gateway.dart';
+import '../services/open_tab_event_stream.dart';
+import '../services/open_tab_event_stream_base.dart';
 import '../services/responder_api.dart';
+import '../services/web_push_service.dart';
+import '../widgets/responder_brand.dart';
 
 class ResponderHomeScreen extends StatefulWidget {
   const ResponderHomeScreen({super.key, required this.auth});
@@ -23,18 +29,28 @@ class ResponderHomeScreen extends StatefulWidget {
 class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   final api = ResponderApi();
   final backupNotifications = BackupNotificationService();
+  final webPush = WebPushService(publicKey: webPushPublicKey);
+  late final OpenTabEventStream openTabEvents = createOpenTabEventStream(
+    streamUrl: '${api.baseUrl}/events/stream',
+  );
   List<ResponderIncident> incidents = const [];
   int selected = 0;
   String availability = 'Available';
   bool loading = true;
   String? loadError;
   StreamSubscription<BackupAlert>? alertSubscription;
+  StreamSubscription<OpenTabEvent>? openTabEventSubscription;
   BackupAlert? activeBackupAlert;
 
   @override
   void initState() {
     super.initState();
     backupNotifications.initialize();
+    webPush.initialize();
+    final userEmail = widget.auth.currentUser?.email?.trim() ?? '';
+    if (userEmail.isNotEmpty) {
+      openTabEvents.connect(userEmail: userEmail);
+    }
     _loadIncidents();
     alertSubscription = backupNotifications.alerts.listen((alert) {
       if (!mounted) {
@@ -48,12 +64,16 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
         activeBackupAlert = alert;
       });
     });
+    openTabEventSubscription = openTabEvents.events.listen(_handleOpenTabEvent);
   }
 
   @override
   void dispose() {
     alertSubscription?.cancel();
+    openTabEventSubscription?.cancel();
     backupNotifications.dispose();
+    openTabEvents.dispose();
+    webPush.dispose();
     super.dispose();
   }
 
@@ -103,6 +123,8 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                           incident: incidents[selected],
                         ),
                 ),
+                const SizedBox(height: 16),
+                _WebPushBanner(service: webPush, onEnable: webPush.enable),
                 const SizedBox(height: 16),
                 Expanded(
                   child: loading
@@ -227,6 +249,58 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
       });
     }
   }
+
+  Future<void> _handleOpenTabEvent(OpenTabEvent event) async {
+    if (!event.isIncidentCreated) {
+      return;
+    }
+
+    try {
+      final loadedIncidents = await api.fetchIncidents(
+        userEmail: widget.auth.currentUser?.email,
+        userName: widget.auth.currentUser?.name,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      final incidentIndex = event.incidentId == null
+          ? -1
+          : loadedIncidents.indexWhere(
+              (incident) => incident.id == event.incidentId,
+            );
+      final nextSelected = loadedIncidents.isEmpty
+          ? 0
+          : incidentIndex >= 0
+          ? incidentIndex
+          : selected.clamp(0, loadedIncidents.length - 1) as int;
+
+      setState(() {
+        incidents = loadedIncidents;
+        selected = nextSelected;
+        loading = false;
+        loadError = null;
+      });
+
+      if (incidentIndex >= 0) {
+        final incident = loadedIncidents[incidentIndex];
+        await backupNotifications.presentAlert(
+          incidentIndex: incidentIndex,
+          title: event.title,
+          body: '${incident.location} - ${incident.timeLabel}',
+        );
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        loadError = 'Could not refresh missions after a live event.';
+      });
+    }
+  }
 }
 
 class _Header extends StatelessWidget {
@@ -259,7 +333,7 @@ class _Header extends StatelessWidget {
         children: [
           const SizedBox(
             width: 620,
-            child: MissionOutBrandLockup(
+            child: ResponderBrandLockup(
               subtitle:
                   'Responder view for acknowledgements, readiness, and active mission context.',
               logoSize: 58,
@@ -443,6 +517,106 @@ class _BackupNotificationBanner extends StatelessWidget {
                     OutlinedButton(
                       onPressed: onSendTestAlert,
                       child: const Text('Send test alert'),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WebPushBanner extends StatelessWidget {
+  const _WebPushBanner({required this.service, required this.onEnable});
+
+  final WebPushService service;
+  final Future<void> Function() onEnable;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: service,
+      builder: (context, _) {
+        final statusColor = switch (service.state) {
+          WebPushClientState.workerReady => ResponderPalette.accent,
+          WebPushClientState.backendPending => ResponderPalette.success,
+          WebPushClientState.error => ResponderPalette.danger,
+          WebPushClientState.blocked => ResponderPalette.warning,
+          WebPushClientState.unsupported => ResponderPalette.warning,
+          WebPushClientState.registering => ResponderPalette.accent,
+          WebPushClientState.notEnabled => ResponderPalette.warning,
+        };
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: ResponderPalette.card.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: ResponderPalette.border),
+          ),
+          child: Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: 560,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Closed-tab browser alerts',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: ResponderPalette.text,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        _StatusPill(
+                          label: service.statusLabel,
+                          color: statusColor,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      service.detailText,
+                      style: const TextStyle(
+                        color: ResponderPalette.textSoft,
+                        height: 1.45,
+                      ),
+                    ),
+                    if (service.subscription != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Local subscription ready: ${service.subscription!.endpoint}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: ResponderPalette.textSoft,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  if (service.canEnable)
+                    FilledButton(
+                      onPressed: onEnable,
+                      child: const Text('Enable browser alerts'),
                     ),
                 ],
               ),
@@ -689,7 +863,7 @@ class _NoMissionState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const MissionOutLogo(size: 74),
+              const ResponderBrandLogo(size: 74),
               const SizedBox(height: 18),
               const Text(
                 'No active mission',
@@ -702,7 +876,7 @@ class _NoMissionState extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               const Text(
-                'You are currently clear. When a new incident is dispatched, it will appear here with your responder actions and mission notes.',
+                'When a new mission is dispatched, it will appear here.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: ResponderPalette.textSoft, height: 1.5),
               ),
