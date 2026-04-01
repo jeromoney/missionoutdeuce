@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="See the MissionOut responder experience, including urgent mobile alerting, lock-screen actions, and response syncing.">
+  <meta name="theme-color" content="#0d1b2a">
+  <title>MissionOut | Responder Guide</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="MissionOut home">
+        <span class="brand-mark">M</span>
+        <span class="brand-text">
+          <strong>MissionOut</strong>
+          <span>Built for live SAR operations</span>
+        </span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="site-nav" id="site-nav">
+        <a href="product.html">Platform</a>
+        <a href="dispatcher-guide.html">Dispatcher Guide</a>
+        <a href="responder-guide.html" aria-current="page">Responder Guide</a>
+        <a href="admin-guide.html">Admin Guide</a>
+        <a class="button button-small button-ghost" href="index.html#contact">Book a walkthrough</a>
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <section class="subhero reveal">
+        <p class="eyebrow">Responder workflow</p>
+        <h1>Responders get a clear, minimal alert flow designed for stress, noise, and cold starts.</h1>
+        <p class="lede">
+          MissionOut uses native mobile alert handling so the alarm path can start when the phone is locked, the app is
+          backgrounded, or Flutter has not launched yet.
+        </p>
+      </section>
+
+      <section class="section section-light">
+        <div class="split-layout aligned-top">
+          <div class="reveal">
+            <p class="eyebrow">How to use it</p>
+            <h2>The responder journey stays short on purpose.</h2>
+          </div>
+          <div class="phone-flow reveal">
+            <div class="phone-card">
+              <span>Alert arrives</span>
+              <strong>Phone wakes with alarm and vibration</strong>
+              <p>The alert experience begins from native mobile code to reduce missed mission notifications.</p>
+            </div>
+            <div class="phone-card">
+              <span>Immediate action</span>
+              <strong>Tap responding or not available</strong>
+              <p>Lock-screen actions minimize delay and reduce the number of taps required during mobilization.</p>
+            </div>
+            <div class="phone-card">
+              <span>Mission context</span>
+              <strong>Review incident details in the app</strong>
+              <p>Responders can see mission notes, team context, and their current status after the urgent action is captured.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-dark">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Design principle</p>
+          <h2>Minimal interaction reduces friction when the responder is half-awake, gloved, or moving.</h2>
+        </div>
+        <div class="feature-rows">
+          <article class="feature-row reveal">
+            <div>
+              <p class="feature-kicker">Wake reliability</p>
+              <h3>The phone does not need a foreground Flutter session to start the alert path.</h3>
+            </div>
+            <p>The native layer handles critical device behaviors like wake, full-screen alert UI, vibration, and looping audio.</p>
+          </article>
+          <article class="feature-row reveal">
+            <div>
+              <p class="feature-kicker">Immediate clarity</p>
+              <h3>Responders act with one obvious choice instead of navigating menus first.</h3>
+            </div>
+            <p>The system captures intent quickly, which gives dispatch more trustworthy live staffing awareness.</p>
+          </article>
+          <article class="feature-row reveal">
+            <div>
+              <p class="feature-kicker">State sync</p>
+              <h3>Response decisions become part of the shared operational picture as soon as connectivity allows.</h3>
+            </div>
+            <p>Dispatch and administration teams can later review response timing alongside device and delivery data.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-light">
+        <div class="quote-panel reveal">
+          <p>
+            For buyers, the responder experience is where reliability becomes tangible. If the alert does not break
+            through and capture intent quickly, nothing downstream matters. MissionOut treats that moment as the center
+            of the product.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>MissionOut</strong>
+        <p>Reliable alerting, immediate responder action, and auditable mission records.</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="product.html">Platform</a>
+        <a href="dispatcher-guide.html">Dispatch</a>
+        <a href="admin-guide.html">Administration</a>
+      </div>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
