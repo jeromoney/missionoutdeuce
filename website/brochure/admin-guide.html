@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Review how MissionOut handles team administration, permissions, device health, and auditable oversight.">
+  <meta name="theme-color" content="#0d1b2a">
+  <title>MissionOut | Admin Guide</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="MissionOut home">
+        <span class="brand-mark">M</span>
+        <span class="brand-text">
+          <strong>MissionOut</strong>
+          <span>Built for live SAR operations</span>
+        </span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="site-nav" id="site-nav">
+        <a href="product.html">Platform</a>
+        <a href="dispatcher-guide.html">Dispatcher Guide</a>
+        <a href="responder-guide.html">Responder Guide</a>
+        <a href="admin-guide.html" aria-current="page">Admin Guide</a>
+        <a class="button button-small button-ghost" href="index.html#contact">Book a walkthrough</a>
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <section class="subhero reveal">
+        <p class="eyebrow">Administration and oversight</p>
+        <h1>MissionOut separates team management from dispatch so permissions stay tighter and cleaner.</h1>
+        <p class="lede">
+          Team Admins manage one team's users and device readiness, while Super Admins retain full-system visibility and
+          control across teams, incidents, and operational logs.
+        </p>
+      </section>
+
+      <section class="section section-light">
+        <div class="section-heading reveal">
+          <p class="eyebrow">How to use it</p>
+          <h2>Administration centers on readiness, scope, and auditability.</h2>
+        </div>
+        <div class="guide-grid">
+          <article class="guide-step reveal">
+            <span>Step 1</span>
+            <h3>Manage the right people</h3>
+            <p>Create, invite, activate, or deactivate users for the team without deleting historical operational records.</p>
+          </article>
+          <article class="guide-step reveal">
+            <span>Step 2</span>
+            <h3>Keep roles scoped</h3>
+            <p>Assign team-scoped permissions deliberately so dispatch access and administration access remain separate.</p>
+          </article>
+          <article class="guide-step reveal">
+            <span>Step 3</span>
+            <h3>Monitor device health</h3>
+            <p>Review active registrations, last-seen data, and stale devices before they become a mission reliability risk.</p>
+          </article>
+          <article class="guide-step reveal">
+            <span>Step 4</span>
+            <h3>Review incidents and responses</h3>
+            <p>Use the stored operational trail to support training, supervision, and after-action review.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-dark">
+        <div class="split-layout aligned-top">
+          <div class="reveal">
+            <p class="eyebrow">Governance model</p>
+            <h2>Permissions match how real organizations divide operational responsibility.</h2>
+          </div>
+          <div class="role-stack reveal">
+            <div class="role-item">
+              <strong>Team Admin scope</strong>
+              <p>Single-team user management, team device visibility, and team operational review.</p>
+            </div>
+            <div class="role-item">
+              <strong>Super Admin scope</strong>
+              <p>Global team creation, cross-team oversight, user or device disabling, and system-wide analytics.</p>
+            </div>
+            <div class="role-item">
+              <strong>Operational benefit</strong>
+              <p>Scope boundaries reduce accidental overreach and make access decisions easier to defend.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-light">
+        <div class="quote-panel reveal">
+          <p>
+            Buyers evaluating MissionOut for organizational maturity should pay close attention to this separation of
+            duties. It keeps live operations fast while preserving the governance controls command staff expects.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>MissionOut</strong>
+        <p>Reliable alerting, immediate responder action, and auditable mission records.</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="product.html">Platform</a>
+        <a href="dispatcher-guide.html">Dispatch</a>
+        <a href="responder-guide.html">Response</a>
+      </div>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn how MissionOut connects dispatch, responder mobile alerts, device targeting, and escalation into one reliable SAR alerting platform.">
+  <meta name="theme-color" content="#0d1b2a">
+  <title>MissionOut Platform | Product Overview</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="MissionOut home">
+        <span class="brand-mark">M</span>
+        <span class="brand-text">
+          <strong>MissionOut</strong>
+          <span>Built for live SAR operations</span>
+        </span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span></span>
+        <span></span>
+      </button>
+      <nav class="site-nav" id="site-nav">
+        <a href="product.html" aria-current="page">Platform</a>
+        <a href="dispatcher-guide.html">Dispatcher Guide</a>
+        <a href="responder-guide.html">Responder Guide</a>
+        <a href="admin-guide.html">Admin Guide</a>
+        <a class="button button-small button-ghost" href="index.html#contact">Book a walkthrough</a>
+      </nav>
+    </header>
+
+    <main class="page-main">
+      <section class="subhero reveal">
+        <p class="eyebrow">Platform overview</p>
+        <h1>The MissionOut system is built around dependable delivery and clear operational state.</h1>
+        <p class="lede">
+          Dispatch happens on the web, responder alerting is owned by native mobile code, and the API remains the
+          system of record for incidents, responses, deliveries, and device health.
+        </p>
+      </section>
+
+      <section class="section section-light">
+        <div class="section-heading reveal">
+          <p class="eyebrow">System model</p>
+          <h2>Each component has one clear job in the alert chain.</h2>
+        </div>
+        <div class="info-grid">
+          <article class="info-panel reveal">
+            <span>Dispatcher web client</span>
+            <strong>Launches incidents and monitors acknowledgements from a focused live-operations interface.</strong>
+          </article>
+          <article class="info-panel reveal">
+            <span>API server</span>
+            <strong>Authenticates users and devices, stores incidents, and serves role-aware workflows.</strong>
+          </article>
+          <article class="info-panel reveal">
+            <span>Notification worker</span>
+            <strong>Fans alerts out to registered devices and records every delivery attempt.</strong>
+          </article>
+          <article class="info-panel reveal">
+            <span>Native alert handler</span>
+            <strong>Wakes the phone, starts the alarm path, and captures action even from the lock screen.</strong>
+          </article>
+          <article class="info-panel reveal">
+            <span>Escalation worker</span>
+            <strong>Applies retry, SMS, or voice policies when responders do not acknowledge quickly enough.</strong>
+          </article>
+          <article class="info-panel reveal">
+            <span>Device registry</span>
+            <strong>Maintains valid push tokens, platform metadata, and device health signals for targeting.</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-dark">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Operational flow</p>
+          <h2>From incident creation to escalation, the full chain stays explicit and reviewable.</h2>
+        </div>
+        <div class="process-list">
+          <article class="process-item reveal">
+            <span>1</span>
+            <div>
+              <h3>Dispatcher creates the incident</h3>
+              <p>Priority, team, location, and notes are recorded in a structured form instead of a free-form text blast.</p>
+            </div>
+          </article>
+          <article class="process-item reveal">
+            <span>2</span>
+            <div>
+              <h3>API writes the authoritative record</h3>
+              <p>MissionOut stores incident state centrally so downstream workers and clients stay aligned.</p>
+            </div>
+          </article>
+          <article class="process-item reveal">
+            <span>3</span>
+            <div>
+              <h3>Notification workers target valid devices</h3>
+              <p>Delivery focuses on registered devices, which is more operationally useful than user-only targeting.</p>
+            </div>
+          </article>
+          <article class="process-item reveal">
+            <span>4</span>
+            <div>
+              <h3>Native mobile code owns the urgent alert experience</h3>
+              <p>The alarm path begins even if Flutter is backgrounded or cold-started, improving reliability under real conditions.</p>
+            </div>
+          </article>
+          <article class="process-item reveal">
+            <span>5</span>
+            <div>
+              <h3>Responder intent syncs back immediately</h3>
+              <p>Responding and unavailable actions become live operational data that dispatch can use right away.</p>
+            </div>
+          </article>
+          <article class="process-item reveal">
+            <span>6</span>
+            <div>
+              <h3>Escalation policies keep the mission moving</h3>
+              <p>Retries and fallback channels activate for non-responders, with every step preserved in the audit trail.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-light">
+        <div class="split-layout aligned-top">
+          <div class="reveal">
+            <p class="eyebrow">Role separation</p>
+            <h2>MissionOut reduces mistakes by separating operational roles cleanly.</h2>
+          </div>
+          <div class="role-stack reveal">
+            <div class="role-item">
+              <strong>Responder</strong>
+              <p>Receives mission alerts and submits immediate response intent from mobile devices.</p>
+            </div>
+            <div class="role-item">
+              <strong>Dispatcher</strong>
+              <p>Creates incidents and monitors response status without inheriting unrelated admin permissions.</p>
+            </div>
+            <div class="role-item">
+              <strong>Team Admin</strong>
+              <p>Manages one team's users, roles, device health, and team-scoped operational history.</p>
+            </div>
+            <div class="role-item">
+              <strong>Super Admin</strong>
+              <p>Oversees all teams, system-wide controls, and cross-team operational visibility.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section final-cta">
+        <div class="final-cta-panel reveal">
+          <p class="eyebrow">Continue exploring</p>
+          <h2>See how MissionOut works for the people actually using it.</h2>
+          <div class="hero-actions">
+            <a class="button" href="dispatcher-guide.html">See dispatcher workflow</a>
+            <a class="button button-secondary" href="responder-guide.html">See responder workflow</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>
+        <strong>MissionOut</strong>
+        <p>Reliable alerting, immediate responder action, and auditable mission records.</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html">Home</a>
+        <a href="dispatcher-guide.html">Dispatch</a>
+        <a href="responder-guide.html">Response</a>
+        <a href="admin-guide.html">Administration</a>
+      </div>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "MissionOut Brochure",
+  "short_name": "MissionOut",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#0d1b2a",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
