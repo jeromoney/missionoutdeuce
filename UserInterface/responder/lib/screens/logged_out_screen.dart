@@ -33,7 +33,7 @@ Widget LoggedOutScreenPreview() {
     onVerifyEmailCode: ({required String email, required String code}) async {},
     onGoogleLogin: () async {},
     googleLoginEnabled: true,
-    roleLabel: 'Preview Role',
+    roleLabel: 'Responder Role',
   );
 }
 
@@ -197,7 +197,7 @@ class _LoginPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const ResponderBrandLockup(
-            subtitle: 'Secure sign-in for active MissionOut operations.',
+            subtitle: null,
             logoSize: 60,
           ),
           const SizedBox(height: 20),
@@ -221,7 +221,7 @@ class _LoginPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Use an emailed code or Google to continue to your mission queue.',
+            'Use an emailed code or Google to continue.',
             style: TextStyle(color: ResponderPalette.textSoft, height: 1.5),
           ),
           const SizedBox(height: 22),
@@ -238,7 +238,7 @@ class _LoginPanel extends StatelessWidget {
             keyboardType: TextInputType.emailAddress,
             readOnly: awaitingCode,
             decoration: InputDecoration(
-              hintText: 'justin@missionout.test',
+              hintText: 'example@domain.com',
               errorText: errorText,
             ),
           ),

@@ -18,6 +18,14 @@ This file exists to explain the intent, ownership, and usage of that contract al
 - Backend implementation details should not leak into UI code.
 - Dispatcher and Team Management clients should share the same backend API while enforcing different permissions.
 - A route change is not complete until the exported OpenAPI contract is regenerated.
+- MissionOut should be modeled as an interrupt-driven system with long idle periods, not as a continuous operational queue.
+
+## Product Mode Split
+
+- The dispatcher app initiates the interrupt loop by creating incidents and starting delivery fanout.
+- The responder experience is mostly idle until a mission arrives, then shifts into a high-urgency action state.
+- The Team Management app is administrative and outside the live dispatch interrupt loop.
+- Contract choices should preserve this separation: operational routes belong to dispatch and response, while administrative routes belong to readiness and roster management.
 
 ## Contract-First Workflow
 
@@ -405,6 +413,7 @@ Response shape:
 Notes:
 
 - Creating an incident is expected to begin the dispatch flow, not just persist a row.
+- This route is the boundary where the system moves from idle state into interrupt state.
 - When an incident is created, it should get pushed to all active devices owned by active members of that incident's team.
 - Closed-tab browser delivery follows the same team-targeting rule through active backend-owned Web Push subscriptions for active team members.
 - Delivery fanout and retry behavior may be handled asynchronously by workers, but the targeting rule is part of the shared contract semantics.
@@ -557,6 +566,7 @@ Guidance:
 - Team Management routes should avoid destructive hard-delete semantics for users with operational history.
 - Team Management routes should not create teams or perform global administration.
 - Dispatcher permissions should not imply Team Admin access, and Team Admin permissions should not imply dispatch access.
+- Team Management routes are administrative readiness tools and should not be treated as part of the live incident interrupt flow.
 
 ## Realtime Contract
 
