@@ -17,6 +17,7 @@ Backend storage models and UI view models may differ internally, but the concept
 - Fields should be stable and predictable across web, responder, and backend services.
 - Emergency alerting features should prefer explicit state over derived guesswork.
 - Internal implementation details should not be treated as the contract.
+- The product should be modeled around long idle periods interrupted by rare high-consequence missions.
 
 ## Core Entities
 
@@ -47,6 +48,7 @@ Notes:
 
 - `title`, `location`, `notes`, and `active` may change over time.
 - `created` should be exposed as a real timestamp and formatted per client.
+- Most teams will have zero active incidents most of the time, and multiple simultaneous incidents should be treated as an exception case rather than the default design center.
 - `GET /incidents` exposes only incidents whose `created` timestamp falls within the last 7 calendar days. Historical incident access, if added later, should use a separate route or explicit query contract.
 - Incident visibility for that route is derived from the authenticated user's team memberships and global permissions rather than a client-provided `team_id` filter.
 - Incident dispatch targeting is team-scoped: when an incident is created, it should get pushed to all active devices owned by active members of that incident's team.
@@ -219,6 +221,7 @@ Notes:
 - A single membership should represent one `user_id` plus one `team_id`, with the full set of granted team-scoped roles attached to that membership.
 - `super_admin` should be modeled outside team membership or as a separate global permission concept, not as a normal team-scoped role.
 - The Team Management app should use Team Admin permissions only for one existing team and should prefer deactivation over hard deletion so historical incidents and responses remain auditable.
+- Team membership administration supports readiness before and between missions; it is not part of the live dispatch interrupt loop.
 
 ## AlertDelivery
 

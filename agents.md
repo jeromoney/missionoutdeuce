@@ -210,6 +210,25 @@ Responsibilities:
 7. API server updates response and delivery state.
 8. Escalation worker retries or escalates for non-responders.
 
+## Operational Modes
+
+MissionOut is an interrupt-driven alert system, not a continuous work queue.
+
+### Default State
+- Most of the time, teams have no active mission.
+- The normal responder experience should feel quiet, idle, and ready rather than busy.
+- The dispatcher app is dormant between incidents and becomes active when a mission is created.
+
+### Alarm State
+- A new incident should shift the dispatcher and responder experience into a clear interrupt state.
+- The dispatcher app initiates that interrupt by creating the incident and starting delivery fanout.
+- The responder experience should prioritize immediate acknowledgment and action over browsing, queue management, or dashboard complexity.
+
+### Administrative State
+- The Team Management app is outside the live dispatch interrupt loop.
+- Team Management supports readiness by maintaining members, roles, and device health.
+- Team Management should not be treated as part of the active mission-time responder or dispatcher workflow.
+
 ## Design Principles
 - Reliability over convenience
 - Push is one delivery layer, not the whole system
@@ -217,12 +236,14 @@ Responsibilities:
 - Clear, auditable state for incidents, responses, and deliveries
 - Minimal interaction during high-stress use
 - Web-first for product iteration, native-first for alert reliability
+- Design for long idle periods interrupted by rare high-consequence alerts
 
 ## Notes
 - Flutter is the shared UI layer across web and mobile.
 - Android and iOS native code own the alarm and OS-level alert path.
 - Dispatcher and Team Admin are intentionally separate team-scoped roles.
 - The Team Management app is a dedicated web-only surface for Team Admin users on the same API.
+- The dispatcher app initiates the interrupt-driven system; the Team Management app is administrative and outside the live dispatch loop.
 - Team Admin and Super Admin are intentionally separate roles with different scopes.
 - PostgreSQL is the source of truth for incidents, responses, teams, and permissions.
 - `GET /events/stream` is the planned supplemental SSE path for open web tabs only and is not the primary responder alert mechanism.

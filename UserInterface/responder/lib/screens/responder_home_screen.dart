@@ -81,6 +81,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final compact = width < 1080;
+    final selectedIncident = incidents.isEmpty ? null : incidents[selected];
 
     return Scaffold(
       body: MissionOutBackdrop(
@@ -100,79 +101,55 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                   _LoadErrorBanner(message: loadError!),
                   const SizedBox(height: 16),
                 ],
-                _BackupNotificationBanner(
-                  service: backupNotifications,
-                  alert: activeBackupAlert,
-                  onEnableNotifications: backupNotifications.requestPermission,
-                  onDismissAlert: () {
-                    setState(() => activeBackupAlert = null);
-                  },
-                  onOpenAlert: () {
-                    if (activeBackupAlert == null) {
-                      return;
-                    }
-                    setState(() {
-                      selected = activeBackupAlert!.incidentIndex;
-                      activeBackupAlert = null;
-                    });
-                  },
-                  onSendTestAlert: incidents.isEmpty
-                      ? null
-                      : () => backupNotifications.sendTestAlert(
-                          incidentIndex: selected,
-                          incident: incidents[selected],
-                        ),
-                ),
-                const SizedBox(height: 16),
-                _WebPushBanner(service: webPush, onEnable: webPush.enable),
-                const SizedBox(height: 16),
+                if (activeBackupAlert != null) ...[
+                  _IncomingAlertStrip(
+                    alert: activeBackupAlert!,
+                    onDismiss: () {
+                      setState(() => activeBackupAlert = null);
+                    },
+                    onOpen: () {
+                      if (activeBackupAlert == null) {
+                        return;
+                      }
+                      setState(() {
+                        selected = activeBackupAlert!.incidentIndex;
+                        activeBackupAlert = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 Expanded(
                   child: loading
                       ? const Center(child: CircularProgressIndicator())
                       : incidents.isEmpty
-                      ? const _NoMissionState()
-                      : compact
-                      ? ListView(
-                          children: [
-                            SizedBox(
-                              height: 340,
-                              child: _MissionList(
-                                incidents: incidents,
-                                selected: selected,
-                                onSelected: (index) {
-                                  setState(() => selected = index);
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 600,
-                              child: _IncidentCard(
-                                incident: incidents[selected],
-                              ),
-                            ),
-                          ],
+                      ? _StandbyWorkspace(
+                          availability: availability,
+                          notifications: backupNotifications,
+                          webPush: webPush,
+                          onEnableNotifications:
+                              backupNotifications.requestPermission,
+                          onEnableWebPush: webPush.enable,
                         )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SizedBox(
-                              width: 370,
-                              child: _MissionList(
-                                incidents: incidents,
-                                selected: selected,
-                                onSelected: (index) {
-                                  setState(() => selected = index);
-                                },
+                      : _ActiveMissionWorkspace(
+                          compact: compact,
+                          incidents: incidents,
+                          selected: selected,
+                          availability: availability,
+                          selectedIncident: selectedIncident!,
+                          notifications: backupNotifications,
+                          webPush: webPush,
+                          onEnableNotifications:
+                              backupNotifications.requestPermission,
+                          onEnableWebPush: webPush.enable,
+                          onSendTestAlert: () =>
+                              backupNotifications.sendTestAlert(
+                                incidentIndex: selected,
+                                incident: selectedIncident,
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _IncidentCard(
-                                incident: incidents[selected],
-                              ),
-                            ),
-                          ],
+                          onSelected: (index) {
+                            setState(() => selected = index);
+                          },
                         ),
                 ),
               ],
@@ -303,6 +280,157 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   }
 }
 
+class _StandbyWorkspace extends StatelessWidget {
+  const _StandbyWorkspace({
+    required this.availability,
+    required this.notifications,
+    required this.webPush,
+    required this.onEnableNotifications,
+    required this.onEnableWebPush,
+  });
+
+  final String availability;
+  final BackupNotificationService notifications;
+  final WebPushService webPush;
+  final Future<void> Function() onEnableNotifications;
+  final Future<void> Function() onEnableWebPush;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 1080;
+
+        if (narrow) {
+          return ListView(
+            children: [
+              _StandbyHero(availability: availability),
+              const SizedBox(height: 16),
+              _ReadinessPanel(
+                notifications: notifications,
+                webPush: webPush,
+                onEnableNotifications: onEnableNotifications,
+                onEnableWebPush: onEnableWebPush,
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(flex: 3, child: _StandbyHero(availability: availability)),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 360,
+              child: _ReadinessPanel(
+                notifications: notifications,
+                webPush: webPush,
+                onEnableNotifications: onEnableNotifications,
+                onEnableWebPush: onEnableWebPush,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ActiveMissionWorkspace extends StatelessWidget {
+  const _ActiveMissionWorkspace({
+    required this.compact,
+    required this.incidents,
+    required this.selected,
+    required this.availability,
+    required this.selectedIncident,
+    required this.notifications,
+    required this.webPush,
+    required this.onEnableNotifications,
+    required this.onEnableWebPush,
+    required this.onSendTestAlert,
+    required this.onSelected,
+  });
+
+  final bool compact;
+  final List<ResponderIncident> incidents;
+  final int selected;
+  final String availability;
+  final ResponderIncident selectedIncident;
+  final BackupNotificationService notifications;
+  final WebPushService webPush;
+  final Future<void> Function() onEnableNotifications;
+  final Future<void> Function() onEnableWebPush;
+  final Future<void> Function() onSendTestAlert;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (compact) {
+      return ListView(
+        children: [
+          SizedBox(
+            height: 460,
+            child: _IncidentCard(incident: selectedIncident),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 300,
+            child: _MissionList(
+              incidents: incidents,
+              selected: selected,
+              onSelected: onSelected,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _ReadinessPanel(
+            availability: availability,
+            notifications: notifications,
+            webPush: webPush,
+            onEnableNotifications: onEnableNotifications,
+            onEnableWebPush: onEnableWebPush,
+            onSendTestAlert: onSendTestAlert,
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(flex: 4, child: _IncidentCard(incident: selectedIncident)),
+        const SizedBox(width: 16),
+        SizedBox(
+          width: 360,
+          child: Column(
+            children: [
+              Expanded(
+                child: _MissionList(
+                  incidents: incidents,
+                  selected: selected,
+                  onSelected: onSelected,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 300,
+                child: _ReadinessPanel(
+                  availability: availability,
+                  notifications: notifications,
+                  webPush: webPush,
+                  onEnableNotifications: onEnableNotifications,
+                  onEnableWebPush: onEnableWebPush,
+                  onSendTestAlert: onSendTestAlert,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _Header extends StatelessWidget {
   const _Header({
     required this.userInitials,
@@ -411,219 +539,374 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _BackupNotificationBanner extends StatelessWidget {
-  const _BackupNotificationBanner({
-    required this.service,
+class _IncomingAlertStrip extends StatelessWidget {
+  const _IncomingAlertStrip({
     required this.alert,
-    required this.onEnableNotifications,
-    required this.onDismissAlert,
-    required this.onOpenAlert,
-    required this.onSendTestAlert,
+    required this.onDismiss,
+    required this.onOpen,
   });
 
-  final BackupNotificationService service;
-  final BackupAlert? alert;
-  final Future<void> Function() onEnableNotifications;
-  final VoidCallback onDismissAlert;
-  final VoidCallback onOpenAlert;
-  final Future<void> Function()? onSendTestAlert;
+  final BackupAlert alert;
+  final VoidCallback onDismiss;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: service,
-      builder: (context, _) {
-        final permissionLabel = switch (service.permissionState) {
-          BrowserNotificationPermissionState.granted => 'Enabled',
-          BrowserNotificationPermissionState.denied => 'Blocked',
-          BrowserNotificationPermissionState.unsupported => 'Unsupported',
-          BrowserNotificationPermissionState.notDetermined => 'Not enabled',
-        };
-
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: ResponderPalette.card.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: ResponderPalette.border),
-          ),
-          child: Wrap(
-            spacing: 14,
-            runSpacing: 14,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SizedBox(
-                width: 520,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Backup notifications',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: ResponderPalette.text,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        _StatusPill(
-                          label: permissionLabel,
-                          color: service.isGranted
-                              ? ResponderPalette.success
-                              : ResponderPalette.warning,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      alert != null
-                          ? 'Incoming backup alert: ${alert!.title}'
-                          : 'Browser notifications are supplemental only. Use them for backup awareness and testing, not primary paging.',
-                      style: const TextStyle(
-                        color: ResponderPalette.textSoft,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: ResponderPalette.accent.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: ResponderPalette.accent.withValues(alpha: 0.34),
+        ),
+      ),
+      child: Wrap(
+        spacing: 14,
+        runSpacing: 14,
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: 560,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Incoming mission alert',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: ResponderPalette.text,
+                  ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  alert.title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: ResponderPalette.text,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  alert.body,
+                  style: const TextStyle(
+                    color: ResponderPalette.textSoft,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton(
+                onPressed: onOpen,
+                child: const Text('Open mission'),
               ),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  if (alert != null)
-                    FilledButton.tonal(
-                      onPressed: onOpenAlert,
-                      child: const Text('Open alert'),
-                    ),
-                  if (alert != null)
-                    TextButton(
-                      onPressed: onDismissAlert,
-                      child: const Text('Dismiss'),
-                    ),
-                  if (!service.isGranted &&
-                      service.permissionState !=
-                          BrowserNotificationPermissionState.unsupported)
-                    FilledButton(
-                      onPressed: onEnableNotifications,
-                      child: const Text('Enable notifications'),
-                    ),
-                  if (onSendTestAlert != null)
-                    OutlinedButton(
-                      onPressed: onSendTestAlert,
-                      child: const Text('Send test alert'),
-                    ),
-                ],
-              ),
+              TextButton(onPressed: onDismiss, child: const Text('Dismiss')),
             ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
 
-class _WebPushBanner extends StatelessWidget {
-  const _WebPushBanner({required this.service, required this.onEnable});
+class _StandbyHero extends StatelessWidget {
+  const _StandbyHero({required this.availability});
 
-  final WebPushService service;
-  final Future<void> Function() onEnable;
+  final String availability;
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: service,
-      builder: (context, _) {
-        final statusColor = switch (service.state) {
-          WebPushClientState.workerReady => ResponderPalette.accent,
-          WebPushClientState.backendPending => ResponderPalette.success,
-          WebPushClientState.error => ResponderPalette.danger,
-          WebPushClientState.blocked => ResponderPalette.warning,
-          WebPushClientState.unsupported => ResponderPalette.warning,
-          WebPushClientState.registering => ResponderPalette.accent,
-          WebPushClientState.notEnabled => ResponderPalette.warning,
-        };
+    final available = availability == 'Available';
 
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: ResponderPalette.card.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: ResponderPalette.border),
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.05),
+            ResponderPalette.card.withValues(alpha: 0.92),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(34),
+        border: Border.all(color: ResponderPalette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _StatusPill(
+            label: available ? 'Standing by' : 'Unavailable',
+            color: available
+                ? ResponderPalette.success
+                : ResponderPalette.warning,
           ),
-          child: Wrap(
-            spacing: 14,
+          const SizedBox(height: 56),
+          const ResponderBrandLogo(size: 82),
+          const SizedBox(height: 24),
+          const Text(
+            'Quiet until a mission arrives.',
+            style: TextStyle(
+              fontSize: 42,
+              height: 1.05,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1.6,
+              color: ResponderPalette.text,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            available
+                ? 'This screen stays minimal by default. When dispatch starts, the mission view takes over and response actions move to the front.'
+                : 'You are currently unavailable, so the app stays in standby and no responder actions are active until you switch back.',
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.6,
+              color: ResponderPalette.textSoft,
+            ),
+          ),
+          const SizedBox(height: 26),
+          Wrap(
+            spacing: 24,
             runSpacing: 14,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              SizedBox(
-                width: 560,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Closed-tab browser alerts',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: ResponderPalette.text,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        _StatusPill(
-                          label: service.statusLabel,
-                          color: statusColor,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      service.detailText,
-                      style: const TextStyle(
-                        color: ResponderPalette.textSoft,
-                        height: 1.45,
-                      ),
-                    ),
-                    if (service.subscription != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        'Local subscription ready: ${service.subscription!.endpoint}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: ResponderPalette.textSoft,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+              _StandbyMetric(
+                label: 'State',
+                value: available ? 'Ready for interrupt' : 'Alerts paused',
               ),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  if (service.canEnable)
-                    FilledButton(
-                      onPressed: onEnable,
-                      child: const Text('Enable browser alerts'),
-                    ),
-                ],
+              const _StandbyMetric(
+                label: 'Default mode',
+                value: 'Idle, not queue-driven',
               ),
             ],
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+}
+
+class _ReadinessPanel extends StatelessWidget {
+  const _ReadinessPanel({
+    required this.notifications,
+    required this.webPush,
+    required this.onEnableNotifications,
+    required this.onEnableWebPush,
+    this.availability,
+    this.onSendTestAlert,
+  });
+
+  final BackupNotificationService notifications;
+  final WebPushService webPush;
+  final Future<void> Function() onEnableNotifications;
+  final Future<void> Function() onEnableWebPush;
+  final String? availability;
+  final Future<void> Function()? onSendTestAlert;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: ResponderPalette.card.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: ResponderPalette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Readiness',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.7,
+              color: ResponderPalette.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Keep this device ready for the next interrupt. Notification channels are supplemental to native mobile alerting.',
+            style: TextStyle(color: ResponderPalette.textSoft, height: 1.5),
+          ),
+          if (availability != null) ...[
+            const SizedBox(height: 18),
+            _ReadinessRow(
+              title: 'Availability',
+              status: availability!,
+              statusColor: availability == 'Available'
+                  ? ResponderPalette.success
+                  : ResponderPalette.warning,
+              detail: availability == 'Available'
+                  ? 'Responder actions will surface when a mission is assigned.'
+                  : 'Alert actions stay out of the way until you are available again.',
+            ),
+          ],
+          const SizedBox(height: 18),
+          ListenableBuilder(
+            listenable: notifications,
+            builder: (context, _) {
+              final permissionLabel = switch (notifications.permissionState) {
+                BrowserNotificationPermissionState.granted => 'Enabled',
+                BrowserNotificationPermissionState.denied => 'Blocked',
+                BrowserNotificationPermissionState.unsupported => 'Unsupported',
+                BrowserNotificationPermissionState.notDetermined =>
+                  'Not enabled',
+              };
+
+              return _ReadinessRow(
+                title: 'Open-tab alerts',
+                status: permissionLabel,
+                statusColor: notifications.isGranted
+                    ? ResponderPalette.success
+                    : ResponderPalette.warning,
+                detail:
+                    'Use browser notifications for backup awareness while this tab is open.',
+                action:
+                    !notifications.isGranted &&
+                        notifications.permissionState !=
+                            BrowserNotificationPermissionState.unsupported
+                    ? FilledButton(
+                        onPressed: onEnableNotifications,
+                        child: const Text('Enable'),
+                      )
+                    : onSendTestAlert != null
+                    ? OutlinedButton(
+                        onPressed: onSendTestAlert,
+                        child: const Text('Test alert'),
+                      )
+                    : null,
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          ListenableBuilder(
+            listenable: webPush,
+            builder: (context, _) {
+              final statusColor = switch (webPush.state) {
+                WebPushClientState.workerReady => ResponderPalette.accent,
+                WebPushClientState.backendPending => ResponderPalette.success,
+                WebPushClientState.error => ResponderPalette.danger,
+                WebPushClientState.blocked => ResponderPalette.warning,
+                WebPushClientState.unsupported => ResponderPalette.warning,
+                WebPushClientState.registering => ResponderPalette.accent,
+                WebPushClientState.notEnabled => ResponderPalette.warning,
+              };
+
+              return _ReadinessRow(
+                title: 'Closed-tab browser alerts',
+                status: webPush.statusLabel,
+                statusColor: statusColor,
+                detail: webPush.detailText,
+                action: webPush.canEnable
+                    ? FilledButton(
+                        onPressed: onEnableWebPush,
+                        child: const Text('Enable'),
+                      )
+                    : null,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReadinessRow extends StatelessWidget {
+  const _ReadinessRow({
+    required this.title,
+    required this.status,
+    required this.statusColor,
+    required this.detail,
+    this.action,
+  });
+
+  final String title;
+  final String status;
+  final Color statusColor;
+  final String detail;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: ResponderPalette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: ResponderPalette.text,
+                  ),
+                ),
+              ),
+              _StatusPill(label: status, color: statusColor),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            detail,
+            style: const TextStyle(
+              color: ResponderPalette.textSoft,
+              height: 1.5,
+            ),
+          ),
+          if (action != null) ...[const SizedBox(height: 14), action!],
+        ],
+      ),
+    );
+  }
+}
+
+class _StandbyMetric extends StatelessWidget {
+  const _StandbyMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: ResponderPalette.textSoft,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: ResponderPalette.text,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -840,54 +1123,6 @@ class _IncidentCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _NoMissionState extends StatelessWidget {
-  const _NoMissionState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560),
-        child: Container(
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: ResponderPalette.card.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: ResponderPalette.border),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const ResponderBrandLogo(size: 74),
-              const SizedBox(height: 18),
-              const Text(
-                'No active mission',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.7,
-                  color: ResponderPalette.text,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'When a new mission is dispatched, it will appear here.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: ResponderPalette.textSoft, height: 1.5),
-              ),
-              const SizedBox(height: 20),
-              _StatusPill(
-                label: 'Standing by',
-                color: ResponderPalette.success,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
