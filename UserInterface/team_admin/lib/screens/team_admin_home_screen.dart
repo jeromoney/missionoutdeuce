@@ -216,8 +216,6 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       loading = false;
       memberCrudSupported = workspace.memberCrudSupported;
       usingLiveData = workspace.usingLiveData;
-      connectionLabel = workspace.connectionLabel;
-      connectionDetail = workspace.connectionDetail;
       statusMessage = workspace.statusMessage;
     });
   }

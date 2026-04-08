@@ -26,7 +26,7 @@ class LoggedOutScreen extends StatefulWidget {
 }
 
 class _LoggedOutScreenState extends State<LoggedOutScreen> {
-  final emailController = TextEditingController(text: 'justin@missionout.test');
+  final emailController = TextEditingController();
   final codeController = TextEditingController();
 
   String? errorText;
@@ -223,7 +223,7 @@ class _LoginPanel extends StatelessWidget {
             keyboardType: TextInputType.emailAddress,
             readOnly: awaitingCode,
             decoration: InputDecoration(
-              hintText: 'justin@missionout.test',
+              hintText: 'name@example.com',
               errorText: errorText,
             ),
           ),

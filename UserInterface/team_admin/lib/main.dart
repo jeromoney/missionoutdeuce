@@ -22,12 +22,6 @@ class _MissionOutTeamAdminAppState extends State<MissionOutTeamAdminApp> {
   final auth = AuthController(
     loggedOutRoleLabel: 'Team Admin',
     requestedClient: 'team_admin',
-    defaultUser: const AuthUser(
-      name: 'Justin Mercer',
-      initials: 'JM',
-      role: 'Team Admin',
-      email: 'justin@missionout.test',
-    ),
     backendBaseUrl: resolveApiBaseUrl(),
     googleClientId: googleClientId.isEmpty ? null : googleClientId,
   );

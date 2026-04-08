@@ -11,7 +11,6 @@ import 'auth_user.dart';
 class AuthController extends ChangeNotifier {
   AuthController({
     required this.loggedOutRoleLabel,
-    required this.defaultUser,
     required this.backendBaseUrl,
     required this.requestedClient,
     this.googleClientId,
@@ -20,7 +19,6 @@ class AuthController extends ChangeNotifier {
   }
 
   final String loggedOutRoleLabel;
-  final AuthUser defaultUser;
   final String backendBaseUrl;
   final String requestedClient;
   final String? googleClientId;

@@ -150,11 +150,6 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
         userEmail: widget.auth.currentUser?.email,
       );
 
-      debugPrint(
-        '[Dispatcher] Dashboard load: label=${snapshot.connectionLabel}, '
-        'baseUrl=${snapshot.baseUrl}, error=none',
-      );
-
       if (!mounted) {
         return;
       }
@@ -179,7 +174,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
         events = const [];
         selected = 0;
         loading = false;
-        loadError = 'Could not load incident data from ${api.connectionLabel}.';
+        loadError = 'Could not load incident data.';
       });
     }
   }

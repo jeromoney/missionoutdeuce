@@ -12,7 +12,7 @@ const demoManagedTeam = TeamAdminTeam(
     TeamAdminMember(
       id: 101,
       name: 'Justin Mercer',
-      email: 'justin@missionout.test',
+      email: 'justin@example.com',
       phone: '(719) 555-0110',
       roles: ['team_admin', 'dispatcher'],
       status: 'Available',
@@ -24,7 +24,7 @@ const demoManagedTeam = TeamAdminTeam(
     TeamAdminMember(
       id: 102,
       name: 'Sarah Kent',
-      email: 'sarah@missionout.test',
+      email: 'sarah@example.com',
       phone: '(719) 555-0133',
       roles: ['responder'],
       status: 'Responding',
@@ -36,7 +36,7 @@ const demoManagedTeam = TeamAdminTeam(
     TeamAdminMember(
       id: 103,
       name: 'Mike Dawson',
-      email: 'mike@missionout.test',
+      email: 'mike@example.com',
       phone: '(719) 555-0175',
       roles: ['responder'],
       status: 'Unavailable',

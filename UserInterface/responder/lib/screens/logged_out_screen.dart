@@ -26,10 +26,10 @@ class LoggedOutScreen extends StatefulWidget {
   State<LoggedOutScreen> createState() => _LoggedOutScreenState();
 }
 
-@Preview(name: 'LoggedOutScreen'  )
+@Preview(name: 'LoggedOutScreen')
 Widget LoggedOutScreenPreview() {
   return LoggedOutScreen(
-      onRequestEmailCode: ({required String email}) async {},
+    onRequestEmailCode: ({required String email}) async {},
     onVerifyEmailCode: ({required String email, required String code}) async {},
     onGoogleLogin: () async {},
     googleLoginEnabled: true,
@@ -38,7 +38,7 @@ Widget LoggedOutScreenPreview() {
 }
 
 class _LoggedOutScreenState extends State<LoggedOutScreen> {
-  final emailController = TextEditingController(text: 'justin@missionout.test');
+  final emailController = TextEditingController();
   final codeController = TextEditingController();
 
   String? errorText;
@@ -196,10 +196,7 @@ class _LoginPanel extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ResponderBrandLockup(
-            subtitle: null,
-            logoSize: 60,
-          ),
+          const ResponderBrandLockup(subtitle: null, logoSize: 60),
           const SizedBox(height: 20),
           Text(
             roleLabel,
