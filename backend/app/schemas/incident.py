@@ -21,9 +21,10 @@ class ResponseRecordRead(BaseModel):
 
 
 class IncidentRead(BaseModel):
-    id: int
+    public_id: str
     title: str
     team: str
+    team_public_id: str | None = None
     location: str
     created: datetime
     notes: str
@@ -33,7 +34,7 @@ class IncidentRead(BaseModel):
 
 class IncidentCreate(BaseModel):
     title: str
-    team: str
+    team_public_id: str
     location: str
     notes: str
     active: bool = True

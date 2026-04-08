@@ -4,8 +4,10 @@ import 'package:shared_models/shared_models.dart';
 class Incident {
   const Incident({
     required this.id,
+    required this.publicId,
     required this.title,
     required this.team,
+    required this.teamPublicId,
     required this.location,
     required this.created,
     required this.notes,
@@ -14,8 +16,10 @@ class Incident {
   });
 
   final int id;
+  final String publicId;
   final String title;
   final String team;
+  final String? teamPublicId;
   final String location;
   final String created;
   final String notes;
@@ -24,8 +28,10 @@ class Incident {
 
   Incident copyWith({
     int? id,
+    String? publicId,
     String? title,
     String? team,
+    String? teamPublicId,
     String? location,
     String? created,
     String? notes,
@@ -34,8 +40,10 @@ class Incident {
   }) {
     return Incident(
       id: id ?? this.id,
+      publicId: publicId ?? this.publicId,
       title: title ?? this.title,
       team: team ?? this.team,
+      teamPublicId: teamPublicId ?? this.teamPublicId,
       location: location ?? this.location,
       created: created ?? this.created,
       notes: notes ?? this.notes,
@@ -52,8 +60,10 @@ class Incident {
 
     return Incident(
       id: json['id'] as int? ?? 0,
+      publicId: json['public_id'] as String? ?? '',
       title: json['title'] as String? ?? 'Untitled incident',
       team: json['team'] as String? ?? 'Unknown team',
+      teamPublicId: json['team_public_id'] as String?,
       location: json['location'] as String? ?? 'Unknown location',
       created: formatMissionTimestamp(
         json['created'] as String? ?? '',

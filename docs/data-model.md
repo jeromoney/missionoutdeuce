@@ -18,6 +18,7 @@ Backend storage models and UI view models may differ internally, but the concept
 - Emergency alerting features should prefer explicit state over derived guesswork.
 - Internal implementation details should not be treated as the contract.
 - The product should be modeled around long idle periods interrupted by rare high-consequence missions.
+- Internal integer `id` fields may remain primary keys in the database, but API-facing resources should use non-sequential `public_id` values.
 
 ## Core Entities
 
@@ -27,10 +28,10 @@ Represents an operational mission or callout.
 
 Fields:
 
-- `id`
-  Unique identifier for the incident.
-  `team_id`
-  Foreign key unique identifier for the associated team
+- `public_id`
+  Non-sequential external identifier for the incident used in API payloads and route parameters.
+- `team_public_id`
+  Non-sequential external identifier for the associated team when team scope needs to be exposed to clients.
 - `title`
   Short dispatcher-facing incident name.
 - `location`
@@ -46,11 +47,12 @@ Fields:
 
 Notes:
 
+- Internal integer incident and team IDs may still exist in backend storage, but they are backend-only and should not be used by frontend clients.
 - `title`, `location`, `notes`, and `active` may change over time.
 - `created` should be exposed as a real timestamp and formatted per client.
 - Most teams will have zero active incidents most of the time, and multiple simultaneous incidents should be treated as an exception case rather than the default design center.
 - `GET /incidents` exposes only incidents whose `created` timestamp falls within the last 7 calendar days. Historical incident access, if added later, should use a separate route or explicit query contract.
-- Incident visibility for that route is derived from the authenticated user's team memberships and global permissions rather than a client-provided `team_id` filter.
+- Incident visibility for that route is derived from the authenticated user's team memberships and global permissions rather than a client-provided team selector.
 - Incident dispatch targeting is team-scoped: when an incident is created, it should get pushed to all active devices owned by active members of that incident's team.
 - Browser Web Push targeting follows the same team-scoped rule through active backend-owned subscriptions for active team members.
 
@@ -110,8 +112,8 @@ Represents a one-way live update delivered to open web clients over SSE.
 Likely fields:
 
 - `type`
-- `incident_id`
-- `team_id`
+- `incident_public_id`
+- `team_public_id`
 - `created`
 - `data`
 
@@ -129,20 +131,19 @@ These are part of the intended MissionOut architecture even if they are not full
 
 Represents an operational SAR unit or organization.
 
-Likely fields:
+Likely API-facing fields:
 
-- `id`
+- `public_id`
 - `name`
-- `organization_id`
 - `is_active`
 
 ## User
 
 Represents a human account in the system.
 
-Likely fields:
+Likely API-facing fields:
 
-- `id`
+- `public_id`
 - `name`
 - `email`
 - `phone`
@@ -150,17 +151,17 @@ Likely fields:
 
 Notes:
 
-- A user may authenticate through Google auth or an email sign-in link issued by the backend.
+- A user may authenticate through Google auth or an emailed one-time code issued by the backend.
 - Email should be treated as a first-class identity field because it is used both for login and for team membership administration.
 
 ## Device
 
 Represents a registered delivery target for a responder.
 
-Likely fields:
+Likely API-facing fields:
 
-- `id`
-- `user_id`
+- `public_id`
+- `user_public_id`
 - `platform`
 - `push_token`
 - `last_seen`
@@ -175,11 +176,11 @@ Notes:
 
 Represents a browser push subscription saved by the backend for future Web Push delivery.
 
-Likely fields:
+Likely API-facing fields:
 
-- `id`
-- `user_id`
-- `team_id`
+- `public_id`
+- `user_public_id`
+- `team_public_id`
 - `endpoint`
 - `p256dh`
 - `auth`
@@ -199,11 +200,11 @@ Notes:
 
 Represents a user's membership and granted roles in a team.
 
-Likely fields:
+Likely API-facing fields:
 
-- `id`
-- `user_id`
-- `team_id`
+- `public_id`
+- `user_public_id`
+- `team_public_id`
 - `roles`
 - `is_active`
 - `granted_at`
@@ -217,8 +218,9 @@ Expected roles:
 
 Notes:
 
+- Internal integer membership, user, and team IDs may still exist in backend storage, but clients should use `public_id`, `user_public_id`, and `team_public_id`.
 - Team-scoped roles should allow a user to hold both `dispatcher` and `team_admin` for the same team when explicitly granted.
-- A single membership should represent one `user_id` plus one `team_id`, with the full set of granted team-scoped roles attached to that membership.
+- A single membership should represent one user plus one team, with the full set of granted team-scoped roles attached to that membership.
 - `super_admin` should be modeled outside team membership or as a separate global permission concept, not as a normal team-scoped role.
 - The Team Management app should use Team Admin permissions only for one existing team and should prefer deactivation over hard deletion so historical incidents and responses remain auditable.
 - Team membership administration supports readiness before and between missions; it is not part of the live dispatch interrupt loop.

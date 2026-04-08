@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.time import utc_now
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
@@ -80,7 +81,7 @@ def seeded_user(db_session: Session, seeded_team: Team) -> User:
         team_id=seeded_team.id,
         roles=["responder", "dispatcher", "team_admin"],
         is_active=True,
-        granted_at=datetime.utcnow(),
+        granted_at=utc_now(),
         revoked_at=None,
     )
     db_session.add(membership)
@@ -97,7 +98,7 @@ def seeded_incident(db_session: Session, seeded_team: Team) -> Incident:
         location="Cinder Valley South Fork",
         notes="Subject overdue from day hike.",
         active=True,
-        created_at=datetime.utcnow(),
+        created_at=utc_now(),
         responses=[
             ResponseRecord(
                 name="Nora E.",

@@ -18,7 +18,7 @@ class TeamAdminHomeScreen extends StatefulWidget {
 class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
   final repository = TeamAdminRepository();
   TeamAdminTeam team = const TeamAdminTeam(
-    id: 0,
+    publicId: 'team_loading',
     name: 'Loading team',
     organization: 'MissionOut',
     region: 'Current team scope',
@@ -279,7 +279,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
     }
 
     try {
-      final updatedTeam = await repository.updateMember(member.id, draft);
+      final updatedTeam = await repository.updateMember(member.publicId, draft);
       if (!mounted) {
         return;
       }
@@ -338,7 +338,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
 
     try {
       final updatedTeam = await repository.setMemberActive(
-        member.id,
+        member.publicId,
         nextState,
       );
       if (!mounted) {

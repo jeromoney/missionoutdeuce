@@ -5,8 +5,10 @@ import '../models/records.dart';
 const demoIncidents = [
   Incident(
     id: 1,
+    publicId: 'incident_injured_climber_demo',
     title: 'Injured Climber Extraction',
     team: 'Chaffee SAR',
+    teamPublicId: 'team_chaffee_sar_demo',
     location: 'Mt. Princeton Southwest Gully',
     created: '8 min ago',
     notes:
@@ -40,8 +42,10 @@ const demoIncidents = [
   ),
   Incident(
     id: 2,
+    publicId: 'incident_overdue_snowmobiler_demo',
     title: 'Overdue Snowmobiler',
     team: 'Summit County Rescue',
+    teamPublicId: 'team_summit_county_rescue_demo',
     location: 'Georgia Pass East Approach',
     created: '21 min ago',
     notes:
@@ -69,8 +73,10 @@ const demoIncidents = [
   ),
   Incident(
     id: 3,
+    publicId: 'incident_avalanche_report_demo',
     title: 'Avalanche Witness Report',
     team: 'Alpine Rescue',
+    teamPublicId: 'team_alpine_rescue_demo',
     location: 'Monarch Crest Sector 4',
     created: '42 min ago',
     notes:

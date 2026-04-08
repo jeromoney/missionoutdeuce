@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.time import utc_now
 from app.db.session import get_db
 from app.models.team_management import Device, Team, TeamMembership, User
 from app.schemas.team_management import DeviceRead, TeamMemberCreate, TeamMemberRead, TeamMemberUpdate
@@ -12,8 +13,8 @@ from app.schemas.team_management import DeviceRead, TeamMemberCreate, TeamMember
 router = APIRouter(prefix="/teams", tags=["teams"])
 
 
-def _get_team_or_404(team_id: int, db: Session) -> Team:
-    team = db.get(Team, team_id)
+def _get_team_or_404(team_public_id: str, db: Session) -> Team:
+    team = db.scalar(select(Team).where(Team.public_id == team_public_id))
     if team is None:
         raise HTTPException(status_code=404, detail="Team not found")
     return team
@@ -21,9 +22,9 @@ def _get_team_or_404(team_id: int, db: Session) -> Team:
 
 def _serialize_membership(membership: TeamMembership) -> TeamMemberRead:
     return TeamMemberRead(
-        id=membership.id,
-        user_id=membership.user_id,
-        team_id=membership.team_id,
+        public_id=membership.public_id,
+        user_public_id=membership.user.public_id,
+        team_public_id=membership.team.public_id,
         name=membership.user.name,
         email=membership.user.email,
         phone=membership.user.phone,
@@ -34,25 +35,25 @@ def _serialize_membership(membership: TeamMembership) -> TeamMemberRead:
     )
 
 
-@router.get("/{team_id}/members", response_model=list[TeamMemberRead])
-def list_team_members(team_id: int, db: Session = Depends(get_db)):
-    _get_team_or_404(team_id, db)
+@router.get("/{team_public_id}/members", response_model=list[TeamMemberRead])
+def list_team_members(team_public_id: str, db: Session = Depends(get_db)):
+    team = _get_team_or_404(team_public_id, db)
     memberships = db.scalars(
         select(TeamMembership)
-        .options(joinedload(TeamMembership.user))
-        .where(TeamMembership.team_id == team_id)
+        .options(joinedload(TeamMembership.user), joinedload(TeamMembership.team))
+        .where(TeamMembership.team_id == team.id)
         .order_by(TeamMembership.id.asc())
     ).all()
     return [_serialize_membership(membership) for membership in memberships]
 
 
-@router.post("/{team_id}/members", response_model=TeamMemberRead, status_code=201)
+@router.post("/{team_public_id}/members", response_model=TeamMemberRead, status_code=201)
 def create_team_member(
-    team_id: int,
+    team_public_id: str,
     payload: TeamMemberCreate,
     db: Session = Depends(get_db),
 ):
-    _get_team_or_404(team_id, db)
+    team = _get_team_or_404(team_public_id, db)
 
     user = db.scalar(select(User).where(User.email == payload.email))
     if user is None:
@@ -71,7 +72,7 @@ def create_team_member(
 
     existing_membership = db.scalar(
         select(TeamMembership).where(
-            TeamMembership.team_id == team_id,
+            TeamMembership.team_id == team.id,
             TeamMembership.user_id == user.id,
         )
     )
@@ -80,36 +81,36 @@ def create_team_member(
 
     membership = TeamMembership(
         user_id=user.id,
-        team_id=team_id,
+        team_id=team.id,
         roles=payload.roles,
         is_active=payload.is_active,
-        revoked_at=None if payload.is_active else datetime.utcnow(),
+        revoked_at=None if payload.is_active else utc_now(),
     )
     db.add(membership)
     db.commit()
     db.refresh(membership)
     membership = db.scalar(
         select(TeamMembership)
-        .options(joinedload(TeamMembership.user))
+        .options(joinedload(TeamMembership.user), joinedload(TeamMembership.team))
         .where(TeamMembership.id == membership.id)
     )
     return _serialize_membership(membership)
 
 
-@router.patch("/{team_id}/members/{membership_id}", response_model=TeamMemberRead)
+@router.patch("/{team_public_id}/members/{membership_public_id}", response_model=TeamMemberRead)
 def update_team_member(
-    team_id: int,
-    membership_id: int,
+    team_public_id: str,
+    membership_public_id: str,
     payload: TeamMemberUpdate,
     db: Session = Depends(get_db),
 ):
-    _get_team_or_404(team_id, db)
+    team = _get_team_or_404(team_public_id, db)
     membership = db.scalar(
         select(TeamMembership)
-        .options(joinedload(TeamMembership.user))
+        .options(joinedload(TeamMembership.user), joinedload(TeamMembership.team))
         .where(
-            TeamMembership.id == membership_id,
-            TeamMembership.team_id == team_id,
+            TeamMembership.public_id == membership_public_id,
+            TeamMembership.team_id == team.id,
         )
     )
     if membership is None:
@@ -121,28 +122,28 @@ def update_team_member(
     if payload.is_active is not None:
         membership.is_active = payload.is_active
         membership.user.is_active = payload.is_active
-        membership.revoked_at = None if payload.is_active else datetime.utcnow()
+        membership.revoked_at = None if payload.is_active else utc_now()
 
     db.commit()
     db.refresh(membership)
     return _serialize_membership(membership)
 
 
-@router.get("/{team_id}/devices", response_model=list[DeviceRead])
-def list_team_devices(team_id: int, db: Session = Depends(get_db)):
-    _get_team_or_404(team_id, db)
+@router.get("/{team_public_id}/devices", response_model=list[DeviceRead])
+def list_team_devices(team_public_id: str, db: Session = Depends(get_db)):
+    team = _get_team_or_404(team_public_id, db)
     devices = db.scalars(
         select(Device)
         .join(Device.user)
         .join(User.memberships)
         .options(joinedload(Device.user))
-        .where(TeamMembership.team_id == team_id)
+        .where(TeamMembership.team_id == team.id)
         .order_by(Device.last_seen.desc())
     ).all()
     return [
         DeviceRead(
-            id=device.id,
-            user_id=device.user_id,
+            public_id=device.public_id,
+            user_public_id=device.user.public_id,
             user_name=device.user.name,
             platform=device.platform,
             push_token=device.push_token,

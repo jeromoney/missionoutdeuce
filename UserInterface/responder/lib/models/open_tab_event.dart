@@ -4,15 +4,15 @@ class OpenTabEvent {
   const OpenTabEvent({
     required this.type,
     required this.title,
-    this.incidentId,
-    this.teamId,
+    this.incidentPublicId,
+    this.teamPublicId,
     this.created,
   });
 
   final String type;
   final String title;
-  final int? incidentId;
-  final int? teamId;
+  final String? incidentPublicId;
+  final String? teamPublicId;
   final DateTime? created;
 
   bool get isIncidentCreated => type == 'incident.created';
@@ -31,8 +31,8 @@ class OpenTabEvent {
     return OpenTabEvent(
       type: type,
       title: decoded['title'] as String? ?? 'Mission update',
-      incidentId: decoded['incident_id'] as int?,
-      teamId: decoded['team_id'] as int?,
+      incidentPublicId: decoded['incident_public_id'] as String?,
+      teamPublicId: decoded['team_public_id'] as String?,
       created: DateTime.tryParse(decoded['created'] as String? ?? ''),
     );
   }

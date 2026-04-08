@@ -1,17 +1,17 @@
 class AuthTeamMembership {
   const AuthTeamMembership({
-    required this.teamId,
+    required this.teamPublicId,
     required this.teamName,
     required this.roles,
   });
 
-  final int teamId;
+  final String teamPublicId;
   final String teamName;
   final List<String> roles;
 
   Map<String, dynamic> toJson() {
     return {
-      'team_id': teamId,
+      'team_public_id': teamPublicId,
       'team_name': teamName,
       'roles': roles,
     };
@@ -23,7 +23,7 @@ class AuthTeamMembership {
         .toList();
 
     return AuthTeamMembership(
-      teamId: json['team_id'] as int? ?? 0,
+      teamPublicId: json['team_public_id'] as String? ?? '',
       teamName: json['team_name'] as String? ?? 'Unknown Team',
       roles: roles,
     );
@@ -32,6 +32,7 @@ class AuthTeamMembership {
 
 class AuthUser {
   const AuthUser({
+    required this.publicId,
     required this.name,
     required this.initials,
     required this.role,
@@ -40,6 +41,7 @@ class AuthUser {
     this.teamMemberships = const [],
   });
 
+  final String publicId;
   final String name;
   final String initials;
   final String role;
@@ -63,6 +65,7 @@ class AuthUser {
             .toList();
 
     return AuthUser(
+      publicId: json['public_id'] as String? ?? '',
       name: json['name'] as String? ?? 'Unknown User',
       initials: json['initials'] as String? ?? '--',
       role:
@@ -80,6 +83,7 @@ class AuthUser {
   }
 
   AuthUser copyWith({
+    String? publicId,
     String? name,
     String? initials,
     String? role,
@@ -88,6 +92,7 @@ class AuthUser {
     List<AuthTeamMembership>? teamMemberships,
   }) {
     return AuthUser(
+      publicId: publicId ?? this.publicId,
       name: name ?? this.name,
       initials: initials ?? this.initials,
       role: role ?? this.role,
@@ -99,12 +104,15 @@ class AuthUser {
 
   Map<String, dynamic> toJson() {
     return {
+      'public_id': publicId,
       'name': name,
       'initials': initials,
       'role': role,
       'email': email,
       'global_permissions': globalPermissions,
-      'team_memberships': teamMemberships.map((membership) => membership.toJson()).toList(),
+      'team_memberships': teamMemberships
+          .map((membership) => membership.toJson())
+          .toList(),
     };
   }
 }

@@ -18,9 +18,9 @@ class TeamMemberUpdate(BaseModel):
 
 
 class TeamMemberRead(BaseModel):
-    id: int
-    user_id: int
-    team_id: int
+    public_id: str
+    user_public_id: str
+    team_public_id: str
     name: str
     email: str
     phone: str
@@ -31,8 +31,8 @@ class TeamMemberRead(BaseModel):
 
 
 class DeviceRead(BaseModel):
-    id: int
-    user_id: int
+    public_id: str
+    user_public_id: str
     user_name: str
     platform: str
     push_token: str
@@ -51,7 +51,7 @@ class WebPushSubscriptionCreate(BaseModel):
     keys: WebPushKeys
     user_agent: str = ""
     client: Literal["responder", "dispatcher", "team_admin"]
-    team_id: int | None = None
+    team_public_id: str | None = None
 
 
 class WebPushSubscriptionDelete(BaseModel):
@@ -59,9 +59,9 @@ class WebPushSubscriptionDelete(BaseModel):
 
 
 class WebPushSubscriptionRead(BaseModel):
-    id: int
-    user_id: int
-    team_id: int | None
+    public_id: str
+    user_public_id: str
+    team_public_id: str | None
     platform: Literal["web"] = "web"
     endpoint: str
     client: str

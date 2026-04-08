@@ -6,10 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 import requests
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
+from app.core.time import ensure_utc, utc_now
 from app.db.session import get_db
 from app.models.team_management import EmailCodeToken, TeamMembership, User
 from app.schemas.auth import (
@@ -48,7 +49,7 @@ def _build_auth_user_read(*, email: str, name: str, user: User | None) -> AuthUs
         ]
         team_memberships = [
             AuthTeamMembershipRead(
-                team_id=membership.team_id,
+                team_public_id=membership.team.public_id,
                 team_name=membership.team.name,
                 roles=list(membership.roles),
             )
@@ -56,6 +57,7 @@ def _build_auth_user_read(*, email: str, name: str, user: User | None) -> AuthUs
         ]
 
     return AuthUserRead(
+        public_id=user.public_id if user is not None else "",
         name=name,
         initials=initials,
         global_permissions=[],
@@ -92,6 +94,14 @@ def _load_or_create_user(*, db: Session, email: str, name: str) -> User:
         )
 
     return user
+
+
+def _load_existing_user(*, db: Session, email: str) -> User | None:
+    return db.scalar(
+        select(User)
+        .options(selectinload(User.memberships).selectinload(TeamMembership.team))
+        .where(User.email == email)
+    )
 
 
 def _normalize_email(email: str) -> str:
@@ -159,6 +169,25 @@ def _send_email_code_via_resend(*, recipient_email: str, code: str, requested_cl
         raise HTTPException(
             status_code=502,
             detail="Resend email delivery failed.",
+        )
+
+
+def _enforce_email_code_rate_limit(*, db: Session, normalized_email: str) -> None:
+    now = utc_now()
+    window_start = now - timedelta(minutes=settings.email_code_rate_limit_window_minutes)
+    recent_attempt_count = db.scalar(
+        select(func.count(EmailCodeToken.id)).where(
+            EmailCodeToken.email == normalized_email,
+            EmailCodeToken.created_at >= window_start,
+        )
+    )
+    if recent_attempt_count is not None and recent_attempt_count >= settings.email_code_rate_limit_attempts:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "Too many email sign-in code requests. "
+                "Please wait before requesting another code."
+            ),
         )
 
 
@@ -252,24 +281,28 @@ def _verify_google_identity(payload: GoogleAuthRequest) -> dict:
     ),
 )
 def request_email_code(payload: EmailCodeRequest, db: Session = Depends(get_db)):
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.email_code_expires_in_minutes)
     normalized_email = _normalize_email(payload.email)
-    upper_bound = 10 ** settings.email_code_length
-    raw_code = f"{secrets.randbelow(upper_bound):0{settings.email_code_length}d}"
-    token_record = EmailCodeToken(
-        email=normalized_email,
-        code_hash=_hash_email_code(email=normalized_email, code=raw_code),
-        requested_client=payload.requested_client,
-        expires_at=expires_at,
-    )
-    db.add(token_record)
+    user = _load_existing_user(db=db, email=normalized_email)
+    if user is not None and user.is_active:
+        _enforce_email_code_rate_limit(db=db, normalized_email=normalized_email)
 
-    _send_email_code_via_resend(
-        recipient_email=payload.email,
-        code=raw_code,
-        requested_client=payload.requested_client,
-    )
-    db.commit()
+        expires_at = utc_now() + timedelta(minutes=settings.email_code_expires_in_minutes)
+        upper_bound = 10 ** settings.email_code_length
+        raw_code = f"{secrets.randbelow(upper_bound):0{settings.email_code_length}d}"
+        token_record = EmailCodeToken(
+            email=normalized_email,
+            code_hash=_hash_email_code(email=normalized_email, code=raw_code),
+            requested_client=payload.requested_client,
+            expires_at=expires_at,
+        )
+        db.add(token_record)
+
+        _send_email_code_via_resend(
+            recipient_email=payload.email,
+            code=raw_code,
+            requested_client=payload.requested_client,
+        )
+        db.commit()
 
     return EmailCodeSentRead(
         email=payload.email,
@@ -301,18 +334,16 @@ def verify_email_code(payload: EmailCodeVerifyRequest, db: Session = Depends(get
     if token_record is None:
         raise HTTPException(status_code=401, detail="Invalid email sign-in code.")
 
-    now = datetime.utcnow()
+    now = utc_now()
     if token_record.consumed_at is not None:
         raise HTTPException(status_code=401, detail="Email sign-in code has already been used.")
-    if token_record.expires_at < now:
+    if ensure_utc(token_record.expires_at) < now:
         raise HTTPException(status_code=401, detail="Email sign-in code has expired.")
 
     email = token_record.email
-    user = _load_or_create_user(
-        db=db,
-        email=email,
-        name=email.split("@", 1)[0].replace(".", " ").title() or email,
-    )
+    user = _load_existing_user(db=db, email=email)
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=401, detail="Invalid email sign-in code.")
     token_record.consumed_at = now
     db.commit()
 

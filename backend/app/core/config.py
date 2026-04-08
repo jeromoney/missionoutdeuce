@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     debug: bool = False
     google_client_id: str | None = None
     email_code_length: int = 6
+    email_code_rate_limit_attempts: int = 5
+    email_code_rate_limit_window_minutes: int = 15
     email_code_expires_in_minutes: int = Field(
         default=15,
         validation_alias=AliasChoices(

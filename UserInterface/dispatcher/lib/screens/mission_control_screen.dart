@@ -193,12 +193,22 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
     }
 
     try {
+      final memberships = widget.auth.currentUser?.teamMemberships ?? const [];
+      final teamPublicId = memberships.isNotEmpty
+          ? memberships.first.teamPublicId
+          : '';
+      if (teamPublicId.isEmpty) {
+        throw Exception(
+          'No team_public_id available for dispatcher incident creation.',
+        );
+      }
       final newIncident = await api.createIncident(
         draft,
+        teamPublicId: teamPublicId,
         userEmail: widget.auth.currentUser?.email,
       );
       debugPrint(
-        '[Dispatcher] Incident created: id=${newIncident.id}, title=${newIncident.title}',
+        '[Dispatcher] Incident created: public_id=${newIncident.publicId}, title=${newIncident.title}',
       );
       if (!mounted) {
         return;
@@ -233,11 +243,11 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
 
     try {
       final updatedIncident = await api.updateIncident(
-        incidents[selected].id,
+        incidents[selected].publicId,
         update,
       );
       debugPrint(
-        '[Dispatcher] Incident updated: id=${updatedIncident.id}, title=${updatedIncident.title}',
+        '[Dispatcher] Incident updated: public_id=${updatedIncident.publicId}, title=${updatedIncident.title}',
       );
       if (!mounted) {
         return;

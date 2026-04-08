@@ -38,7 +38,11 @@ class MissionOutApi {
     );
   }
 
-  Future<Incident> createIncident(IncidentDraft draft, {String? userEmail}) async {
+  Future<Incident> createIncident(
+    IncidentDraft draft, {
+    required String teamPublicId,
+    String? userEmail,
+  }) async {
     final response = await _client.post(
       Uri.parse('$_baseUrl/incidents'),
       headers: {
@@ -47,7 +51,7 @@ class MissionOutApi {
       },
       body: jsonEncode({
         'title': draft.title,
-        'team': draft.team,
+        'team_public_id': teamPublicId,
         'location': draft.location,
         'notes': draft.notes,
         'active': true,
@@ -57,9 +61,12 @@ class MissionOutApi {
     return _decodeIncidentResponse(response, 'create incident');
   }
 
-  Future<Incident> updateIncident(int incidentId, IncidentUpdate update) async {
+  Future<Incident> updateIncident(
+    String incidentPublicId,
+    IncidentUpdate update,
+  ) async {
     final response = await _client.patch(
-      Uri.parse('$_baseUrl/incidents/$incidentId'),
+      Uri.parse('$_baseUrl/incidents/$incidentPublicId'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'title': update.title,

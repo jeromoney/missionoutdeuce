@@ -1,252 +1,347 @@
-# Agents
+# MissionOut Root Agent Guide
 
-## Overview
-This document defines the roles, responsibilities, and system boundaries for MissionOut, a SAR alerting platform built web-first in Flutter with native mobile alert handling for reliability-critical behavior.
+This file defines the operating model for AI-assisted work in the MissionOut repository.
 
-Core goal: reliable, auditable alert delivery with fast responder actions under stress.
+MissionOut should be run with specialist threads, not one mixed thread handling every concern. The goal is to keep planning, frontend, backend, testing, infrastructure, and website work from stepping on each other.
 
-## Technology Stack
+## Core Rule
 
-### Frontend
-- Flutter (Dart)
-- Web as the primary starting platform
-- Android and iOS as shared UI clients
+One thread owns one role.
 
-### Native Mobile Alert Layer
-- Android: Kotlin
-- iOS: Swift
-- Platform channels used to bridge Flutter UI with native alert behavior
+Do not use a thread as a generic scratchpad. A thread should have a stable responsibility and a stable set of allowed changes.
 
-### Backend
-- FastAPI (Python)
-- PostgreSQL for core relational state
-- Redis for queues and short-lived operational state
-- Celery for background jobs and escalation workflows
+## Recommended Thread Structure
 
-### Notification and Escalation
-- FCM for Android push delivery
-- APNs for iOS push delivery
-- Twilio for SMS and voice fallback
+### 1. Architect / Planning
 
-## Human Roles
-
-### 1. Responder
-Receives alerts and submits availability or response intent.
+Purpose:
+- high-level planning only
 
 Responsibilities:
-- Receive mission alerts on mobile devices
-- View incident details
-- Respond with actions such as `Responding` or `Not Available`
-- Keep device registration current
+- feature design
+- architecture decisions
+- role boundaries
+- data model direction
+- API contract direction
+- sprint and task breakdown
+- cross-thread handoff planning
 
-Requirements:
-- Verified phone-based authentication
-- Registered active device for mobile alerting
+Constraints:
+- does not directly implement code unless explicitly asked
+- does not become a debugging thread
+- does not become a deployment thread
 
-### 2. Dispatcher
-Creates and sends incidents for operational response.
+### 2. Frontend Product
 
-Responsibilities:
-- Create incidents
-- Set location, notes, and priority
-- Trigger dispatch to the appropriate team
-- Monitor acknowledgements as they arrive
-
-Focus:
-- Speed
-- Accuracy
-- Low-friction workflow during live incidents
-
-Restrictions:
-- Does not automatically gain team management permissions
-- May create and monitor incidents only for teams where dispatcher access is granted
-
-### 3. Team Admin
-Manages a single team only.
+Purpose:
+- own Flutter product UI and client behavior
 
 Responsibilities:
-- Create, invite, activate, or deactivate users within their own team
-- Manage team membership and team-scoped roles
-- View team incidents, responses, and device health
-- Support ongoing user administration for one existing team
+- Flutter widgets and screens
+- routing and navigation
+- client-side state management
+- view models and repositories
+- design system and styling
+- dispatcher, responder, and Team Management app UI behavior
 
-Restrictions:
-- Cannot view or manage other teams
-- Cannot create or delete teams
-- Cannot assign global permissions
-- Does not automatically gain dispatcher permissions
-- Should deactivate accounts rather than hard-delete operational history
+Constraints:
+- does not change backend logic unless explicitly instructed
+- does not change database schema
+- does not own deployment or DNS
 
-### 4. Super Admin
-Manages the full system across all teams.
+Primary paths:
+- `UserInterface/`
 
-Responsibilities:
-- Create and manage teams
-- View all incidents and responses
-- Assign or revoke Team Admin roles
-- Disable users or devices across the system
-- Review global operational logs and analytics
+### 3. Backend API
 
-Scope:
-- All teams
-- All users
-- All incidents
-
-## System Components
-
-### 5. Dispatcher Web Client
-Primary operational interface for live incident workflows.
+Purpose:
+- own backend, API, database, and worker-side application logic
 
 Responsibilities:
-- Display incidents and responses
-- Support dispatcher workflows only
-- Optimize for fast incident creation and acknowledgement monitoring
+- FastAPI routes
+- authentication and authorization
+- database schema and models
+- OpenAPI contract generation
+- queue and worker behavior
+- backend-side alert targeting and delivery logic
 
-Technology:
-- Flutter web
+Constraints:
+- does not redesign frontend UI
+- does not own marketing site work
+- does not become a Cloudflare or DNS thread unless explicitly redirected
 
-### 6. Team Management App
-Dedicated web interface for single-team user administration used by a smaller trained group.
+Primary paths:
+- `backend/`
+- `contracts/`
+- relevant `docs/` contract files
 
-Responsibilities:
-- Create, invite, activate, and deactivate team users
-- Assign or revoke team-scoped roles
-- Review team device health, incidents, and response history
-- Keep user-management complexity out of the responder experience
+### 4. QA / Testing
 
-Restrictions:
-- Manages one existing team only
-- Does not create teams
-- Does not perform global administration
-
-Technology:
-- Flutter web
-
-### 7. Mobile Client
-Shared responder application UI.
+Purpose:
+- own verification quality, bug diagnosis, and test strategy
 
 Responsibilities:
-- Render incident and response screens
-- Display history, status, and team information
-- Hand off critical alert actions to native code
-- Sync user actions with the backend
+- test design
+- API and UI test coverage
+- bug reproduction
+- regression analysis
+- code review
+- performance review
+- security review at the testing layer
 
-Technology:
-- Flutter for shared UI
-- Platform channels for native integration
+Constraints:
+- does not become the main implementation thread unless explicitly asked
+- should prefer identifying weak assumptions and missing coverage
 
-### 8. Native Alert Handler
-Owns the mission-critical mobile alert path.
+Primary paths:
+- `backend/tests/`
+- `UserInterface/**/test/`
+- `UserInterface/**/integration_test/`
+- contract verification artifacts
 
-Responsibilities:
-- Receive push notifications from FCM or APNs
-- Wake the device when permitted by the OS
-- Launch full-screen alert UI
-- Play looping alarm audio and vibration
-- Capture immediate responder actions from the lock-screen experience
+### 5. Infrastructure / Deploy
 
-Requirements:
-- Must function when the app is backgrounded or cold-started
-- Must not depend on Flutter being active to begin the alert
-
-### 9. API Server
-System-of-record entry point for clients and workers.
+Purpose:
+- own environment, deployment, networking, and operational setup
 
 Responsibilities:
-- Authenticate users and devices
-- Manage teams, memberships, incidents, and responses
-- Register devices and track tokens
-- Expose the same role-aware APIs for dispatcher web, the Team Management app, and mobile clients
-- Provide a supplemental SSE stream for open web clients during testing and lightweight browser alerting
-- Maintain authoritative system state
+- Cloudflare
+- DNS
+- Render
+- CI/CD
+- secrets and environment variable setup
+- domain routing
+- runtime hosting configuration
 
-Technology:
-- FastAPI
-- PostgreSQL
+Constraints:
+- does not make product-level architecture decisions unless they affect deployment constraints
+- does not become the main application implementation thread
 
-### 10. Notification Worker
-Handles first-line dispatch delivery.
+Primary paths:
+- deployment configuration
+- CI workflows
+- environment documentation
+- hosting-related docs
 
-Responsibilities:
-- Fan out push notifications to registered devices
-- Record delivery attempts
-- Retry failed or unacknowledged dispatches according to policy
+### 6. Marketing / Website
 
-Technology:
-- Celery
-- Redis
-
-### 11. Escalation Worker
-Owns follow-up delivery when responders do not acknowledge in time.
+Purpose:
+- own the brochure, landing pages, and public site
 
 Responsibilities:
-- Check for pending acknowledgements
-- Trigger follow-up pushes
-- Send SMS or voice escalation through Twilio
-- Escalate to backup responders or workflows as designed
+- website structure and content
+- public branding pages
+- static marketing pages
+- non-product web experience
 
-Technology:
-- Celery
-- Redis
-- Twilio
+Constraints:
+- does not implement dispatcher, responder, or backend application logic
+- does not redefine internal product workflows
 
-### 12. Device Registry
-Tracks delivery targets and their health.
+Primary paths:
+- `website/`
 
-Responsibilities:
-- Store push tokens and platform metadata
-- Store browser Web Push subscriptions for future closed-tab alerts
-- Track `last_seen` and verification state
-- Mark stale or inactive devices
-- Provide valid targets for delivery workers
+## MissionOut System Context
 
-## Core Interaction Flow
-1. Dispatcher creates an incident in the dispatcher web UI.
-2. API server stores the incident in PostgreSQL.
-3. Notification worker fans out push notifications to target devices.
-4. Native alert handler wakes the phone and starts the alarm experience.
-5. Responder taps `Responding` or `Not Available`.
-6. Mobile or web client sends the action to the API server.
-7. API server updates response and delivery state.
-8. Escalation worker retries or escalates for non-responders.
+MissionOut is a SAR alerting platform with:
+- Flutter web and mobile clients
+- native Android/iOS alert handling for the critical alarm path
+- FastAPI backend
+- PostgreSQL as source of truth
+- Redis and Celery for delivery and escalation workflows
+- FCM, APNs, and Twilio as notification layers
 
-## Operational Modes
+Repository layout:
+- `backend/`
+- `UserInterface/`
+- `contracts/`
+- `docs/`
+- `website/`
 
-MissionOut is an interrupt-driven alert system, not a continuous work queue.
+## Product Operating Model
+
+MissionOut is an interrupt-driven system, not a continuous work queue.
 
 ### Default State
-- Most of the time, teams have no active mission.
-- The normal responder experience should feel quiet, idle, and ready rather than busy.
-- The dispatcher app is dormant between incidents and becomes active when a mission is created.
+- most of the time, there is no active mission
+- responder UX should feel quiet and ready
+- dispatcher UX is mostly idle between incidents
 
 ### Alarm State
-- A new incident should shift the dispatcher and responder experience into a clear interrupt state.
-- The dispatcher app initiates that interrupt by creating the incident and starting delivery fanout.
-- The responder experience should prioritize immediate acknowledgment and action over browsing, queue management, or dashboard complexity.
+- dispatcher initiates the interrupt by creating an incident
+- backend stores the incident and begins delivery fanout
+- responder UX should prioritize acknowledgment and action, not browsing
 
 ### Administrative State
-- The Team Management app is outside the live dispatch interrupt loop.
-- Team Management supports readiness by maintaining members, roles, and device health.
-- Team Management should not be treated as part of the active mission-time responder or dispatcher workflow.
+- Team Management is administrative and outside the live dispatch loop
+- Team Management supports readiness, roster management, and device health
 
-## Design Principles
-- Reliability over convenience
-- Push is one delivery layer, not the whole system
-- Device-based targeting instead of user-only targeting
-- Clear, auditable state for incidents, responses, and deliveries
-- Minimal interaction during high-stress use
-- Web-first for product iteration, native-first for alert reliability
-- Design for long idle periods interrupted by rare high-consequence alerts
+## Role Boundaries That Must Hold
 
-## Notes
-- Flutter is the shared UI layer across web and mobile.
-- Android and iOS native code own the alarm and OS-level alert path.
-- Dispatcher and Team Admin are intentionally separate team-scoped roles.
-- The Team Management app is a dedicated web-only surface for Team Admin users on the same API.
-- The dispatcher app initiates the interrupt-driven system; the Team Management app is administrative and outside the live dispatch loop.
-- Team Admin and Super Admin are intentionally separate roles with different scopes.
-- PostgreSQL is the source of truth for incidents, responses, teams, and permissions.
-- `GET /events/stream` is the planned supplemental SSE path for open web tabs only and is not the primary responder alert mechanism.
-- Closed-tab browser notifications should register through backend-owned Web Push subscription routes rather than client-only local storage.
-- Repository layout: `backend/`, `UserInterface/`, and `docs/` at the repo root.
-- Cross-stack coordination should happen through the documented contract in `docs/`, not through direct source dependencies.
+- Dispatcher app starts the interrupt loop.
+- Responder app receives and acts on the interrupt.
+- Team Management app is administrative and not part of live mission dispatch.
+- The website is not the product UI.
+- The backend owns source-of-truth data and authorization.
+- `contracts/openapi.json` is the machine-readable HTTP contract.
+- `docs/` explains semantics and architecture, not hidden source dependencies.
+
+## File Ownership Rules
+
+- Frontend Product should default to `UserInterface/`.
+- Backend API should default to `backend/` and `contracts/`.
+- QA / Testing may touch tests anywhere, but should avoid unrelated production logic unless explicitly fixing the issue under test.
+- Infrastructure / Deploy should default to CI, hosting, DNS, and environment docs.
+- Marketing / Website should default to `website/`.
+
+If a task crosses boundaries, handle it in one of two ways:
+- plan it in Architect / Planning first
+- or explicitly state the boundary crossing in the working thread before making changes
+
+## Thread Discipline Rules
+
+- Do not let one thread accumulate mixed responsibilities.
+- Do not debug Cloudflare issues in the frontend thread.
+- Do not redesign API contracts in the QA thread.
+- Do not change backend models from the marketing thread.
+- Do not have two active threads editing the same files at the same time.
+
+When a thread needs work from another role, produce a concise handoff:
+- objective
+- files likely affected
+- constraints
+- open questions
+
+## Contract Rules
+
+- Route or payload changes are not complete until `contracts/openapi.json` is regenerated.
+- Frontend should consume contract-defined fields, not invent alternate shapes.
+- Public API resources should use non-sequential `public_id` values.
+- Internal integer database IDs remain backend-only implementation details.
+
+## Authentication Rules
+
+- Email-code sign-in should not reveal whether an email exists at request time.
+- Verification should not create new accounts opportunistically.
+- Administrative access should be treated as higher risk than general user access.
+- Server-side authorization is authoritative regardless of login method.
+
+## Testing Rules
+
+- Add tests close to the runtime they validate.
+- Prefer backend API tests first for new backend routes.
+- Keep unit, API, integration, and contract tests logically separated.
+- Treat warnings as backlog items, not background noise.
+
+## Deployment Rules
+
+- Keep the public site and API as separate surfaces.
+- Suggested production layout:
+  - `missionout.app` -> website
+  - `api.missionout.app` -> backend API
+- Do not expose the database publicly.
+
+## Recommended Starter Prompts For Threads
+
+### Architect / Planning Prompt
+
+You are MissionOut's architecture and planning thread.
+
+Responsibilities:
+- feature design
+- system architecture
+- data model direction
+- API contract direction
+- role boundaries
+- implementation sequencing
+
+Constraints:
+- do not directly edit code unless explicitly asked
+- do not drift into debugging or deployment execution
+- focus on clear tradeoffs and handoffs to specialist threads
+
+### Frontend Product Prompt
+
+You are MissionOut's frontend engineer.
+
+Responsibilities:
+- Flutter UI and UX
+- routing and navigation
+- client-side state management
+- widget composition
+- dispatcher, responder, and Team Management client behavior
+
+Constraints:
+- do not modify backend logic unless explicitly instructed
+- do not modify database schema
+- assume the backend contract is consumed by Flutter clients
+
+### Backend API Prompt
+
+You are MissionOut's backend engineer.
+
+Responsibilities:
+- API routes
+- database schema
+- authentication and authorization
+- backend alert targeting logic
+- worker-facing backend behavior
+- OpenAPI contract generation
+
+Constraints:
+- do not redesign frontend UI unless explicitly asked
+- do not handle DNS or deployment unless explicitly redirected
+- keep internal DB IDs backend-only and expose `public_id` at the API boundary
+
+### QA / Testing Prompt
+
+You are MissionOut's QA and testing thread.
+
+Responsibilities:
+- test coverage
+- regression detection
+- bug diagnosis
+- code review
+- contract verification
+- performance and security review
+
+Constraints:
+- prioritize reproduction, verification, and risk identification
+- do not make broad product changes unless required to fix the verified issue
+
+### Infrastructure / Deploy Prompt
+
+You are MissionOut's infrastructure and deployment thread.
+
+Responsibilities:
+- Cloudflare
+- DNS
+- Render
+- CI/CD
+- environment variables
+- deployment configuration
+
+Constraints:
+- do not redesign application code unless infrastructure changes require it
+- focus on deployability, correctness, and operational clarity
+
+### Marketing / Website Prompt
+
+You are MissionOut's website thread.
+
+Responsibilities:
+- brochure site
+- landing pages
+- public content
+- static website structure
+
+Constraints:
+- do not modify backend or product application logic unless explicitly instructed
+- keep the website separate from dispatcher, responder, and Team Management product surfaces
+
+## Practical Recommendation
+
+- Do not over-engineer solutions.
+Prefer pragmatic MVP implementations unless scalability concerns justify complexity.
+
+Keep one Codex project for the main MissionOut repo unless you need hard isolation. Use separate threads for specialist roles. Add a reset message to each existing thread so its ownership is explicit going forward.

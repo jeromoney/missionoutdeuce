@@ -38,6 +38,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   String availability = 'Available';
   bool loading = true;
   String? loadError;
+  bool submittingResponse = false;
   StreamSubscription<BackupAlert>? alertSubscription;
   StreamSubscription<OpenTabEvent>? openTabEventSubscription;
   BackupAlert? activeBackupAlert;
@@ -60,7 +61,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
       setState(() {
         selected = incidents.isEmpty
             ? 0
-            : alert.incidentIndex.clamp(0, incidents.length - 1) as int;
+            : alert.incidentIndex.clamp(0, incidents.length - 1);
         activeBackupAlert = alert;
       });
     });
@@ -139,6 +140,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                           selectedIncident: selectedIncident!,
                           notifications: backupNotifications,
                           webPush: webPush,
+                          submittingResponse: submittingResponse,
                           onEnableNotifications:
                               backupNotifications.requestPermission,
                           onEnableWebPush: webPush.enable,
@@ -147,6 +149,15 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                                 incidentIndex: selected,
                                 incident: selectedIncident,
                               ),
+                          onResponding: () => _submitResponse(
+                            status: 'Responding',
+                            detail: 'Responder acknowledged and is en route.',
+                          ),
+                          onNotAvailable: () => _submitResponse(
+                            status: 'Not Available',
+                            detail:
+                                'Responder is not available for this mission.',
+                          ),
                           onSelected: (index) {
                             setState(() => selected = index);
                           },
@@ -242,10 +253,10 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
         return;
       }
 
-      final incidentIndex = event.incidentId == null
+      final incidentIndex = event.incidentPublicId == null
           ? -1
           : loadedIncidents.indexWhere(
-              (incident) => incident.id == event.incidentId,
+              (incident) => incident.publicId == event.incidentPublicId,
             );
       final nextSelected = loadedIncidents.isEmpty
           ? 0
@@ -275,6 +286,55 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
 
       setState(() {
         loadError = 'Could not refresh missions after a live event.';
+      });
+    }
+  }
+
+  Future<void> _submitResponse({
+    required String status,
+    required String detail,
+  }) async {
+    if (incidents.isEmpty || submittingResponse) {
+      return;
+    }
+
+    final incident = incidents[selected];
+    if (incident.publicId.isEmpty) {
+      setState(() {
+        loadError =
+            'Could not submit response because the incident public ID is missing.';
+      });
+      return;
+    }
+
+    setState(() {
+      submittingResponse = true;
+      loadError = null;
+    });
+
+    try {
+      await api.submitResponse(
+        incidentPublicId: incident.publicId,
+        status: status,
+        detail: detail,
+        userEmail: widget.auth.currentUser?.email,
+      );
+      await _loadIncidents();
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        loadError = 'Could not submit your responder status.';
+      });
+    } finally {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        submittingResponse = false;
       });
     }
   }
@@ -346,9 +406,12 @@ class _ActiveMissionWorkspace extends StatelessWidget {
     required this.selectedIncident,
     required this.notifications,
     required this.webPush,
+    required this.submittingResponse,
     required this.onEnableNotifications,
     required this.onEnableWebPush,
     required this.onSendTestAlert,
+    required this.onResponding,
+    required this.onNotAvailable,
     required this.onSelected,
   });
 
@@ -359,9 +422,12 @@ class _ActiveMissionWorkspace extends StatelessWidget {
   final ResponderIncident selectedIncident;
   final BackupNotificationService notifications;
   final WebPushService webPush;
+  final bool submittingResponse;
   final Future<void> Function() onEnableNotifications;
   final Future<void> Function() onEnableWebPush;
   final Future<void> Function() onSendTestAlert;
+  final Future<void> Function() onResponding;
+  final Future<void> Function() onNotAvailable;
   final ValueChanged<int> onSelected;
 
   @override
@@ -371,7 +437,12 @@ class _ActiveMissionWorkspace extends StatelessWidget {
         children: [
           SizedBox(
             height: 460,
-            child: _IncidentCard(incident: selectedIncident),
+            child: _IncidentCard(
+              incident: selectedIncident,
+              submittingResponse: submittingResponse,
+              onResponding: onResponding,
+              onNotAvailable: onNotAvailable,
+            ),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -398,7 +469,15 @@ class _ActiveMissionWorkspace extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(flex: 4, child: _IncidentCard(incident: selectedIncident)),
+        Expanded(
+          flex: 4,
+          child: _IncidentCard(
+            incident: selectedIncident,
+            submittingResponse: submittingResponse,
+            onResponding: onResponding,
+            onNotAvailable: onNotAvailable,
+          ),
+        ),
         const SizedBox(width: 16),
         SizedBox(
           width: 360,
@@ -1024,9 +1103,17 @@ class _MissionList extends StatelessWidget {
 }
 
 class _IncidentCard extends StatelessWidget {
-  const _IncidentCard({required this.incident});
+  const _IncidentCard({
+    required this.incident,
+    required this.submittingResponse,
+    required this.onResponding,
+    required this.onNotAvailable,
+  });
 
   final ResponderIncident incident;
+  final bool submittingResponse;
+  final Future<void> Function() onResponding;
+  final Future<void> Function() onNotAvailable;
 
   @override
   Widget build(BuildContext context) {
@@ -1105,15 +1192,15 @@ class _IncidentCard extends StatelessWidget {
             runSpacing: 12,
             children: [
               FilledButton.icon(
-                onPressed: () {},
+                onPressed: submittingResponse ? null : onResponding,
                 style: FilledButton.styleFrom(
                   backgroundColor: ResponderPalette.success,
                 ),
                 icon: const Icon(Icons.directions_run_rounded),
-                label: const Text('Responding'),
+                label: Text(submittingResponse ? 'Saving...' : 'Responding'),
               ),
               OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: submittingResponse ? null : onNotAvailable,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: ResponderPalette.danger,
                 ),

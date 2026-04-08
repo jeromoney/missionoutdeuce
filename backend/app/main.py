@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import auth, devices, events, health, incidents, team_management
 from app.core.config import settings
 from app.db.base import Base
-from app.db.bootstrap import ensure_incident_team_fk
+from app.db.bootstrap import ensure_incident_team_fk, ensure_public_ids
 from app.db.session import engine
 from app.models import (
     DeliveryEvent,
@@ -26,6 +26,7 @@ from app.schemas.meta import RootRead
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
     ensure_incident_team_fk(engine)
+    ensure_public_ids(engine)
     yield
 
 

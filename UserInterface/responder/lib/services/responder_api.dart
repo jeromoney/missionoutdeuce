@@ -41,6 +41,28 @@ class ResponderApi {
         .toList();
   }
 
+  Future<void> submitResponse({
+    required String incidentPublicId,
+    required String status,
+    required String detail,
+    String? userEmail,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$_baseUrl/incidents/$incidentPublicId/responses'),
+      headers: {
+        'Content-Type': 'application/json',
+        ..._headers(userEmail: userEmail),
+      },
+      body: jsonEncode({'status': status, 'detail': detail}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        'Request failed for /incidents/$incidentPublicId/responses (${response.statusCode})',
+      );
+    }
+  }
+
   Map<String, String> _headers({String? userEmail}) {
     final trimmedEmail = userEmail?.trim();
     if (trimmedEmail == null || trimmedEmail.isEmpty) {

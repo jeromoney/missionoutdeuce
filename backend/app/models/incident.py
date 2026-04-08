@@ -3,6 +3,8 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.ids import generate_public_id
+from app.core.time import utc_now
 from app.db.base import Base
 
 
@@ -10,6 +12,7 @@ class Incident(Base):
     __tablename__ = "incidents"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=generate_public_id)
     title: Mapped[str] = mapped_column(String(255))
     team_id: Mapped[int | None] = mapped_column(
         ForeignKey("teams.id", ondelete="RESTRICT"),
@@ -19,7 +22,7 @@ class Incident(Base):
     location: Mapped[str] = mapped_column(String(255))
     notes: Mapped[str] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     team_ref: Mapped["Team | None"] = relationship()
     responses: Mapped[list["ResponseRecord"]] = relationship(

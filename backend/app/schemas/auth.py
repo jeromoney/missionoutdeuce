@@ -35,12 +35,13 @@ class EmailCodeVerifyRequest(BaseModel):
 
 
 class AuthTeamMembershipRead(BaseModel):
-    team_id: int
+    team_public_id: str
     team_name: str
     roles: list[str]
 
 
 class AuthUserRead(BaseModel):
+    public_id: str
     name: str
     initials: str
     global_permissions: list[str]
