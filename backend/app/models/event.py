@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.time import utc_now
 from app.db.base import Base
 
 
@@ -15,4 +16,4 @@ class DeliveryEvent(Base):
     time_label: Mapped[str] = mapped_column(String(50))
     icon: Mapped[str] = mapped_column(String(50), default="notifications")
     color: Mapped[str] = mapped_column(String(20), default="#4F6F95")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)

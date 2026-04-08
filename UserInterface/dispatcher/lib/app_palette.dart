@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 class AppPalette {

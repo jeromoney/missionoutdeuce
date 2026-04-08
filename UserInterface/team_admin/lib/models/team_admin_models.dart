@@ -1,6 +1,6 @@
 class TeamAdminTeam {
   const TeamAdminTeam({
-    required this.id,
+    required this.publicId,
     required this.name,
     required this.organization,
     required this.region,
@@ -11,7 +11,7 @@ class TeamAdminTeam {
     required this.responses,
   });
 
-  final int id;
+  final String publicId;
   final String name;
   final String organization;
   final String region;
@@ -22,7 +22,7 @@ class TeamAdminTeam {
   final List<TeamResponseSummary> responses;
 
   TeamAdminTeam copyWith({
-    int? id,
+    String? publicId,
     String? name,
     String? organization,
     String? region,
@@ -33,7 +33,7 @@ class TeamAdminTeam {
     List<TeamResponseSummary>? responses,
   }) {
     return TeamAdminTeam(
-      id: id ?? this.id,
+      publicId: publicId ?? this.publicId,
       name: name ?? this.name,
       organization: organization ?? this.organization,
       region: region ?? this.region,
@@ -62,7 +62,9 @@ class TeamAdminWorkspace {
 
 class TeamAdminMember {
   const TeamAdminMember({
-    required this.id,
+    required this.publicId,
+    required this.userPublicId,
+    required this.teamPublicId,
     required this.name,
     required this.email,
     required this.phone,
@@ -74,7 +76,9 @@ class TeamAdminMember {
     required this.isActive,
   });
 
-  final int id;
+  final String publicId;
+  final String userPublicId;
+  final String teamPublicId;
   final String name;
   final String email;
   final String phone;
@@ -86,7 +90,9 @@ class TeamAdminMember {
   final bool isActive;
 
   TeamAdminMember copyWith({
-    int? id,
+    String? publicId,
+    String? userPublicId,
+    String? teamPublicId,
     String? name,
     String? email,
     String? phone,
@@ -98,7 +104,9 @@ class TeamAdminMember {
     bool? isActive,
   }) {
     return TeamAdminMember(
-      id: id ?? this.id,
+      publicId: publicId ?? this.publicId,
+      userPublicId: userPublicId ?? this.userPublicId,
+      teamPublicId: teamPublicId ?? this.teamPublicId,
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,
@@ -114,12 +122,16 @@ class TeamAdminMember {
 
 class TeamIncidentSummary {
   const TeamIncidentSummary({
+    required this.publicId,
+    required this.teamPublicId,
     required this.title,
     required this.location,
     required this.state,
     required this.time,
   });
 
+  final String publicId;
+  final String? teamPublicId;
   final String title;
   final String location;
   final String state;

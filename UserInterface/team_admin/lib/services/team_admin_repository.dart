@@ -14,7 +14,7 @@ class TeamAdminRepository {
 
   final http.Client _client;
   final String _baseUrl;
-  int? _currentTeamId;
+  String? _currentTeamPublicId;
   String? _currentTeamName;
   String? _currentUserEmail;
 
@@ -26,13 +26,14 @@ class TeamAdminRepository {
     return host == '127.0.0.1' || host == 'localhost';
   }
 
-
   Future<TeamAdminWorkspace> loadWorkspace({
     List<AuthTeamMembership> memberships = const [],
     String? userEmail,
   }) async {
     _currentUserEmail = userEmail;
-    final teamId = memberships.isNotEmpty ? memberships.first.teamId : 0;
+    final teamPublicId = memberships.isNotEmpty
+        ? memberships.first.teamPublicId
+        : '';
     final preferredTeamName = memberships.isNotEmpty
         ? memberships.first.teamName
         : 'Unassigned team';
@@ -40,8 +41,12 @@ class TeamAdminRepository {
     try {
       final healthFuture = _getMap('/health');
       final incidentsFuture = _getList('/incidents', userEmail: userEmail);
-      final membersFuture = _getOptionalList('/teams/$teamId/members');
-      final devicesFuture = _getOptionalList('/teams/$teamId/devices');
+      final membersFuture = teamPublicId.isEmpty
+          ? Future.value(null)
+          : _getOptionalList('/teams/$teamPublicId/members');
+      final devicesFuture = teamPublicId.isEmpty
+          ? Future.value(null)
+          : _getOptionalList('/teams/$teamPublicId/devices');
 
       final results = await Future.wait([
         healthFuture,
@@ -50,7 +55,6 @@ class TeamAdminRepository {
         devicesFuture,
       ]);
 
-      final health = results[0] as Map<String, dynamic>;
       final incidentJson = results[1] as List<Map<String, dynamic>>;
       final memberJson = results[2] as List<Map<String, dynamic>>?;
       final deviceJson = results[3] as List<Map<String, dynamic>>?;
@@ -60,10 +64,16 @@ class TeamAdminRepository {
       final resolvedTeamName = teamIncidents.isNotEmpty
           ? teamIncidents.first['team'] as String? ?? preferredTeamName
           : preferredTeamName;
+      final resolvedTeamPublicId = teamIncidents.isNotEmpty
+          ? teamIncidents.first['team_public_id'] as String? ??
+                (memberships.isNotEmpty ? memberships.first.teamPublicId : '')
+          : (memberships.isNotEmpty ? memberships.first.teamPublicId : '');
 
       final incidents = teamIncidents
           .map(
             (incident) => TeamIncidentSummary(
+              publicId: incident['public_id'] as String? ?? '',
+              teamPublicId: incident['team_public_id'] as String?,
               title: incident['title'] as String? ?? 'Untitled incident',
               location: incident['location'] as String? ?? 'Unknown location',
               state: (incident['active'] as bool? ?? false)
@@ -94,9 +104,9 @@ class TeamAdminRepository {
             ),
       ];
 
-      final deviceByUserId = {
+      final deviceByUserPublicId = {
         for (final device in deviceJson ?? const <Map<String, dynamic>>[])
-          device['user_id']: device,
+          device['user_public_id']: device,
       };
       final members = memberJson == null
           ? const <TeamAdminMember>[]
@@ -104,23 +114,23 @@ class TeamAdminRepository {
                 .map(
                   (member) => _memberFromJson(
                     member,
-                    deviceByUserId[member['user_id']],
+                    deviceByUserPublicId[member['user_public_id']],
                   ),
                 )
                 .toList();
 
       final liveTeam = _buildTeam(
-        teamId: teamId,
+        teamPublicId: resolvedTeamPublicId,
         teamName: resolvedTeamName,
         members: members,
         incidents: incidents,
         responses: responsesList,
       );
-      _currentTeamId = teamId;
+      _currentTeamPublicId = resolvedTeamPublicId;
       _currentTeamName = resolvedTeamName;
 
       final memberCrudSupported = memberJson != null;
-     
+
       return TeamAdminWorkspace(
         team: liveTeam,
         memberCrudSupported: memberCrudSupported,
@@ -129,7 +139,9 @@ class TeamAdminRepository {
     } catch (error) {
       return TeamAdminWorkspace(
         team: _buildTeam(
-          teamId: teamId,
+          teamPublicId: memberships.isNotEmpty
+              ? memberships.first.teamPublicId
+              : '',
           teamName: preferredTeamName,
           members: const [],
           incidents: const [],
@@ -143,10 +155,13 @@ class TeamAdminRepository {
   }
 
   Future<TeamAdminTeam> createMember(TeamAdminMemberDraft draft) async {
-    final teamId = _requireTeamId();
+    final teamPublicId = _requireTeamPublicId();
     final response = await _client.post(
-      Uri.parse('$_baseUrl/teams/$teamId/members'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('$_baseUrl/teams/$teamPublicId/members'),
+      headers: {
+        'Content-Type': 'application/json',
+        ..._headers(userEmail: _currentUserEmail),
+      },
       body: jsonEncode({
         'name': draft.name,
         'email': draft.email,
@@ -160,17 +175,20 @@ class TeamAdminRepository {
       throw Exception('Failed to create team member (${response.statusCode}).');
     }
 
-    return _reloadTeam(teamId);
+    return _reloadTeam(teamPublicId);
   }
 
   Future<TeamAdminTeam> updateMember(
-    int memberId,
+    String membershipPublicId,
     TeamAdminMemberDraft draft,
   ) async {
-    final teamId = _requireTeamId();
+    final teamPublicId = _requireTeamPublicId();
     final response = await _client.patch(
-      Uri.parse('$_baseUrl/teams/$teamId/members/$memberId'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
+      headers: {
+        'Content-Type': 'application/json',
+        ..._headers(userEmail: _currentUserEmail),
+      },
       body: jsonEncode({'roles': draft.roles, 'is_active': draft.isActive}),
     );
 
@@ -178,14 +196,20 @@ class TeamAdminRepository {
       throw Exception('Failed to update team member (${response.statusCode}).');
     }
 
-    return _reloadTeam(teamId);
+    return _reloadTeam(teamPublicId);
   }
 
-  Future<TeamAdminTeam> setMemberActive(int memberId, bool isActive) async {
-    final teamId = _requireTeamId();
+  Future<TeamAdminTeam> setMemberActive(
+    String membershipPublicId,
+    bool isActive,
+  ) async {
+    final teamPublicId = _requireTeamPublicId();
     final response = await _client.patch(
-      Uri.parse('$_baseUrl/teams/$teamId/members/$memberId'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
+      headers: {
+        'Content-Type': 'application/json',
+        ..._headers(userEmail: _currentUserEmail),
+      },
       body: jsonEncode({'is_active': isActive}),
     );
 
@@ -195,7 +219,7 @@ class TeamAdminRepository {
       );
     }
 
-    return _reloadTeam(teamId);
+    return _reloadTeam(teamPublicId);
   }
 
   Future<List<Map<String, dynamic>>> _getList(
@@ -264,7 +288,9 @@ class TeamAdminRepository {
     final isDeviceActive = device?['is_active'] as bool?;
 
     return TeamAdminMember(
-      id: json['membership_id'] as int? ?? json['id'] as int? ?? 0,
+      publicId: json['public_id'] as String? ?? '',
+      userPublicId: json['user_public_id'] as String? ?? '',
+      teamPublicId: json['team_public_id'] as String? ?? '',
       name: json['name'] as String? ?? 'Unknown member',
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
@@ -281,11 +307,11 @@ class TeamAdminRepository {
     );
   }
 
-  Future<TeamAdminTeam> _reloadTeam(int teamId) async {
+  Future<TeamAdminTeam> _reloadTeam(String teamPublicId) async {
     final workspace = await loadWorkspace(
       memberships: [
         AuthTeamMembership(
-          teamId: teamId,
+          teamPublicId: teamPublicId,
           teamName: _currentTeamName ?? 'Unknown team',
           roles: const [],
         ),
@@ -295,12 +321,12 @@ class TeamAdminRepository {
     return workspace.team;
   }
 
-  int _requireTeamId() {
-    final teamId = _currentTeamId;
-    if (teamId == null) {
+  String _requireTeamPublicId() {
+    final teamPublicId = _currentTeamPublicId;
+    if (teamPublicId == null || teamPublicId.isEmpty) {
       throw Exception('Team context is not loaded yet.');
     }
-    return teamId;
+    return teamPublicId;
   }
 
   String _deviceHealthLabel({
@@ -333,14 +359,14 @@ class TeamAdminRepository {
   }
 
   TeamAdminTeam _buildTeam({
-    required int teamId,
+    required String teamPublicId,
     required String teamName,
     required List<TeamAdminMember> members,
     required List<TeamIncidentSummary> incidents,
     required List<TeamResponseSummary> responses,
   }) {
     return TeamAdminTeam(
-      id: teamId,
+      publicId: teamPublicId,
       name: teamName,
       organization: 'MissionOut',
       region: 'Current team scope',

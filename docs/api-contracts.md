@@ -19,6 +19,7 @@ This file exists to explain the intent, ownership, and usage of that contract al
 - Dispatcher and Team Management clients should share the same backend API while enforcing different permissions.
 - A route change is not complete until the exported OpenAPI contract is regenerated.
 - MissionOut should be modeled as an interrupt-driven system with long idle periods, not as a continuous operational queue.
+- API payloads and route parameters should use non-sequential `public_id` values for externally visible resources. Internal integer `id` fields remain backend-only.
 
 ## Product Mode Split
 
@@ -70,8 +71,11 @@ Response shape:
 Notes:
 
 - This route initiates sign-in but does not return the authenticated user payload yet.
+- The backend should silently ignore unknown or inactive email addresses and return the same generic `202` response to avoid user enumeration.
+- The backend should only generate and send a code when the email address is already provisioned and active.
 - The backend is responsible for generating and emailing the one-time code.
 - The email flow should use the same `requested_client` concept as other auth entry points so the correct app surface can continue sign-in after code entry.
+- The backend should rate-limit repeated code requests per email address and reject excessive attempts with `429`.
 
 ## `POST /auth/email-code/verify`
 
@@ -92,12 +96,13 @@ Response shape:
 
 ```json
 {
+  "public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
   "name": "Justin Mercer",
   "initials": "JM",
   "global_permissions": [],
   "team_memberships": [
     {
-      "team_id": 7,
+      "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
       "team_name": "Chaffee SAR",
       "roles": ["responder", "dispatcher"]
     }
@@ -111,6 +116,8 @@ Notes:
 - The code is expected to be short-lived and single-use.
 - Once verified, this route returns the same authenticated user shape as other successful auth flows.
 - If the code is expired, malformed, or already consumed, the backend should reject the verification attempt.
+- Verification should not create new user accounts. Email-code sign-in is only for already provisioned users.
+- Verification failures should use generic invalid-code responses rather than disclosing whether the email exists.
 
 ## `POST /auth/google`
 
@@ -131,12 +138,13 @@ Response shape:
 
 ```json
 {
+  "public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
   "name": "Justin Mercer",
   "initials": "JM",
   "global_permissions": [],
   "team_memberships": [
     {
-      "team_id": 7,
+      "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
       "team_name": "Chaffee SAR",
       "roles": ["responder", "dispatcher"]
     }
@@ -155,7 +163,7 @@ Notes:
 ## Email-Code Flow
 
 1. The client calls `POST /auth/email-code` with the user's email address and requested client surface.
-2. The backend generates a short-lived one-time code and sends that code by email.
+2. The backend returns a generic success response. If the email is already provisioned and active, it generates a short-lived one-time code and sends that code by email.
 3. The user reads the code from their email app.
 4. The client submits the email address and code to `POST /auth/email-code/verify`.
 5. The backend validates the code, resolves the user identity and memberships, and returns the authenticated user payload.
@@ -191,16 +199,17 @@ Purpose:
 
 Query parameters:
 
-- None. Clients call `GET /incidents` without a `team_id` filter.
+- None. Clients call `GET /incidents` without a client-supplied team filter.
 
 Response shape:
 
 ```json
 [
   {
-    "id": 42,
+    "public_id": "2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b",
     "title": "Injured Climber Extraction",
     "team": "Chaffee SAR",
+    "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
     "location": "Mt. Princeton Southwest Gully",
     "created": "2026-03-26T17:24:41.760280",
     "notes": "Subject reports lower-leg injury above treeline.",
@@ -219,9 +228,10 @@ Response shape:
 
 Field definitions:
 
-- `id`: numeric incident identifier
+- `public_id`: non-sequential public incident identifier
 - `title`: short incident name
 - `team`: primary responsible team display name
+- `team_public_id`: non-sequential public team identifier
 - `location`: human-readable location
 - `created`: canonical incident creation timestamp
 - `notes`: dispatcher notes
@@ -286,7 +296,7 @@ Suggested event shape:
 
 ```text
 event: incident.created
-data: {"incident_id":42,"team_id":1,"title":"Injured Climber Extraction","created":"2026-03-26T17:24:41.760280"}
+data: {"incident_public_id":"2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b","team_public_id":"58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591","title":"Injured Climber Extraction","created":"2026-03-26T17:24:41.760280"}
 ```
 
 Guidance:
@@ -320,8 +330,12 @@ Suggested response shape:
 
 ```json
 {
-  "id": 9,
+  "public_id": "b8da4d5d-bf0e-40bf-a95c-64f4254e8f7b",
+  "user_public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
+  "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
   "platform": "web",
+  "endpoint": "https://fcm.googleapis.com/fcm/send/abc123",
+  "client": "dispatcher",
   "is_active": true,
   "last_seen": "2026-03-26T17:24:41.760280"
 }
@@ -388,7 +402,7 @@ Request shape:
 ```json
 {
   "title": "Injured Climber Extraction",
-  "team": "Chaffee SAR",
+  "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
   "location": "Mt. Princeton Southwest Gully",
   "notes": "Subject reports lower-leg injury above treeline.",
   "active": true
@@ -399,9 +413,10 @@ Response shape:
 
 ```json
 {
-  "id": 42,
+  "public_id": "2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b",
   "title": "Injured Climber Extraction",
   "team": "Chaffee SAR",
+  "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
   "location": "Mt. Princeton Southwest Gully",
   "created": "2026-03-26T17:24:41.760280",
   "notes": "Subject reports lower-leg injury above treeline.",
@@ -418,7 +433,7 @@ Notes:
 - Closed-tab browser delivery follows the same team-targeting rule through active backend-owned Web Push subscriptions for active team members.
 - Delivery fanout and retry behavior may be handled asynchronously by workers, but the targeting rule is part of the shared contract semantics.
 
-## `PATCH /incidents/{id}`
+## `PATCH /incidents/{incident_public_id}`
 
 Purpose:
 
@@ -439,9 +454,10 @@ Response shape:
 
 ```json
 {
-  "id": 42,
+  "public_id": "2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b",
   "title": "Updated Incident Title",
   "team": "Chaffee SAR",
+  "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
   "location": "Updated Location",
   "created": "2026-03-26T17:24:41.760280",
   "notes": "Updated notes",
@@ -450,7 +466,7 @@ Response shape:
 }
 ```
 
-## `POST /incidents/{id}/responses`
+## `POST /incidents/{incident_public_id}/responses`
 
 Purpose:
 
@@ -470,7 +486,7 @@ Suggested response:
 - updated response record
 - or updated incident, depending on chosen backend pattern
 
-## `GET /teams/{team_id}/members`
+## `GET /teams/{team_public_id}/members`
 
 Purpose:
 
@@ -481,9 +497,9 @@ Response shape:
 ```json
 [
   {
-    "id": 1,
-    "user_id": 1,
-    "team_id": 1,
+    "public_id": "f243d97c-a98f-47b4-8a5d-8c95b00c590d",
+    "user_public_id": "1d87b98d-f975-4e81-bc8d-c2c46719f671",
+    "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
     "name": "Justin Mercer",
     "email": "justin@example.com",
     "phone": "555-0101",
@@ -495,7 +511,7 @@ Response shape:
 ]
 ```
 
-## `POST /teams/{team_id}/members`
+## `POST /teams/{team_public_id}/members`
 
 Purpose:
 
@@ -518,7 +534,7 @@ Response:
 - created membership record
 - status `201`
 
-## `PATCH /teams/{team_id}/members/{membership_id}`
+## `PATCH /teams/{team_public_id}/members/{membership_public_id}`
 
 Purpose:
 
@@ -537,7 +553,7 @@ Response:
 
 - updated membership record
 
-## `GET /teams/{team_id}/devices`
+## `GET /teams/{team_public_id}/devices`
 
 Purpose:
 
@@ -548,8 +564,8 @@ Response shape:
 ```json
 [
   {
-    "id": 3,
-    "user_id": 3,
+    "public_id": "b18afef8-e66a-4326-9172-b6ed59665781",
+    "user_public_id": "1d87b98d-f975-4e81-bc8d-c2c46719f671",
     "user_name": "Mike Donnelly",
     "platform": "android",
     "push_token": "fcm-token-mike",
@@ -591,7 +607,7 @@ Suggested payload shape:
 ```json
 {
   "type": "incident.updated",
-  "incident_id": 42,
+  "incident_public_id": "2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b",
   "data": {
     "title": "Updated Incident Title",
     "location": "Updated Location",

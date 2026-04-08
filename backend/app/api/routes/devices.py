@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
+from app.core.time import utc_now
 from app.db.session import get_db
 from app.models.team_management import TeamMembership, User, WebPushSubscription
 from app.schemas.team_management import (
@@ -35,9 +36,9 @@ def _get_authenticated_user(request: Request, db: Session) -> User:
 
 def _serialize_subscription(subscription: WebPushSubscription) -> WebPushSubscriptionRead:
     return WebPushSubscriptionRead(
-        id=subscription.id,
-        user_id=subscription.user_id,
-        team_id=subscription.team_id,
+        public_id=subscription.public_id,
+        user_public_id=subscription.user.public_id,
+        team_public_id=subscription.team.public_id if subscription.team is not None else None,
         endpoint=subscription.endpoint,
         client=subscription.client,
         last_seen=subscription.last_seen,
@@ -68,11 +69,13 @@ def register_web_push_subscription(
 ):
     user = _get_authenticated_user(request, db)
 
-    if payload.team_id is not None:
+    if payload.team_public_id is not None:
         membership = db.scalar(
-            select(TeamMembership).where(
+            select(TeamMembership)
+            .options(joinedload(TeamMembership.team))
+            .where(
                 TeamMembership.user_id == user.id,
-                TeamMembership.team_id == payload.team_id,
+                TeamMembership.team.has(public_id=payload.team_public_id),
                 TeamMembership.is_active.is_(True),
             )
         )
@@ -85,12 +88,12 @@ def register_web_push_subscription(
     subscription = db.scalar(
         select(WebPushSubscription).where(WebPushSubscription.endpoint == payload.endpoint)
     )
-    now = datetime.utcnow()
+    now = utc_now()
 
     if subscription is None:
         subscription = WebPushSubscription(
             user_id=user.id,
-            team_id=payload.team_id,
+            team_id=membership.team_id if payload.team_public_id is not None else None,
             endpoint=payload.endpoint,
             p256dh=payload.keys.p256dh,
             auth=payload.keys.auth,
@@ -106,7 +109,7 @@ def register_web_push_subscription(
                 status_code=409,
                 detail="Web push subscription endpoint is already registered to another user.",
             )
-        subscription.team_id = payload.team_id
+        subscription.team_id = membership.team_id if payload.team_public_id is not None else None
         subscription.p256dh = payload.keys.p256dh
         subscription.auth = payload.keys.auth
         subscription.user_agent = payload.user_agent
@@ -117,6 +120,7 @@ def register_web_push_subscription(
 
     db.commit()
     db.refresh(subscription)
+    db.refresh(subscription, attribute_names=["user", "team"])
     return _serialize_subscription(subscription)
 
 
@@ -135,6 +139,6 @@ def delete_web_push_subscription(
     )
     if subscription is not None:
         subscription.is_active = False
-        subscription.last_seen = datetime.utcnow()
+        subscription.last_seen = utc_now()
         db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

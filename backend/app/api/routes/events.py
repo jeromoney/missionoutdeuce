@@ -72,7 +72,7 @@ def _load_authenticated_user(*, request: Request, db: Session) -> User:
                         "type": "string",
                         "example": (
                             "event: incident.created\n"
-                            'data: {"incident_id":42,"team_id":1,"title":"Injured Climber Extraction"}\n\n'
+                            'data: {"incident_public_id":"2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b","team_public_id":"58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591","title":"Injured Climber Extraction"}\n\n'
                         ),
                     }
                 }

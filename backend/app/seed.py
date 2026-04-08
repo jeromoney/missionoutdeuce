@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import delete, text
 
+from app.core.time import utc_now
 from app.db.base import Base
-from app.db.bootstrap import ensure_incident_team_fk
+from app.db.bootstrap import ensure_incident_team_fk, ensure_public_ids
 from app.db.session import SessionLocal
 from app.models.event import DeliveryEvent
 from app.models.incident import Incident, ResponseRecord
@@ -14,6 +15,7 @@ from app.db.session import engine
 def seed() -> None:
     Base.metadata.create_all(bind=engine)
     ensure_incident_team_fk(engine)
+    ensure_public_ids(engine)
 
     with SessionLocal() as db:
         if db.bind is not None and db.bind.dialect.name == "postgresql":
@@ -35,7 +37,7 @@ def seed() -> None:
             db.execute(delete(Incident))
             db.execute(delete(DeliveryEvent))
 
-        now = datetime.utcnow()
+        now = utc_now()
         within_one_day = now - timedelta(hours=12)
         four_days_ago = now - timedelta(days=4)
         four_weeks_ago = now - timedelta(weeks=4)

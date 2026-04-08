@@ -17,6 +17,8 @@ def test_get_incidents_returns_team_scoped_incidents(client, seeded_user, seeded
     assert body[0]["title"] == "Lost Day Hiker"
     assert body[0]["team"] == "Cinder Valley Rescue"
     assert body[0]["active"] is True
+    assert body[0]["public_id"]
+    assert body[0]["team_public_id"]
     assert body[0]["responses"][0]["status"] == "Responding"
 
 
@@ -25,7 +27,7 @@ def test_post_incidents_creates_incident(client, seeded_team):
         "/incidents",
         json={
             "title": "Injured Climber Extraction",
-            "team": seeded_team.name,
+            "team_public_id": seeded_team.public_id,
             "location": "Mt. Princeton Southwest Gully",
             "notes": "Lower-leg injury above treeline.",
             "active": True,
@@ -40,13 +42,14 @@ def test_post_incidents_creates_incident(client, seeded_team):
     assert body["notes"] == "Lower-leg injury above treeline."
     assert body["active"] is True
     assert body["responses"] == []
-    assert "id" in body
+    assert body["public_id"]
+    assert body["team_public_id"] == seeded_team.public_id
     assert "created" in body
 
 
 def test_patch_incident_updates_fields(client, seeded_incident):
     response = client.patch(
-        f"/incidents/{seeded_incident.id}",
+        f"/incidents/{seeded_incident.public_id}",
         json={
             "title": "Updated Incident Title",
             "location": "Updated Location",
@@ -57,7 +60,7 @@ def test_patch_incident_updates_fields(client, seeded_incident):
 
     assert response.status_code == 200
     body = response.json()
-    assert body["id"] == seeded_incident.id
+    assert body["public_id"] == seeded_incident.public_id
     assert body["title"] == "Updated Incident Title"
     assert body["location"] == "Updated Location"
     assert body["notes"] == "Updated notes"
@@ -66,7 +69,7 @@ def test_patch_incident_updates_fields(client, seeded_incident):
 
 def test_post_incident_response_creates_response_record(client, seeded_incident):
     response = client.post(
-        f"/incidents/{seeded_incident.id}/responses",
+        f"/incidents/{seeded_incident.public_id}/responses",
         json={
             "name": "Pat R.",
             "status": "Responding",

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.time import utc_now
 from app.db.session import get_db
 from app.models.incident import Incident, ResponseRecord
 from app.models.team_management import Team, TeamMembership, User
@@ -23,9 +24,10 @@ router = APIRouter(prefix="/incidents", tags=["incidents"])
 def _serialize_incident(incident: Incident) -> IncidentRead:
     team_name = incident.team_ref.name if incident.team_ref is not None else "Unknown Team"
     return IncidentRead(
-        id=incident.id,
+        public_id=incident.public_id,
         title=incident.title,
         team=team_name,
+        team_public_id=incident.team_ref.public_id if incident.team_ref is not None else None,
         location=incident.location,
         created=incident.created_at,
         notes=incident.notes,
@@ -82,7 +84,7 @@ def list_incidents(request: Request, db: Session = Depends(get_db)):
     if not visible_team_ids:
         return []
 
-    recent_cutoff = datetime.utcnow() - timedelta(days=7)
+    recent_cutoff = utc_now() - timedelta(days=7)
     statement = (
         select(Incident)
         .options(selectinload(Incident.responses), selectinload(Incident.team_ref))
@@ -113,7 +115,7 @@ def create_incident(payload: IncidentCreate, request: Request, db: Session = Dep
             (
                 membership
                 for membership in dispatcher_memberships
-                if membership.team.name == payload.team
+                if membership.team.public_id == payload.team_public_id
             ),
             None,
         )
@@ -127,7 +129,7 @@ def create_incident(payload: IncidentCreate, request: Request, db: Session = Dep
                 detail="Requested team is not available to the authenticated dispatcher.",
             )
     else:
-        team = db.scalar(select(Team).where(Team.name == payload.team))
+        team = db.scalar(select(Team).where(Team.public_id == payload.team_public_id))
         if team is None:
             raise HTTPException(status_code=400, detail="Unknown team")
 
@@ -146,8 +148,8 @@ def create_incident(payload: IncidentCreate, request: Request, db: Session = Dep
         event_type="incident.created",
         team_id=team.id,
         payload={
-            "incident_id": incident.id,
-            "team_id": team.id,
+            "incident_public_id": incident.public_id,
+            "team_public_id": team.public_id,
             "title": incident.title,
             "created": incident.created_at.isoformat(),
         },
@@ -155,16 +157,16 @@ def create_incident(payload: IncidentCreate, request: Request, db: Session = Dep
     return _serialize_incident(incident)
 
 
-@router.patch("/{incident_id}", response_model=IncidentRead)
+@router.patch("/{incident_public_id}", response_model=IncidentRead)
 def update_incident(
-    incident_id: int,
+    incident_public_id: str,
     payload: IncidentUpdate,
     db: Session = Depends(get_db),
 ):
     incident = db.scalar(
         select(Incident)
         .options(selectinload(Incident.responses), selectinload(Incident.team_ref))
-        .where(Incident.id == incident_id)
+        .where(Incident.public_id == incident_public_id)
     )
     if incident is None:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -179,18 +181,18 @@ def update_incident(
     return _serialize_incident(incident)
 
 
-@router.post("/{incident_id}/responses", response_model=ResponseRecordRead, status_code=201)
+@router.post("/{incident_public_id}/responses", response_model=ResponseRecordRead, status_code=201)
 def create_incident_response(
-    incident_id: int,
+    incident_public_id: str,
     payload: ResponseRecordCreate,
     db: Session = Depends(get_db),
 ):
-    incident = db.scalar(select(Incident).where(Incident.id == incident_id))
+    incident = db.scalar(select(Incident).where(Incident.public_id == incident_public_id))
     if incident is None:
         raise HTTPException(status_code=404, detail="Incident not found")
 
     response = ResponseRecord(
-        incident_id=incident_id,
+        incident_id=incident.id,
         name=payload.name,
         status=payload.status,
         detail=payload.detail,

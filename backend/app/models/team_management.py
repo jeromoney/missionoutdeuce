@@ -3,6 +3,8 @@ from datetime import datetime
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.ids import generate_public_id
+from app.core.time import utc_now
 from app.db.base import Base
 
 
@@ -10,6 +12,7 @@ class Team(Base):
     __tablename__ = "teams"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=generate_public_id)
     name: Mapped[str] = mapped_column(String(255), unique=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -23,6 +26,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=generate_public_id)
     name: Mapped[str] = mapped_column(String(255))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     phone: Mapped[str] = mapped_column(String(32), default="")
@@ -49,11 +53,12 @@ class TeamMembership(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=generate_public_id)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     team_id: Mapped[int] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
     roles: Mapped[list[str]] = mapped_column(JSON, default=list)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    granted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    granted_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     user: Mapped[User] = relationship(back_populates="memberships")
@@ -64,10 +69,11 @@ class Device(Base):
     __tablename__ = "devices"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=generate_public_id)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     platform: Mapped[str] = mapped_column(String(32))
     push_token: Mapped[str] = mapped_column(Text)
-    last_seen: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_seen: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -78,6 +84,7 @@ class WebPushSubscription(Base):
     __tablename__ = "web_push_subscriptions"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    public_id: Mapped[str] = mapped_column(String(36), unique=True, index=True, default=generate_public_id)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     team_id: Mapped[int | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
     endpoint: Mapped[str] = mapped_column(Text, unique=True)
@@ -85,7 +92,7 @@ class WebPushSubscription(Base):
     auth: Mapped[str] = mapped_column(Text)
     user_agent: Mapped[str] = mapped_column(Text, default="")
     client: Mapped[str] = mapped_column(String(32))
-    last_seen: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_seen: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     user: Mapped[User] = relationship(back_populates="web_push_subscriptions")
@@ -101,4 +108,4 @@ class EmailCodeToken(Base):
     requested_client: Mapped[str] = mapped_column(String(32))
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)

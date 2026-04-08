@@ -10,17 +10,17 @@
             "title": "Roles",
             "type": "array"
           },
-          "team_id": {
-            "title": "Team Id",
-            "type": "integer"
-          },
           "team_name": {
             "title": "Team Name",
+            "type": "string"
+          },
+          "team_public_id": {
+            "title": "Team Public Id",
             "type": "string"
           }
         },
         "required": [
-          "team_id",
+          "team_public_id",
           "team_name",
           "roles"
         ],
@@ -48,6 +48,10 @@
             "title": "Name",
             "type": "string"
           },
+          "public_id": {
+            "title": "Public Id",
+            "type": "string"
+          },
           "team_memberships": {
             "items": {
               "$ref": "#/components/schemas/AuthTeamMembershipRead"
@@ -57,6 +61,7 @@
           }
         },
         "required": [
+          "public_id",
           "name",
           "initials",
           "global_permissions",
@@ -102,10 +107,6 @@
       },
       "DeviceRead": {
         "properties": {
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
           "is_active": {
             "title": "Is Active",
             "type": "boolean"
@@ -123,22 +124,26 @@
             "title": "Platform",
             "type": "string"
           },
+          "public_id": {
+            "title": "Public Id",
+            "type": "string"
+          },
           "push_token": {
             "title": "Push Token",
             "type": "string"
           },
-          "user_id": {
-            "title": "User Id",
-            "type": "integer"
-          },
           "user_name": {
             "title": "User Name",
+            "type": "string"
+          },
+          "user_public_id": {
+            "title": "User Public Id",
             "type": "string"
           }
         },
         "required": [
-          "id",
-          "user_id",
+          "public_id",
+          "user_public_id",
           "user_name",
           "platform",
           "push_token",
@@ -310,8 +315,8 @@
             "title": "Notes",
             "type": "string"
           },
-          "team": {
-            "title": "Team",
+          "team_public_id": {
+            "title": "Team Public Id",
             "type": "string"
           },
           "title": {
@@ -321,7 +326,7 @@
         },
         "required": [
           "title",
-          "team",
+          "team_public_id",
           "location",
           "notes"
         ],
@@ -339,16 +344,16 @@
             "title": "Created",
             "type": "string"
           },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
           "location": {
             "title": "Location",
             "type": "string"
           },
           "notes": {
             "title": "Notes",
+            "type": "string"
+          },
+          "public_id": {
+            "title": "Public Id",
             "type": "string"
           },
           "responses": {
@@ -362,13 +367,24 @@
             "title": "Team",
             "type": "string"
           },
+          "team_public_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Public Id"
+          },
           "title": {
             "title": "Title",
             "type": "string"
           }
         },
         "required": [
-          "id",
+          "public_id",
           "title",
           "team",
           "location",
@@ -539,10 +555,6 @@
             "title": "Granted At",
             "type": "string"
           },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
           "is_active": {
             "title": "Is Active",
             "type": "boolean"
@@ -553,6 +565,10 @@
           },
           "phone": {
             "title": "Phone",
+            "type": "string"
+          },
+          "public_id": {
+            "title": "Public Id",
             "type": "string"
           },
           "revoked_at": {
@@ -574,19 +590,19 @@
             "title": "Roles",
             "type": "array"
           },
-          "team_id": {
-            "title": "Team Id",
-            "type": "integer"
+          "team_public_id": {
+            "title": "Team Public Id",
+            "type": "string"
           },
-          "user_id": {
-            "title": "User Id",
-            "type": "integer"
+          "user_public_id": {
+            "title": "User Public Id",
+            "type": "string"
           }
         },
         "required": [
-          "id",
-          "user_id",
-          "team_id",
+          "public_id",
+          "user_public_id",
+          "team_public_id",
           "name",
           "email",
           "phone",
@@ -723,16 +739,16 @@
           "keys": {
             "$ref": "#/components/schemas/WebPushKeys"
           },
-          "team_id": {
+          "team_public_id": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Team Id"
+            "title": "Team Public Id"
           },
           "user_agent": {
             "default": "",
@@ -771,10 +787,6 @@
             "title": "Endpoint",
             "type": "string"
           },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
           "is_active": {
             "title": "Is Active",
             "type": "boolean"
@@ -790,26 +802,30 @@
             "title": "Platform",
             "type": "string"
           },
-          "team_id": {
+          "public_id": {
+            "title": "Public Id",
+            "type": "string"
+          },
+          "team_public_id": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Team Id"
+            "title": "Team Public Id"
           },
-          "user_id": {
-            "title": "User Id",
-            "type": "integer"
+          "user_public_id": {
+            "title": "User Public Id",
+            "type": "string"
           }
         },
         "required": [
-          "id",
-          "user_id",
-          "team_id",
+          "public_id",
+          "user_public_id",
+          "team_public_id",
           "endpoint",
           "client",
           "last_seen",
@@ -1104,7 +1120,7 @@
               },
               "text/event-stream": {
                 "schema": {
-                  "example": "event: incident.created\ndata: {\"incident_id\":42,\"team_id\":1,\"title\":\"Injured Climber Extraction\"}\n\n",
+                  "example": "event: incident.created\ndata: {\"incident_public_id\":\"2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b\",\"team_public_id\":\"58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591\",\"title\":\"Injured Climber Extraction\"}\n\n",
                   "type": "string"
                 }
               }
@@ -1203,17 +1219,17 @@
         ]
       }
     },
-    "/incidents/{incident_id}": {
+    "/incidents/{incident_public_id}": {
       "patch": {
-        "operationId": "update_incident_incidents__incident_id__patch",
+        "operationId": "update_incident_incidents__incident_public_id__patch",
         "parameters": [
           {
             "in": "path",
-            "name": "incident_id",
+            "name": "incident_public_id",
             "required": true,
             "schema": {
-              "title": "Incident Id",
-              "type": "integer"
+              "title": "Incident Public Id",
+              "type": "string"
             }
           }
         ],
@@ -1255,17 +1271,17 @@
         ]
       }
     },
-    "/incidents/{incident_id}/responses": {
+    "/incidents/{incident_public_id}/responses": {
       "post": {
-        "operationId": "create_incident_response_incidents__incident_id__responses_post",
+        "operationId": "create_incident_response_incidents__incident_public_id__responses_post",
         "parameters": [
           {
             "in": "path",
-            "name": "incident_id",
+            "name": "incident_public_id",
             "required": true,
             "schema": {
-              "title": "Incident Id",
-              "type": "integer"
+              "title": "Incident Public Id",
+              "type": "string"
             }
           }
         ],
@@ -1307,17 +1323,17 @@
         ]
       }
     },
-    "/teams/{team_id}/devices": {
+    "/teams/{team_public_id}/devices": {
       "get": {
-        "operationId": "list_team_devices_teams__team_id__devices_get",
+        "operationId": "list_team_devices_teams__team_public_id__devices_get",
         "parameters": [
           {
             "in": "path",
-            "name": "team_id",
+            "name": "team_public_id",
             "required": true,
             "schema": {
-              "title": "Team Id",
-              "type": "integer"
+              "title": "Team Public Id",
+              "type": "string"
             }
           }
         ],
@@ -1329,7 +1345,7 @@
                   "items": {
                     "$ref": "#/components/schemas/DeviceRead"
                   },
-                  "title": "Response List Team Devices Teams  Team Id  Devices Get",
+                  "title": "Response List Team Devices Teams  Team Public Id  Devices Get",
                   "type": "array"
                 }
               }
@@ -1353,17 +1369,17 @@
         ]
       }
     },
-    "/teams/{team_id}/members": {
+    "/teams/{team_public_id}/members": {
       "get": {
-        "operationId": "list_team_members_teams__team_id__members_get",
+        "operationId": "list_team_members_teams__team_public_id__members_get",
         "parameters": [
           {
             "in": "path",
-            "name": "team_id",
+            "name": "team_public_id",
             "required": true,
             "schema": {
-              "title": "Team Id",
-              "type": "integer"
+              "title": "Team Public Id",
+              "type": "string"
             }
           }
         ],
@@ -1375,7 +1391,7 @@
                   "items": {
                     "$ref": "#/components/schemas/TeamMemberRead"
                   },
-                  "title": "Response List Team Members Teams  Team Id  Members Get",
+                  "title": "Response List Team Members Teams  Team Public Id  Members Get",
                   "type": "array"
                 }
               }
@@ -1399,15 +1415,15 @@
         ]
       },
       "post": {
-        "operationId": "create_team_member_teams__team_id__members_post",
+        "operationId": "create_team_member_teams__team_public_id__members_post",
         "parameters": [
           {
             "in": "path",
-            "name": "team_id",
+            "name": "team_public_id",
             "required": true,
             "schema": {
-              "title": "Team Id",
-              "type": "integer"
+              "title": "Team Public Id",
+              "type": "string"
             }
           }
         ],
@@ -1449,26 +1465,26 @@
         ]
       }
     },
-    "/teams/{team_id}/members/{membership_id}": {
+    "/teams/{team_public_id}/members/{membership_public_id}": {
       "patch": {
-        "operationId": "update_team_member_teams__team_id__members__membership_id__patch",
+        "operationId": "update_team_member_teams__team_public_id__members__membership_public_id__patch",
         "parameters": [
           {
             "in": "path",
-            "name": "team_id",
+            "name": "team_public_id",
             "required": true,
             "schema": {
-              "title": "Team Id",
-              "type": "integer"
+              "title": "Team Public Id",
+              "type": "string"
             }
           },
           {
             "in": "path",
-            "name": "membership_id",
+            "name": "membership_public_id",
             "required": true,
             "schema": {
-              "title": "Membership Id",
-              "type": "integer"
+              "title": "Membership Public Id",
+              "type": "string"
             }
           }
         ],

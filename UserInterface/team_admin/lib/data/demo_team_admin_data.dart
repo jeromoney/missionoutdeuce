@@ -1,7 +1,7 @@
 import '../models/team_admin_models.dart';
 
 const demoManagedTeam = TeamAdminTeam(
-  id: 1,
+  publicId: 'team_chaffee_sar_demo',
   name: 'Chaffee SAR',
   organization: 'Central Colorado SAR',
   region: 'South Central',
@@ -10,7 +10,9 @@ const demoManagedTeam = TeamAdminTeam(
       'Team Admin manages memberships, roles, and device readiness for one existing operational team. Use deactivation instead of destructive deletion so incident history remains auditable.',
   members: [
     TeamAdminMember(
-      id: 101,
+      publicId: 'membership_justin_mercer_demo',
+      userPublicId: 'user_justin_mercer_demo',
+      teamPublicId: 'team_chaffee_sar_demo',
       name: 'Justin Mercer',
       email: 'justin@example.com',
       phone: '(719) 555-0110',
@@ -22,7 +24,9 @@ const demoManagedTeam = TeamAdminTeam(
       isActive: true,
     ),
     TeamAdminMember(
-      id: 102,
+      publicId: 'membership_sarah_kent_demo',
+      userPublicId: 'user_sarah_kent_demo',
+      teamPublicId: 'team_chaffee_sar_demo',
       name: 'Sarah Kent',
       email: 'sarah@example.com',
       phone: '(719) 555-0133',
@@ -34,7 +38,9 @@ const demoManagedTeam = TeamAdminTeam(
       isActive: true,
     ),
     TeamAdminMember(
-      id: 103,
+      publicId: 'membership_mike_dawson_demo',
+      userPublicId: 'user_mike_dawson_demo',
+      teamPublicId: 'team_chaffee_sar_demo',
       name: 'Mike Dawson',
       email: 'mike@example.com',
       phone: '(719) 555-0175',
@@ -48,12 +54,16 @@ const demoManagedTeam = TeamAdminTeam(
   ],
   incidents: [
     TeamIncidentSummary(
+      publicId: 'incident_injured_climber_demo',
+      teamPublicId: 'team_chaffee_sar_demo',
       title: 'Injured Climber Extraction',
       location: 'Mt. Princeton Southwest Gully',
       state: 'Active',
       time: '8 min ago',
     ),
     TeamIncidentSummary(
+      publicId: 'incident_overdue_hiker_demo',
+      teamPublicId: 'team_chaffee_sar_demo',
       title: 'Overdue Hiker Assist',
       location: 'Browns Canyon Trailhead',
       state: 'Resolved',
