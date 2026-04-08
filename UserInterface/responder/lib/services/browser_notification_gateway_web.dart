@@ -1,15 +1,27 @@
-import 'dart:html' as html;
+import 'dart:js_interop' as js;
+
+import 'package:web/web.dart' as web;
 
 import 'browser_notification_gateway.dart';
+
+@js.JS('Notification')
+extension type _NotificationApi._(js.JSObject _) implements js.JSObject {
+  external String get permission;
+  external js.JSPromise<js.JSString> requestPermission();
+}
+
+@js.JS('Notification')
+external _NotificationApi? get _notificationApi;
 
 class WebBrowserNotificationGateway implements BrowserNotificationGateway {
   @override
   BrowserNotificationPermissionState get permissionState {
-    if (!html.Notification.supported) {
+    final notificationApi = _notificationApi;
+    if (notificationApi == null) {
       return BrowserNotificationPermissionState.unsupported;
     }
 
-    switch (html.Notification.permission) {
+    switch (notificationApi.permission) {
       case 'granted':
         return BrowserNotificationPermissionState.granted;
       case 'denied':
@@ -21,11 +33,12 @@ class WebBrowserNotificationGateway implements BrowserNotificationGateway {
 
   @override
   Future<BrowserNotificationPermissionState> requestPermission() async {
-    if (!html.Notification.supported) {
+    final notificationApi = _notificationApi;
+    if (notificationApi == null) {
       return BrowserNotificationPermissionState.unsupported;
     }
 
-    final result = await html.Notification.requestPermission();
+    final result = (await notificationApi.requestPermission().toDart).toDart;
     switch (result) {
       case 'granted':
         return BrowserNotificationPermissionState.granted;
@@ -45,7 +58,7 @@ class WebBrowserNotificationGateway implements BrowserNotificationGateway {
       return;
     }
 
-    html.Notification(title, body: body);
+    web.Notification(title, web.NotificationOptions(body: body));
   }
 }
 

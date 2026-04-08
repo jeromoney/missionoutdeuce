@@ -151,7 +151,7 @@ class AuthController extends ChangeNotifier {
     _currentUser = null;
     final googleSignIn = _googleSignIn;
     if (googleSignIn != null) {
-      unawaited(googleSignIn.signOut().catchError((_) {}));
+      unawaited(googleSignIn.signOut().catchError((_) => null));
     }
     notifyListeners();
   }
