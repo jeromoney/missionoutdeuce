@@ -47,6 +47,7 @@ def seed() -> None:
         one_team = Team(name="Cinder Valley Rescue", is_active=True)
         many_team = Team(name="Pine Ridge Search", is_active=True)
         test_team = Team(name="Test Team", is_active=True)
+        summit_team = Team(name="Summit Ops", is_active=True)
 
         zero_user = User(
             name="Zane Ortega",
@@ -72,6 +73,12 @@ def seed() -> None:
             phone="555-1003",
             is_active=True,
         )
+        justin_gmail_user = User(
+            name="Justin Matis",
+            email="justin.matis@gmail.com",
+            phone="555-1004",
+            is_active=True,
+        )
 
         db.add_all(
             [
@@ -79,10 +86,12 @@ def seed() -> None:
                 one_team,
                 many_team,
                 test_team,
+                summit_team,
                 zero_user,
                 one_user,
                 many_user,
                 justin_user,
+                justin_gmail_user,
             ]
         )
         db.flush()
@@ -112,6 +121,13 @@ def seed() -> None:
             TeamMembership(
                 user_id=justin_user.id,
                 team_id=test_team.id,
+                roles=["responder", "dispatcher", "team_admin"],
+                is_active=True,
+                granted_at=within_one_day,
+            ),
+            TeamMembership(
+                user_id=justin_gmail_user.id,
+                team_id=summit_team.id,
                 roles=["responder", "dispatcher", "team_admin"],
                 is_active=True,
                 granted_at=within_one_day,
@@ -147,6 +163,14 @@ def seed() -> None:
                 user_id=justin_user.id,
                 platform="web",
                 push_token="web-token-justin",
+                last_seen=within_one_day,
+                is_active=True,
+                is_verified=True,
+            ),
+            Device(
+                user_id=justin_gmail_user.id,
+                platform="android",
+                push_token="fcm-token-justin-gmail",
                 last_seen=within_one_day,
                 is_active=True,
                 is_verified=True,
