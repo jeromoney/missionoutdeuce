@@ -132,3 +132,59 @@ def test_post_email_code_verify_requires_existing_user(client, db_session):
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email sign-in code."
+
+
+def test_post_google_rejects_unknown_email(client, monkeypatch):
+    import app.api.routes.auth as auth_routes
+    from app.core.config import settings
+
+    monkeypatch.setattr(
+        auth_routes,
+        "_verify_google_identity",
+        lambda payload: {
+            "email": "unknown@gmail.com",
+            "name": "Unknown User",
+            "aud": "test-client-id",
+        },
+    )
+    monkeypatch.setattr(settings, "google_client_id", "test-client-id")
+
+    response = client.post(
+        "/auth/google",
+        json={
+            "id_token": "fake-google-token",
+            "requested_client": "dispatcher",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Google account is not provisioned for MissionOut."
+
+
+def test_post_google_returns_provisioned_user(client, seeded_user, monkeypatch):
+    import app.api.routes.auth as auth_routes
+    from app.core.config import settings
+
+    monkeypatch.setattr(
+        auth_routes,
+        "_verify_google_identity",
+        lambda payload: {
+            "email": seeded_user.email,
+            "name": seeded_user.name,
+            "aud": "test-client-id",
+        },
+    )
+    monkeypatch.setattr(settings, "google_client_id", "test-client-id")
+
+    response = client.post(
+        "/auth/google",
+        json={
+            "id_token": "fake-google-token",
+            "requested_client": "dispatcher",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["public_id"] == seeded_user.public_id
+    assert body["email"] == seeded_user.email

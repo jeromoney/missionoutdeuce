@@ -152,6 +152,7 @@ Likely API-facing fields:
 Notes:
 
 - A user may authenticate through Google auth or an emailed one-time code issued by the backend.
+- Both auth methods are provisioned-user-only. A verified Google identity or emailed code should map to an already provisioned active MissionOut user rather than creating a new account at sign-in time.
 - Email should be treated as a first-class identity field because it is used both for login and for team membership administration.
 
 ## Device

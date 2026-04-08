@@ -66,36 +66,6 @@ def _build_auth_user_read(*, email: str, name: str, user: User | None) -> AuthUs
     )
 
 
-def _load_or_create_user(*, db: Session, email: str, name: str) -> User:
-    user = db.scalar(
-        select(User)
-        .options(selectinload(User.memberships).selectinload(TeamMembership.team))
-        .where(User.email == email)
-    )
-    if user is None:
-        user = User(
-            name=name,
-            email=email,
-            phone="",
-            is_active=True,
-        )
-        db.add(user)
-        db.commit()
-        user = db.scalar(
-            select(User)
-            .options(selectinload(User.memberships).selectinload(TeamMembership.team))
-            .where(User.email == email)
-        )
-
-    if user is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Could not load authenticated user.",
-        )
-
-    return user
-
-
 def _load_existing_user(*, db: Session, email: str) -> User | None:
     return db.scalar(
         select(User)
@@ -368,5 +338,11 @@ def google_auth(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
             detail="Google account email missing",
         )
 
-    user = _load_or_create_user(db=db, email=email, name=name)
+    user = _load_existing_user(db=db, email=_normalize_email(email))
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Contact your administrator for support referencing {email}.",
+        )
+
     return _build_auth_user_read(email=email, name=name, user=user)

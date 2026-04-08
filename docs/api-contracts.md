@@ -156,6 +156,8 @@ Response shape:
 Notes:
 
 - Users may authenticate with either email-code sign-in or Google auth.
+- Google auth is provisioned-user-only. The backend should verify the Google ID token, resolve the verified email address, and then look up an existing active MissionOut user before returning an authenticated payload.
+- Google auth should not auto-create users or grant access solely because the Google account is valid.
 - Authentication should return the caller's effective memberships and roles, not collapse them into a single role string.
 - Client selection such as `responder`, `dispatcher`, or `team_admin` determines the requested app surface, not the full authorization set.
 - The `team_admin` client surface represents the Team Management app, not a global admin console.

@@ -47,7 +47,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
+              constraints: const BoxConstraints(maxWidth: 520),
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: _LoginPanel(
@@ -224,10 +224,7 @@ class _LoginPanel extends StatelessWidget {
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             readOnly: awaitingCode,
-            decoration: InputDecoration(
-              hintText: 'name@example.com',
-              errorText: errorText,
-            ),
+            decoration: const InputDecoration(hintText: 'name@example.com'),
           ),
           const SizedBox(height: 10),
           Text(
@@ -236,6 +233,28 @@ class _LoginPanel extends StatelessWidget {
                 : 'We will send a one-time code for this Team Admin account.',
             style: const TextStyle(color: TeamAdminPalette.textSoft),
           ),
+          if (errorText != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: TeamAdminPalette.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: TeamAdminPalette.warning.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Text(
+                errorText!,
+                style: const TextStyle(
+                  color: TeamAdminPalette.warning,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
           if (awaitingCode) ...[
             const SizedBox(height: 18),
             const Text(
