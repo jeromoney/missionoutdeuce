@@ -48,7 +48,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     super.initState();
     backupNotifications.initialize();
     webPush.initialize();
-    final userEmail = widget.auth.currentUser?.email?.trim() ?? '';
+    final userEmail = widget.auth.currentUser?.email.trim() ?? '';
     if (userEmail.isNotEmpty) {
       openTabEvents.connect(userEmail: userEmail);
     }
@@ -221,7 +221,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
         incidents = loadedIncidents;
         selected = loadedIncidents.isEmpty
             ? 0
-            : selected.clamp(0, loadedIncidents.length - 1) as int;
+            : selected.clamp(0, loadedIncidents.length - 1);
         loading = false;
       });
     } catch (error) {
@@ -262,7 +262,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
           ? 0
           : incidentIndex >= 0
           ? incidentIndex
-          : selected.clamp(0, loadedIncidents.length - 1) as int;
+          : selected.clamp(0, loadedIncidents.length - 1);
 
       setState(() {
         incidents = loadedIncidents;
