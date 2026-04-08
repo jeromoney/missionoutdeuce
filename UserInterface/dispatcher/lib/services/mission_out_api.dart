@@ -18,23 +18,6 @@ class MissionOutApi {
 
   String get baseUrl => _baseUrl;
 
-  bool get isLiveRenderBackend =>
-      Uri.tryParse(_baseUrl)?.host == 'missionout-backend.onrender.com';
-
-  String get connectionLabel {
-    if (isLiveRenderBackend) {
-      return 'Live Render backend';
-    }
-
-    final uri = Uri.tryParse(_baseUrl);
-    final host = uri?.host ?? _baseUrl;
-    if (host == '127.0.0.1' || host == 'localhost') {
-      return 'Local FastAPI backend';
-    }
-
-    return 'Custom backend';
-  }
-
   // The UI/backend contract for these routes lives in docs/api-contracts.md.
   Future<DashboardSnapshot> fetchDashboard({String? userEmail}) async {
     final incidentsFuture = _getList('/incidents', userEmail: userEmail);
@@ -52,7 +35,6 @@ class MissionOutApi {
       incidents: incidents,
       events: events,
       baseUrl: _baseUrl,
-      connectionLabel: connectionLabel,
     );
   }
 

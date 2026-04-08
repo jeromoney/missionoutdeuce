@@ -26,8 +26,6 @@ class TeamAdminRepository {
     return host == '127.0.0.1' || host == 'localhost';
   }
 
-  String get connectionLabel =>
-      isLocalBackend ? 'Local FastAPI backend' : 'MissionOut backend';
 
   Future<TeamAdminWorkspace> loadWorkspace({
     List<AuthTeamMembership> memberships = const [],
@@ -121,19 +119,12 @@ class TeamAdminRepository {
       _currentTeamId = teamId;
       _currentTeamName = resolvedTeamName;
 
-      final databaseLabel = health['database'] as String? ?? 'unknown';
       final memberCrudSupported = memberJson != null;
-      final statusMessage = memberCrudSupported
-          ? 'Connected to $connectionLabel with database status "$databaseLabel". Team members, device health, incidents, and response history are live.'
-          : 'Connected to $connectionLabel with database status "$databaseLabel". Incident and response history are live, but team member and device CRUD routes are not available on this backend yet.';
-
+     
       return TeamAdminWorkspace(
         team: liveTeam,
-        connectionLabel: connectionLabel,
-        connectionDetail: _baseUrl,
         memberCrudSupported: memberCrudSupported,
         usingLiveData: true,
-        statusMessage: statusMessage,
       );
     } catch (error) {
       return TeamAdminWorkspace(
@@ -144,8 +135,6 @@ class TeamAdminRepository {
           incidents: const [],
           responses: const [],
         ),
-        connectionLabel: 'API unavailable',
-        connectionDetail: _baseUrl,
         memberCrudSupported: false,
         usingLiveData: false,
         statusMessage: 'Could not load team data from $_baseUrl. Error: $error',

@@ -24,12 +24,6 @@ class _MissionOutAppState extends State<MissionOutApp> {
   final auth = AuthController(
     loggedOutRoleLabel: 'Dispatcher',
     requestedClient: 'dispatcher',
-    defaultUser: const AuthUser(
-      name: 'Justin Mercer',
-      initials: 'JM',
-      role: 'Dispatcher',
-      email: 'justin@missionout.test',
-    ),
     backendBaseUrl: resolveApiBaseUrl(),
     googleClientId: googleClientId.isEmpty ? null : googleClientId,
   );
