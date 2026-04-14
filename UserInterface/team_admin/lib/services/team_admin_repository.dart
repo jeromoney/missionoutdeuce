@@ -60,14 +60,37 @@ class TeamAdminRepository {
       final deviceJson = results[3] as List<Map<String, dynamic>>?;
 
       final teamIncidents = incidentJson;
-
-      final resolvedTeamName = teamIncidents.isNotEmpty
-          ? teamIncidents.first['team'] as String? ?? preferredTeamName
-          : preferredTeamName;
       final resolvedTeamPublicId = teamIncidents.isNotEmpty
           ? teamIncidents.first['team_public_id'] as String? ??
                 (memberships.isNotEmpty ? memberships.first.teamPublicId : '')
           : (memberships.isNotEmpty ? memberships.first.teamPublicId : '');
+      var resolvedTeamName = preferredTeamName;
+      for (final membership in memberships) {
+        if (membership.teamPublicId == resolvedTeamPublicId &&
+            membership.teamName.isNotEmpty) {
+          resolvedTeamName = membership.teamName;
+          break;
+        }
+      }
+
+      final deviceByUserPublicId = {
+        for (final device in deviceJson ?? const <Map<String, dynamic>>[])
+          device['user_public_id']: device,
+      };
+      final members = memberJson == null
+          ? const <TeamAdminMember>[]
+          : memberJson
+                .map(
+                  (member) => _memberFromJson(
+                    member,
+                    deviceByUserPublicId[member['user_public_id']],
+                  ),
+                )
+                .toList();
+      final memberNamesByUserPublicId = {
+        for (final member in members)
+          if (member.userPublicId.isNotEmpty) member.userPublicId: member.name,
+      };
 
       final incidents = teamIncidents
           .map(
@@ -93,31 +116,21 @@ class TeamAdminRepository {
               in (incident['responses'] as List<dynamic>? ?? const [])
                   .whereType<Map<String, dynamic>>())
             TeamResponseSummary(
-              memberName: response['name'] as String? ?? 'Unknown responder',
+              userPublicId: response['user_public_id'] as String? ?? '',
+              memberName:
+                  memberNamesByUserPublicId[response['user_public_id']] ??
+                  _fallbackMemberName(
+                    response['user_public_id'] as String? ?? '',
+                  ),
               incidentTitle:
                   incident['title'] as String? ?? 'Untitled incident',
               status: response['status'] as String? ?? 'Pending',
               time: formatMissionTimestamp(
-                incident['created'] as String? ?? '',
+                response['updated'] as String? ?? '',
                 fallback: 'Unknown',
               ),
             ),
       ];
-
-      final deviceByUserPublicId = {
-        for (final device in deviceJson ?? const <Map<String, dynamic>>[])
-          device['user_public_id']: device,
-      };
-      final members = memberJson == null
-          ? const <TeamAdminMember>[]
-          : memberJson
-                .map(
-                  (member) => _memberFromJson(
-                    member,
-                    deviceByUserPublicId[member['user_public_id']],
-                  ),
-                )
-                .toList();
 
       final liveTeam = _buildTeam(
         teamPublicId: resolvedTeamPublicId,
@@ -327,6 +340,14 @@ class TeamAdminRepository {
       throw Exception('Team context is not loaded yet.');
     }
     return teamPublicId;
+  }
+
+  String _fallbackMemberName(String userPublicId) {
+    if (userPublicId.isEmpty) {
+      return 'Unknown responder';
+    }
+    final end = userPublicId.length < 8 ? userPublicId.length : 8;
+    return 'Responder ${userPublicId.substring(0, end)}';
   }
 
   String _deviceHealthLabel({

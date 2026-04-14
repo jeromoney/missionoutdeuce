@@ -5,25 +5,21 @@ from pydantic import BaseModel
 
 # Keep these request and response shapes aligned with contracts/openapi.json.
 class ResponseRecordCreate(BaseModel):
-    name: str
     status: str
-    detail: str
+    source: str
     rank: int = 1
 
 
 class ResponseRecordRead(BaseModel):
-    name: str
+    user_public_id: str
     status: str
-    detail: str
     rank: int
-
-    model_config = {"from_attributes": True}
+    updated: datetime
 
 
 class IncidentRead(BaseModel):
     public_id: str
     title: str
-    team: str
     team_public_id: str | None = None
     location: str
     created: datetime

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.ids import generate_public_id
@@ -34,12 +34,17 @@ class Incident(Base):
 
 class ResponseRecord(Base):
     __tablename__ = "responses"
+    __table_args__ = (
+        UniqueConstraint("incident_id", "user_id", name="uq_responses_incident_user"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     incident_id: Mapped[int] = mapped_column(ForeignKey("incidents.id", ondelete="CASCADE"))
-    name: Mapped[str] = mapped_column(String(255))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     status: Mapped[str] = mapped_column(String(50))
-    detail: Mapped[str] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(String(50))
     rank: Mapped[int] = mapped_column(Integer, default=1)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
     incident: Mapped[Incident] = relationship(back_populates="responses")
+    user: Mapped["User"] = relationship()

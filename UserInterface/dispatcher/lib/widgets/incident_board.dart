@@ -9,12 +9,14 @@ class IncidentBoard extends StatelessWidget {
   const IncidentBoard({
     super.key,
     required this.incidents,
+    required this.teamNamesByPublicId,
     required this.selectedIndex,
     required this.onSelect,
     required this.onCreateIncident,
   });
 
   final List<Incident> incidents;
+  final Map<String, String> teamNamesByPublicId;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final VoidCallback onCreateIncident;
@@ -39,6 +41,8 @@ class IncidentBoard extends StatelessWidget {
           final pending = incident.responses
               .where((response) => response.status == 'Pending')
               .length;
+          final teamName =
+              teamNamesByPublicId[incident.teamPublicId] ?? 'Assigned team';
           final selected = index == selectedIndex;
 
           return InkWell(
@@ -83,7 +87,7 @@ class IncidentBoard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    incident.team,
+                    teamName,
                     style: const TextStyle(
                       color: AppPalette.info,
                       fontWeight: FontWeight.w700,

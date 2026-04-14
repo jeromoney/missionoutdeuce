@@ -72,18 +72,21 @@ const demoManagedTeam = TeamAdminTeam(
   ],
   responses: [
     TeamResponseSummary(
+      userPublicId: 'user_sarah_kent_demo',
       memberName: 'Sarah Kent',
       incidentTitle: 'Injured Climber Extraction',
       status: 'Responding',
       time: '2 min ago',
     ),
     TeamResponseSummary(
+      userPublicId: 'user_mike_dawson_demo',
       memberName: 'Mike Dawson',
       incidentTitle: 'Overdue Hiker Assist',
       status: 'Not Available',
       time: 'Yesterday',
     ),
     TeamResponseSummary(
+      userPublicId: 'user_justin_mercer_demo',
       memberName: 'Justin Mercer',
       incidentTitle: 'Injured Climber Extraction',
       status: 'Assigned Dispatcher',

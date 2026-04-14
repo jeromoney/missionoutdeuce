@@ -15,11 +15,15 @@ def test_get_incidents_returns_team_scoped_incidents(client, seeded_user, seeded
     body = response.json()
     assert len(body) == 1
     assert body[0]["title"] == "Lost Day Hiker"
-    assert body[0]["team"] == "Cinder Valley Rescue"
     assert body[0]["active"] is True
     assert body[0]["public_id"]
-    assert body[0]["team_public_id"]
+    assert body[0]["team_public_id"] == seeded_incident.team_ref.public_id
     assert body[0]["responses"][0]["status"] == "Responding"
+    assert body[0]["responses"][0]["user_public_id"] == seeded_user.public_id
+    assert body[0]["responses"][0]["updated"]
+    assert "team" not in body[0]
+    assert "name" not in body[0]["responses"][0]
+    assert "detail" not in body[0]["responses"][0]
 
 
 def test_post_incidents_creates_incident(client, seeded_team):
@@ -37,7 +41,6 @@ def test_post_incidents_creates_incident(client, seeded_team):
     assert response.status_code == 201
     body = response.json()
     assert body["title"] == "Injured Climber Extraction"
-    assert body["team"] == seeded_team.name
     assert body["location"] == "Mt. Princeton Southwest Gully"
     assert body["notes"] == "Lower-leg injury above treeline."
     assert body["active"] is True
@@ -45,6 +48,7 @@ def test_post_incidents_creates_incident(client, seeded_team):
     assert body["public_id"]
     assert body["team_public_id"] == seeded_team.public_id
     assert "created" in body
+    assert "team" not in body
 
 
 def test_patch_incident_updates_fields(client, seeded_incident):
@@ -67,20 +71,22 @@ def test_patch_incident_updates_fields(client, seeded_incident):
     assert body["active"] is False
 
 
-def test_post_incident_response_creates_response_record(client, seeded_incident):
+def test_post_incident_response_creates_response_record(client, seeded_user, seeded_incident):
     response = client.post(
         f"/incidents/{seeded_incident.public_id}/responses",
+        headers={"x-missionout-user-email": seeded_user.email},
         json={
-            "name": "Pat R.",
             "status": "Responding",
-            "detail": "15 minutes out",
+            "source": "mobile",
             "rank": 1,
         },
     )
 
     assert response.status_code == 201
     body = response.json()
-    assert body["name"] == "Pat R."
+    assert body["user_public_id"] == seeded_user.public_id
     assert body["status"] == "Responding"
-    assert body["detail"] == "15 minutes out"
     assert body["rank"] == 1
+    assert body["updated"]
+    assert "name" not in body
+    assert "detail" not in body

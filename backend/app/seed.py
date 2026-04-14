@@ -4,7 +4,7 @@ from sqlalchemy import delete, text
 
 from app.core.time import utc_now
 from app.db.base import Base
-from app.db.bootstrap import ensure_incident_team_fk, ensure_public_ids
+from app.db.bootstrap import ensure_incident_team_fk, ensure_public_ids, ensure_response_record_fields
 from app.db.session import SessionLocal
 from app.models.event import DeliveryEvent
 from app.models.incident import Incident, ResponseRecord
@@ -16,6 +16,7 @@ def seed() -> None:
     Base.metadata.create_all(bind=engine)
     ensure_incident_team_fk(engine)
     ensure_public_ids(engine)
+    ensure_response_record_fields(engine)
 
     with SessionLocal() as db:
         if db.bind is not None and db.bind.dialect.name == "postgresql":
@@ -201,9 +202,9 @@ def seed() -> None:
                 created_at=four_weeks_ago,
                 responses=[
                     ResponseRecord(
-                        name="Zane O.",
+                        user_id=zero_user.id,
                         status="Not Available",
-                        detail="Archived training call used for seeded test history.",
+                        source="seed",
                         rank=0,
                     ),
                 ],
@@ -217,9 +218,9 @@ def seed() -> None:
                 created_at=within_one_day,
                 responses=[
                     ResponseRecord(
-                        name="Nora E.",
+                        user_id=one_user.id,
                         status="Responding",
-                        detail="Confirmed availability and is heading to the trailhead.",
+                        source="seed",
                         rank=0,
                     ),
                 ],
@@ -233,9 +234,9 @@ def seed() -> None:
                 created_at=within_one_day - timedelta(hours=2),
                 responses=[
                     ResponseRecord(
-                        name="Miles A.",
+                        user_id=many_user.id,
                         status="Responding",
-                        detail="Departed staging area with technical gear cache.",
+                        source="seed",
                         rank=0,
                     ),
                 ],
@@ -249,9 +250,9 @@ def seed() -> None:
                 created_at=four_days_ago,
                 responses=[
                     ResponseRecord(
-                        name="Miles A.",
+                        user_id=many_user.id,
                         status="Responding",
-                        detail="Assigned to grid sector Bravo for sweep coverage.",
+                        source="seed",
                         rank=0,
                     ),
                 ],
@@ -265,9 +266,9 @@ def seed() -> None:
                 created_at=now - timedelta(days=6),
                 responses=[
                     ResponseRecord(
-                        name="Miles A.",
+                        user_id=many_user.id,
                         status="Responding",
-                        detail="Handled evacuation transport coordination before stand-down.",
+                        source="seed",
                         rank=0,
                     ),
                 ],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
@@ -6,8 +8,11 @@ import 'app_config.dart';
 import 'app_palette.dart';
 import 'screens/logged_out_screen.dart';
 import 'screens/responder_home_screen.dart';
+import 'services/native_alert_bridge.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  unawaited(nativeAlertBridge.initialize());
   runApp(const MissionOutResponderApp());
 }
 

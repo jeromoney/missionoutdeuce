@@ -20,6 +20,8 @@ This file exists to explain the intent, ownership, and usage of that contract al
 - A route change is not complete until the exported OpenAPI contract is regenerated.
 - MissionOut should be modeled as an interrupt-driven system with long idle periods, not as a continuous operational queue.
 - API payloads and route parameters should use non-sequential `public_id` values for externally visible resources. Internal integer `id` fields remain backend-only.
+- Write-route responses should prefer canonical identifiers and persisted state over denormalized display labels.
+- Incident response state should use `user_public_id` rather than embedded responder names.
 
 ## Product Mode Split
 
@@ -210,7 +212,6 @@ Response shape:
   {
     "public_id": "2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b",
     "title": "Injured Climber Extraction",
-    "team": "Chaffee SAR",
     "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
     "location": "Mt. Princeton Southwest Gully",
     "created": "2026-03-26T17:24:41.760280",
@@ -218,10 +219,10 @@ Response shape:
     "active": true,
     "responses": [
       {
-        "name": "Justin M.",
+        "user_public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
         "status": "Responding",
-        "detail": "En route from Buena Vista with litter trailer.",
-        "rank": 0
+        "rank": 0,
+        "updated": "2026-03-26T17:29:10.102441"
       }
     ]
   }
@@ -232,7 +233,6 @@ Field definitions:
 
 - `public_id`: non-sequential public incident identifier
 - `title`: short incident name
-- `team`: primary responsible team display name
 - `team_public_id`: non-sequential public team identifier
 - `location`: human-readable location
 - `created`: canonical incident creation timestamp
@@ -240,11 +240,18 @@ Field definitions:
 - `active`: incident active/resolved state
 - `responses`: ordered responder states
 
+Nested `responses` fields:
+
+- `user_public_id`: canonical responder identifier
+- `status`: responder state for the incident
+- `rank`: optional UI ordering helper
+- `updated`: canonical timestamp for the responder's latest state change
+
 Backend note:
 
-- Incidents are normalized to a team foreign key in backend storage, while the API continues returning `team` as the display name for client compatibility.
 - `GET /incidents` is intentionally a recent-activity feed, not a full historical export. Older incidents fall out of this route once their `created` timestamp is more than 7 calendar days old.
 - The backend should derive team visibility from the authenticated user's memberships and global permissions. Clients should not send a team selector for this route.
+- `team_public_id` is the canonical team reference for incident records. Clients that need a team display label should resolve it from authenticated team context or a dedicated team lookup.
 
 ## `GET /events/delivery-feed`
 
@@ -417,7 +424,6 @@ Response shape:
 {
   "public_id": "2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b",
   "title": "Injured Climber Extraction",
-  "team": "Chaffee SAR",
   "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
   "location": "Mt. Princeton Southwest Gully",
   "created": "2026-03-26T17:24:41.760280",
@@ -434,6 +440,7 @@ Notes:
 - When an incident is created, it should get pushed to all active devices owned by active members of that incident's team.
 - Closed-tab browser delivery follows the same team-targeting rule through active backend-owned Web Push subscriptions for active team members.
 - Delivery fanout and retry behavior may be handled asynchronously by workers, but the targeting rule is part of the shared contract semantics.
+- The success response should return the canonical created resource shape and should not duplicate team display labels when `team_public_id` is already present.
 
 ## `PATCH /incidents/{incident_public_id}`
 
@@ -479,9 +486,27 @@ Suggested request:
 ```json
 {
   "status": "Responding",
-  "detail": "15 minutes out"
+  "source": "android_alert"
 }
 ```
+
+Suggested response:
+
+```json
+{
+  "user_public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
+  "status": "Responding",
+  "rank": 0,
+  "updated": "2026-03-26T17:29:10.102441"
+}
+```
+
+Notes:
+
+- Responder identity should be derived from authenticated user context, not from a client-supplied name.
+- `name` and freeform `detail` are intentionally excluded from the core response-state contract.
+- `user_public_id` is the canonical responder reference for incident responses.
+- `updated` is the authoritative timestamp for the responder's latest state change.
 
 Suggested response:
 

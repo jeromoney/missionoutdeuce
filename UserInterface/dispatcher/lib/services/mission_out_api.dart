@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_auth/shared_auth.dart';
 
 import '../app_config.dart';
 import '../models/dashboard_snapshot.dart';
@@ -19,22 +20,57 @@ class MissionOutApi {
   String get baseUrl => _baseUrl;
 
   // The UI/backend contract for these routes lives in docs/api-contracts.md.
-  Future<DashboardSnapshot> fetchDashboard({String? userEmail}) async {
+  Future<DashboardSnapshot> fetchDashboard({
+    String? userEmail,
+    List<AuthTeamMembership> memberships = const [],
+  }) async {
     final incidentsFuture = _getList('/incidents', userEmail: userEmail);
     final eventsFuture = _getList('/events/delivery-feed');
+    final memberFutures = memberships
+        .map((membership) => membership.teamPublicId.trim())
+        .where((teamPublicId) => teamPublicId.isNotEmpty)
+        .map(
+          (teamPublicId) => _getOptionalList(
+            '/teams/$teamPublicId/members',
+            userEmail: userEmail,
+          ),
+        )
+        .toList();
 
-    final responses = await Future.wait([incidentsFuture, eventsFuture]);
+    final responses = await Future.wait([
+      incidentsFuture,
+      eventsFuture,
+      ...memberFutures,
+    ]);
     final incidents = responses[0]
         .map((item) => Incident.fromJson(item))
         .toList();
     final events = responses[1]
         .map((item) => EventRecord.fromJson(item))
         .toList();
+    final responderNamesByPublicId = <String, String>{};
+    for (final memberList in responses.skip(2)) {
+      for (final member in memberList) {
+        final userPublicId = member['user_public_id'] as String? ?? '';
+        final name = member['name'] as String? ?? '';
+        if (userPublicId.isEmpty || name.isEmpty) {
+          continue;
+        }
+        responderNamesByPublicId[userPublicId] = name;
+      }
+    }
+    final teamNamesByPublicId = {
+      for (final membership in memberships)
+        if (membership.teamPublicId.isNotEmpty)
+          membership.teamPublicId: membership.teamName,
+    };
 
     return DashboardSnapshot(
       incidents: incidents,
       events: events,
       baseUrl: _baseUrl,
+      teamNamesByPublicId: teamNamesByPublicId,
+      responderNamesByPublicId: responderNamesByPublicId,
     );
   }
 
@@ -105,6 +141,17 @@ class MissionOutApi {
     }
 
     throw Exception('Expected a JSON list from $path');
+  }
+
+  Future<List<Map<String, dynamic>>> _getOptionalList(
+    String path, {
+    String? userEmail,
+  }) async {
+    try {
+      return await _getList(path, userEmail: userEmail);
+    } catch (_) {
+      return const [];
+    }
   }
 
   Incident _decodeIncidentResponse(http.Response response, String action) {

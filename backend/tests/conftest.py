@@ -91,7 +91,7 @@ def seeded_user(db_session: Session, seeded_team: Team) -> User:
 
 
 @pytest.fixture()
-def seeded_incident(db_session: Session, seeded_team: Team) -> Incident:
+def seeded_incident(db_session: Session, seeded_team: Team, seeded_user: User) -> Incident:
     incident = Incident(
         title="Lost Day Hiker",
         team_id=seeded_team.id,
@@ -101,9 +101,9 @@ def seeded_incident(db_session: Session, seeded_team: Team) -> Incident:
         created_at=utc_now(),
         responses=[
             ResponseRecord(
-                name="Nora E.",
+                user_id=seeded_user.id,
                 status="Responding",
-                detail="Heading to the trailhead.",
+                source="seed",
                 rank=0,
             )
         ],
