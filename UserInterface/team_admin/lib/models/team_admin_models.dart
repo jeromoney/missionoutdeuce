@@ -140,12 +140,14 @@ class TeamIncidentSummary {
 
 class TeamResponseSummary {
   const TeamResponseSummary({
+    required this.userPublicId,
     required this.memberName,
     required this.incidentTitle,
     required this.status,
     required this.time,
   });
 
+  final String userPublicId;
   final String memberName;
   final String incidentTitle;
   final String status;

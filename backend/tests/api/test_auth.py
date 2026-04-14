@@ -158,7 +158,7 @@ def test_post_google_rejects_unknown_email(client, monkeypatch):
     )
 
     assert response.status_code == 403
-    assert response.json()["detail"] == "Google account is not provisioned for MissionOut."
+    assert response.json()["detail"] == "Contact your administrator for support referencing unknown@gmail.com."
 
 
 def test_post_google_returns_provisioned_user(client, seeded_user, monkeypatch):

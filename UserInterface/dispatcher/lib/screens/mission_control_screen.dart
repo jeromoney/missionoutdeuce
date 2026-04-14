@@ -30,6 +30,8 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
 
   List<Incident> incidents = const [];
   List<EventRecord> events = const [];
+  Map<String, String> teamNamesByPublicId = const {};
+  Map<String, String> responderNamesByPublicId = const {};
   var selected = 0;
   var loading = true;
   String? loadError;
@@ -93,6 +95,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
             height: 440,
             child: IncidentBoard(
               incidents: incidents,
+              teamNamesByPublicId: teamNamesByPublicId,
               selectedIndex: selected,
               onSelect: _selectIncident,
               onCreateIncident: _openCreateIncident,
@@ -103,6 +106,8 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
             height: 580,
             child: IncidentDetailPanel(
               incident: incident,
+              teamName: _teamNameFor(incident.teamPublicId),
+              responderNamesByPublicId: responderNamesByPublicId,
               onEditIncident: _openEditIncident,
             ),
           ),
@@ -119,6 +124,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
           flex: 7,
           child: IncidentBoard(
             incidents: incidents,
+            teamNamesByPublicId: teamNamesByPublicId,
             selectedIndex: selected,
             onSelect: _selectIncident,
             onCreateIncident: _openCreateIncident,
@@ -129,6 +135,8 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
           flex: 5,
           child: IncidentDetailPanel(
             incident: incident,
+            teamName: _teamNameFor(incident.teamPublicId),
+            responderNamesByPublicId: responderNamesByPublicId,
             onEditIncident: _openEditIncident,
           ),
         ),
@@ -147,6 +155,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
     try {
       final DashboardSnapshot snapshot = await api.fetchDashboard(
         userEmail: widget.auth.currentUser?.email,
+        memberships: widget.auth.currentUser?.teamMemberships ?? const [],
       );
 
       if (!mounted) {
@@ -156,6 +165,8 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       setState(() {
         incidents = snapshot.incidents;
         events = snapshot.events;
+        teamNamesByPublicId = snapshot.teamNamesByPublicId;
+        responderNamesByPublicId = snapshot.responderNamesByPublicId;
         selected = 0;
         loading = false;
       });
@@ -171,11 +182,17 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       setState(() {
         incidents = const [];
         events = const [];
+        teamNamesByPublicId = const {};
+        responderNamesByPublicId = const {};
         selected = 0;
         loading = false;
         loadError = 'Could not load incident data.';
       });
     }
+  }
+
+  String _teamNameFor(String teamPublicId) {
+    return teamNamesByPublicId[teamPublicId] ?? 'Assigned team';
   }
 
   void _selectIncident(int index) {

@@ -6,48 +6,48 @@ class Incident {
     required this.id,
     required this.publicId,
     required this.title,
-    required this.team,
     required this.teamPublicId,
     required this.location,
     required this.created,
     required this.notes,
     required this.responses,
+    this.priority,
     this.active = true,
   });
 
   final int id;
   final String publicId;
   final String title;
-  final String team;
-  final String? teamPublicId;
+  final String teamPublicId;
   final String location;
   final String created;
   final String notes;
   final List<ResponseRecord> responses;
+  final String? priority;
   final bool active;
 
   Incident copyWith({
     int? id,
     String? publicId,
     String? title,
-    String? team,
     String? teamPublicId,
     String? location,
     String? created,
     String? notes,
     List<ResponseRecord>? responses,
+    String? priority,
     bool? active,
   }) {
     return Incident(
       id: id ?? this.id,
       publicId: publicId ?? this.publicId,
       title: title ?? this.title,
-      team: team ?? this.team,
       teamPublicId: teamPublicId ?? this.teamPublicId,
       location: location ?? this.location,
       created: created ?? this.created,
       notes: notes ?? this.notes,
       responses: responses ?? this.responses,
+      priority: priority ?? this.priority,
       active: active ?? this.active,
     );
   }
@@ -62,8 +62,7 @@ class Incident {
       id: json['id'] as int? ?? 0,
       publicId: json['public_id'] as String? ?? '',
       title: json['title'] as String? ?? 'Untitled incident',
-      team: json['team'] as String? ?? 'Unknown team',
-      teamPublicId: json['team_public_id'] as String?,
+      teamPublicId: json['team_public_id'] as String? ?? '',
       location: json['location'] as String? ?? 'Unknown location',
       created: formatMissionTimestamp(
         json['created'] as String? ?? '',
@@ -71,6 +70,7 @@ class Incident {
       ),
       notes: json['notes'] as String? ?? '',
       responses: responsesJson,
+      priority: json['priority'] as String?,
       active: json['active'] as bool? ?? true,
     );
   }
@@ -78,23 +78,26 @@ class Incident {
 
 class ResponseRecord {
   const ResponseRecord({
-    required this.name,
+    required this.userPublicId,
     required this.status,
-    required this.detail,
     required this.rank,
+    required this.updated,
   });
 
-  final String name;
+  final String userPublicId;
   final String status;
-  final String detail;
   final int rank;
+  final String updated;
 
   factory ResponseRecord.fromJson(Map<String, dynamic> json) {
     return ResponseRecord(
-      name: json['name'] as String? ?? 'Unknown responder',
+      userPublicId: json['user_public_id'] as String? ?? '',
       status: json['status'] as String? ?? 'Pending',
-      detail: json['detail'] as String? ?? '',
       rank: json['rank'] as int? ?? _defaultRank(json['status'] as String?),
+      updated: formatMissionTimestamp(
+        json['updated'] as String? ?? '',
+        fallback: 'Unknown',
+      ),
     );
   }
 }

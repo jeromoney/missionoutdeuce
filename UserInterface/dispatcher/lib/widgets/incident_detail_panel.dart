@@ -9,10 +9,14 @@ class IncidentDetailPanel extends StatelessWidget {
   const IncidentDetailPanel({
     super.key,
     required this.incident,
+    required this.teamName,
+    required this.responderNamesByPublicId,
     required this.onEditIncident,
   });
 
   final Incident incident;
+  final String teamName;
+  final Map<String, String> responderNamesByPublicId;
   final VoidCallback onEditIncident;
 
   @override
@@ -68,7 +72,7 @@ class IncidentDetailPanel extends StatelessWidget {
                       icon: Icons.place_outlined,
                       text: incident.location,
                     ),
-                    DarkChip(icon: Icons.groups_rounded, text: incident.team),
+                    DarkChip(icon: Icons.groups_rounded, text: teamName),
                     DarkChip(
                       icon: Icons.schedule_rounded,
                       text: incident.created,
@@ -86,6 +90,10 @@ class IncidentDetailPanel extends StatelessWidget {
               itemBuilder: (context, index) {
                 final response = ordered[index];
                 final responseColor = _responseColor(response.status);
+                final responderName = _responderNameFor(response.userPublicId);
+                final responderInitial = responderName.isEmpty
+                    ? '?'
+                    : responderName.substring(0, 1).toUpperCase();
 
                 return Container(
                   padding: const EdgeInsets.all(14),
@@ -101,7 +109,7 @@ class IncidentDetailPanel extends StatelessWidget {
                       CircleAvatar(
                         backgroundColor: responseColor,
                         foregroundColor: AppPalette.primary,
-                        child: Text(response.name.substring(0, 1)),
+                        child: Text(responderInitial),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -109,7 +117,7 @@ class IncidentDetailPanel extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              response.name,
+                              responderName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: AppPalette.text,
@@ -117,7 +125,7 @@ class IncidentDetailPanel extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              response.detail,
+                              'Updated ${response.updated}',
                               style: const TextStyle(
                                 color: AppPalette.textSoft,
                                 height: 1.4,
@@ -148,5 +156,17 @@ class IncidentDetailPanel extends StatelessWidget {
       default:
         return AppPalette.info;
     }
+  }
+
+  String _responderNameFor(String userPublicId) {
+    final resolved = responderNamesByPublicId[userPublicId];
+    if (resolved != null && resolved.isNotEmpty) {
+      return resolved;
+    }
+    if (userPublicId.isEmpty) {
+      return 'Unknown responder';
+    }
+    final end = userPublicId.length < 8 ? userPublicId.length : 8;
+    return 'Responder ${userPublicId.substring(0, end)}';
   }
 }

@@ -62,14 +62,14 @@ Represents a responder's current state for a specific incident.
 
 Fields:
 
-- `name`
-  Human-readable responder name.
+- `user_public_id`
+  Canonical responder identifier used at the API boundary.
 - `status`
   Current responder state for the incident.
-- `detail`
-  Additional context such as ETA, availability note, or delivery state.
 - `rank`
   Sort priority for display ordering.
+- `updated`
+  Canonical timestamp for the responder's latest state change.
 
 Expected statuses:
 
@@ -81,6 +81,7 @@ Notes:
 
 - UI color should be derived from `status` by each client.
 - `rank` is currently a UI convenience field.
+- `ResponseRecord` should stay canonical and identifier-based. Human-readable responder names should come from user or team-roster lookups rather than being duplicated into incident response payloads.
 - Long term, status ordering may be derived from shared enums rather than stored directly.
 
 ## DeliveryEvent

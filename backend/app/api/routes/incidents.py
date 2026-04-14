@@ -22,18 +22,21 @@ router = APIRouter(prefix="/incidents", tags=["incidents"])
 
 
 def _serialize_incident(incident: Incident) -> IncidentRead:
-    team_name = incident.team_ref.name if incident.team_ref is not None else "Unknown Team"
     return IncidentRead(
         public_id=incident.public_id,
         title=incident.title,
-        team=team_name,
         team_public_id=incident.team_ref.public_id if incident.team_ref is not None else None,
         location=incident.location,
         created=incident.created_at,
         notes=incident.notes,
         active=incident.active,
         responses=[
-            ResponseRecordRead.model_validate(response)
+            ResponseRecordRead(
+                user_public_id=response.user.public_id,
+                status=response.status,
+                rank=response.rank,
+                updated=response.updated_at,
+            )
             for response in incident.responses
         ],
     )
@@ -87,7 +90,10 @@ def list_incidents(request: Request, db: Session = Depends(get_db)):
     recent_cutoff = utc_now() - timedelta(days=7)
     statement = (
         select(Incident)
-        .options(selectinload(Incident.responses), selectinload(Incident.team_ref))
+        .options(
+            selectinload(Incident.responses).selectinload(ResponseRecord.user),
+            selectinload(Incident.team_ref),
+        )
         .where(Incident.created_at >= recent_cutoff)
         .where(Incident.team_id.in_(visible_team_ids))
         .order_by(Incident.created_at.desc())
@@ -165,7 +171,10 @@ def update_incident(
 ):
     incident = db.scalar(
         select(Incident)
-        .options(selectinload(Incident.responses), selectinload(Incident.team_ref))
+        .options(
+            selectinload(Incident.responses).selectinload(ResponseRecord.user),
+            selectinload(Incident.team_ref),
+        )
         .where(Incident.public_id == incident_public_id)
     )
     if incident is None:
@@ -185,20 +194,61 @@ def update_incident(
 def create_incident_response(
     incident_public_id: str,
     payload: ResponseRecordCreate,
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    incident = db.scalar(select(Incident).where(Incident.public_id == incident_public_id))
+    user = _load_authenticated_user(request=request, db=db)
+    incident = db.scalar(
+        select(Incident)
+        .options(selectinload(Incident.team_ref))
+        .where(Incident.public_id == incident_public_id)
+    )
     if incident is None:
         raise HTTPException(status_code=404, detail="Incident not found")
 
-    response = ResponseRecord(
-        incident_id=incident.id,
-        name=payload.name,
-        status=payload.status,
-        detail=payload.detail,
-        rank=payload.rank,
+    authorized_membership = next(
+        (
+            membership
+            for membership in user.memberships
+            if membership.is_active and membership.team_id == incident.team_id
+        ),
+        None,
     )
-    db.add(response)
+    if authorized_membership is None:
+        raise HTTPException(
+            status_code=403,
+            detail="Authenticated user does not belong to the incident team.",
+        )
+
+    response = db.scalar(
+        select(ResponseRecord)
+        .options(selectinload(ResponseRecord.user))
+        .where(
+            ResponseRecord.incident_id == incident.id,
+            ResponseRecord.user_id == user.id,
+        )
+    )
+
+    if response is None:
+        response = ResponseRecord(
+            incident_id=incident.id,
+            user_id=user.id,
+            status=payload.status,
+            source=payload.source,
+            rank=payload.rank,
+        )
+        db.add(response)
+    else:
+        response.status = payload.status
+        response.source = payload.source
+        response.rank = payload.rank
+
     db.commit()
     db.refresh(response)
-    return ResponseRecordRead.model_validate(response)
+    db.refresh(user)
+    return ResponseRecordRead(
+        user_public_id=user.public_id,
+        status=response.status,
+        rank=response.rank,
+        updated=response.updated_at,
+    )

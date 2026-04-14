@@ -11,6 +11,8 @@ import '../models/incident.dart';
 import '../models/open_tab_event.dart';
 import '../services/backup_notification_service.dart';
 import '../services/browser_notification_gateway.dart';
+import '../services/native_alert_bridge.dart';
+import '../services/native_alert_status_service.dart';
 import '../services/open_tab_event_stream.dart';
 import '../services/open_tab_event_stream_base.dart';
 import '../services/responder_api.dart';
@@ -29,6 +31,7 @@ class ResponderHomeScreen extends StatefulWidget {
 class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   final api = ResponderApi();
   final backupNotifications = BackupNotificationService();
+  final nativeAlerts = NativeAlertStatusService();
   final webPush = WebPushService(publicKey: webPushPublicKey);
   late final OpenTabEventStream openTabEvents = createOpenTabEventStream(
     streamUrl: '${api.baseUrl}/events/stream',
@@ -41,12 +44,14 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   bool submittingResponse = false;
   StreamSubscription<BackupAlert>? alertSubscription;
   StreamSubscription<OpenTabEvent>? openTabEventSubscription;
+  StreamSubscription<NativeAlertEvent>? nativeAlertSubscription;
   BackupAlert? activeBackupAlert;
 
   @override
   void initState() {
     super.initState();
     backupNotifications.initialize();
+    nativeAlerts.initialize();
     webPush.initialize();
     final userEmail = widget.auth.currentUser?.email.trim() ?? '';
     if (userEmail.isNotEmpty) {
@@ -66,13 +71,18 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
       });
     });
     openTabEventSubscription = openTabEvents.events.listen(_handleOpenTabEvent);
+    nativeAlertSubscription = nativeAlertBridge.events.listen(
+      _handleNativeAlertEvent,
+    );
   }
 
   @override
   void dispose() {
     alertSubscription?.cancel();
     openTabEventSubscription?.cancel();
+    nativeAlertSubscription?.cancel();
     backupNotifications.dispose();
+    nativeAlerts.dispose();
     openTabEvents.dispose();
     webPush.dispose();
     super.dispose();
@@ -127,6 +137,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                       ? _StandbyWorkspace(
                           availability: availability,
                           notifications: backupNotifications,
+                          nativeAlerts: nativeAlerts,
                           webPush: webPush,
                           onEnableNotifications:
                               backupNotifications.requestPermission,
@@ -139,24 +150,23 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
                           availability: availability,
                           selectedIncident: selectedIncident!,
                           notifications: backupNotifications,
+                          nativeAlerts: nativeAlerts,
                           webPush: webPush,
                           submittingResponse: submittingResponse,
                           onEnableNotifications:
                               backupNotifications.requestPermission,
                           onEnableWebPush: webPush.enable,
-                          onSendTestAlert: () =>
-                              backupNotifications.sendTestAlert(
-                                incidentIndex: selected,
-                                incident: selectedIncident,
-                              ),
+                          onSendTestAlert: () => _sendSupplementalAlert(
+                            incidentIndex: selected,
+                            incident: selectedIncident,
+                          ),
                           onResponding: () => _submitResponse(
                             status: 'Responding',
-                            detail: 'Responder acknowledged and is en route.',
+                            source: 'android_app',
                           ),
                           onNotAvailable: () => _submitResponse(
                             status: 'Not Available',
-                            detail:
-                                'Responder is not available for this mission.',
+                            source: 'android_app',
                           ),
                           onSelected: (index) {
                             setState(() => selected = index);
@@ -210,7 +220,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     try {
       final loadedIncidents = await api.fetchIncidents(
         userEmail: widget.auth.currentUser?.email,
-        userName: widget.auth.currentUser?.name,
+        userPublicId: widget.auth.currentUser?.publicId,
       );
 
       if (!mounted) {
@@ -246,7 +256,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     try {
       final loadedIncidents = await api.fetchIncidents(
         userEmail: widget.auth.currentUser?.email,
-        userName: widget.auth.currentUser?.name,
+        userPublicId: widget.auth.currentUser?.publicId,
       );
 
       if (!mounted) {
@@ -273,6 +283,11 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
 
       if (incidentIndex >= 0) {
         final incident = loadedIncidents[incidentIndex];
+        await nativeAlertBridge.showNativeAlert(
+          incidentPublicId: incident.publicId,
+          title: event.title,
+          body: '${incident.location} - ${incident.timeLabel}',
+        );
         await backupNotifications.presentAlert(
           incidentIndex: incidentIndex,
           title: event.title,
@@ -292,14 +307,16 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
 
   Future<void> _submitResponse({
     required String status,
-    required String detail,
+    required String source,
+    String? incidentPublicId,
   }) async {
     if (incidents.isEmpty || submittingResponse) {
       return;
     }
 
     final incident = incidents[selected];
-    if (incident.publicId.isEmpty) {
+    final resolvedIncidentPublicId = incidentPublicId ?? incident.publicId;
+    if (resolvedIncidentPublicId.isEmpty) {
       setState(() {
         loadError =
             'Could not submit response because the incident public ID is missing.';
@@ -314,9 +331,9 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
 
     try {
       await api.submitResponse(
-        incidentPublicId: incident.publicId,
+        incidentPublicId: resolvedIncidentPublicId,
         status: status,
-        detail: detail,
+        source: source,
         userEmail: widget.auth.currentUser?.email,
       );
       await _loadIncidents();
@@ -338,12 +355,69 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
       });
     }
   }
+
+  Future<void> _handleNativeAlertEvent(NativeAlertEvent event) async {
+    if (event.incidentPublicId.isEmpty) {
+      return;
+    }
+
+    final incidentIndex = incidents.indexWhere(
+      (incident) => incident.publicId == event.incidentPublicId,
+    );
+
+    if (incidentIndex >= 0 && mounted) {
+      setState(() {
+        selected = incidentIndex;
+        activeBackupAlert = BackupAlert(
+          incidentIndex: incidentIndex,
+          title: event.title,
+          body: event.body,
+        );
+      });
+    }
+
+    if (event.isReceived) {
+      await _loadIncidents();
+    } else if (event.isResponding) {
+      await _submitResponse(
+        status: 'Responding',
+        source: 'android_alert',
+        incidentPublicId: event.incidentPublicId,
+      );
+    } else if (event.isNotAvailable) {
+      await _submitResponse(
+        status: 'Not Available',
+        source: 'android_alert',
+        incidentPublicId: event.incidentPublicId,
+      );
+    }
+  }
+
+  Future<void> _sendSupplementalAlert({
+    required int incidentIndex,
+    required ResponderIncident incident,
+  }) async {
+    if (nativeAlertBridge.isSupported && incident.publicId.isNotEmpty) {
+      await nativeAlertBridge.showNativeAlert(
+        incidentPublicId: incident.publicId,
+        title: incident.title,
+        body: '${incident.location} - ${incident.timeLabel}',
+      );
+      return;
+    }
+
+    await backupNotifications.sendTestAlert(
+      incidentIndex: incidentIndex,
+      incident: incident,
+    );
+  }
 }
 
 class _StandbyWorkspace extends StatelessWidget {
   const _StandbyWorkspace({
     required this.availability,
     required this.notifications,
+    required this.nativeAlerts,
     required this.webPush,
     required this.onEnableNotifications,
     required this.onEnableWebPush,
@@ -351,6 +425,7 @@ class _StandbyWorkspace extends StatelessWidget {
 
   final String availability;
   final BackupNotificationService notifications;
+  final NativeAlertStatusService nativeAlerts;
   final WebPushService webPush;
   final Future<void> Function() onEnableNotifications;
   final Future<void> Function() onEnableWebPush;
@@ -368,6 +443,7 @@ class _StandbyWorkspace extends StatelessWidget {
               const SizedBox(height: 16),
               _ReadinessPanel(
                 notifications: notifications,
+                nativeAlerts: nativeAlerts,
                 webPush: webPush,
                 onEnableNotifications: onEnableNotifications,
                 onEnableWebPush: onEnableWebPush,
@@ -385,6 +461,7 @@ class _StandbyWorkspace extends StatelessWidget {
               width: 360,
               child: _ReadinessPanel(
                 notifications: notifications,
+                nativeAlerts: nativeAlerts,
                 webPush: webPush,
                 onEnableNotifications: onEnableNotifications,
                 onEnableWebPush: onEnableWebPush,
@@ -405,6 +482,7 @@ class _ActiveMissionWorkspace extends StatelessWidget {
     required this.availability,
     required this.selectedIncident,
     required this.notifications,
+    required this.nativeAlerts,
     required this.webPush,
     required this.submittingResponse,
     required this.onEnableNotifications,
@@ -421,6 +499,7 @@ class _ActiveMissionWorkspace extends StatelessWidget {
   final String availability;
   final ResponderIncident selectedIncident;
   final BackupNotificationService notifications;
+  final NativeAlertStatusService nativeAlerts;
   final WebPushService webPush;
   final bool submittingResponse;
   final Future<void> Function() onEnableNotifications;
@@ -457,6 +536,7 @@ class _ActiveMissionWorkspace extends StatelessWidget {
           _ReadinessPanel(
             availability: availability,
             notifications: notifications,
+            nativeAlerts: nativeAlerts,
             webPush: webPush,
             onEnableNotifications: onEnableNotifications,
             onEnableWebPush: onEnableWebPush,
@@ -496,6 +576,7 @@ class _ActiveMissionWorkspace extends StatelessWidget {
                 child: _ReadinessPanel(
                   availability: availability,
                   notifications: notifications,
+                  nativeAlerts: nativeAlerts,
                   webPush: webPush,
                   onEnableNotifications: onEnableNotifications,
                   onEnableWebPush: onEnableWebPush,
@@ -777,6 +858,7 @@ class _StandbyHero extends StatelessWidget {
 class _ReadinessPanel extends StatelessWidget {
   const _ReadinessPanel({
     required this.notifications,
+    required this.nativeAlerts,
     required this.webPush,
     required this.onEnableNotifications,
     required this.onEnableWebPush,
@@ -785,6 +867,7 @@ class _ReadinessPanel extends StatelessWidget {
   });
 
   final BackupNotificationService notifications;
+  final NativeAlertStatusService nativeAlerts;
   final WebPushService webPush;
   final Future<void> Function() onEnableNotifications;
   final Future<void> Function() onEnableWebPush;
@@ -830,71 +913,115 @@ class _ReadinessPanel extends StatelessWidget {
                   : 'Alert actions stay out of the way until you are available again.',
             ),
           ],
-          const SizedBox(height: 18),
-          ListenableBuilder(
-            listenable: notifications,
-            builder: (context, _) {
-              final permissionLabel = switch (notifications.permissionState) {
-                BrowserNotificationPermissionState.granted => 'Enabled',
-                BrowserNotificationPermissionState.denied => 'Blocked',
-                BrowserNotificationPermissionState.unsupported => 'Unsupported',
-                BrowserNotificationPermissionState.notDetermined =>
-                  'Not enabled',
-              };
-
-              return _ReadinessRow(
-                title: 'Open-tab alerts',
-                status: permissionLabel,
-                statusColor: notifications.isGranted
+          if (nativeAlerts.isSupported) ...[
+            const SizedBox(height: 18),
+            ListenableBuilder(
+              listenable: nativeAlerts,
+              builder: (context, _) {
+                final statusColor = nativeAlerts.isReady
                     ? ResponderPalette.success
-                    : ResponderPalette.warning,
-                detail:
-                    'Use browser notifications for backup awareness while this tab is open.',
-                action:
-                    !notifications.isGranted &&
-                        notifications.permissionState !=
-                            BrowserNotificationPermissionState.unsupported
-                    ? FilledButton(
-                        onPressed: onEnableNotifications,
-                        child: const Text('Enable'),
-                      )
-                    : onSendTestAlert != null
-                    ? OutlinedButton(
-                        onPressed: onSendTestAlert,
-                        child: const Text('Test alert'),
-                      )
-                    : null,
-              );
-            },
-          ),
-          const SizedBox(height: 18),
-          ListenableBuilder(
-            listenable: webPush,
-            builder: (context, _) {
-              final statusColor = switch (webPush.state) {
-                WebPushClientState.workerReady => ResponderPalette.accent,
-                WebPushClientState.backendPending => ResponderPalette.success,
-                WebPushClientState.error => ResponderPalette.danger,
-                WebPushClientState.blocked => ResponderPalette.warning,
-                WebPushClientState.unsupported => ResponderPalette.warning,
-                WebPushClientState.registering => ResponderPalette.accent,
-                WebPushClientState.notEnabled => ResponderPalette.warning,
-              };
+                    : nativeAlerts.isLoading
+                    ? ResponderPalette.accent
+                    : ResponderPalette.warning;
 
-              return _ReadinessRow(
-                title: 'Closed-tab browser alerts',
-                status: webPush.statusLabel,
-                statusColor: statusColor,
-                detail: webPush.detailText,
-                action: webPush.canEnable
-                    ? FilledButton(
-                        onPressed: onEnableWebPush,
-                        child: const Text('Enable'),
-                      )
-                    : null,
-              );
-            },
-          ),
+                Widget? action;
+                if (nativeAlerts.canRequestPermission) {
+                  action = FilledButton(
+                    onPressed: nativeAlerts.requestNotificationPermission,
+                    child: const Text('Enable'),
+                  );
+                } else if (nativeAlerts.canOpenFullScreenSettings) {
+                  action = OutlinedButton(
+                    onPressed: nativeAlerts.openFullScreenIntentSettings,
+                    child: const Text('Full-screen settings'),
+                  );
+                } else if (nativeAlerts.canOpenPolicySettings) {
+                  action = OutlinedButton(
+                    onPressed: nativeAlerts.openNotificationPolicySettings,
+                    child: const Text('DND settings'),
+                  );
+                }
+
+                return _ReadinessRow(
+                  title: 'Native Android alerts',
+                  status: nativeAlerts.statusLabel,
+                  statusColor: statusColor,
+                  detail: nativeAlerts.detailText,
+                  action: action,
+                );
+              },
+            ),
+          ],
+          if (notifications.isSupported) ...[
+            const SizedBox(height: 18),
+            ListenableBuilder(
+              listenable: notifications,
+              builder: (context, _) {
+                final permissionLabel = switch (notifications.permissionState) {
+                  BrowserNotificationPermissionState.granted => 'Enabled',
+                  BrowserNotificationPermissionState.denied => 'Blocked',
+                  BrowserNotificationPermissionState.unsupported =>
+                    'Unsupported',
+                  BrowserNotificationPermissionState.notDetermined =>
+                    'Not enabled',
+                };
+
+                return _ReadinessRow(
+                  title: 'Open-tab alerts',
+                  status: permissionLabel,
+                  statusColor: notifications.isGranted
+                      ? ResponderPalette.success
+                      : ResponderPalette.warning,
+                  detail:
+                      'Use browser notifications for backup awareness while this tab is open.',
+                  action:
+                      !notifications.isGranted &&
+                          notifications.permissionState !=
+                              BrowserNotificationPermissionState.unsupported
+                      ? FilledButton(
+                          onPressed: onEnableNotifications,
+                          child: const Text('Enable'),
+                        )
+                      : onSendTestAlert != null
+                      ? OutlinedButton(
+                          onPressed: onSendTestAlert,
+                          child: const Text('Test alert'),
+                        )
+                      : null,
+                );
+              },
+            ),
+          ],
+          if (webPush.isSupported) ...[
+            const SizedBox(height: 18),
+            ListenableBuilder(
+              listenable: webPush,
+              builder: (context, _) {
+                final statusColor = switch (webPush.state) {
+                  WebPushClientState.workerReady => ResponderPalette.accent,
+                  WebPushClientState.backendPending => ResponderPalette.success,
+                  WebPushClientState.error => ResponderPalette.danger,
+                  WebPushClientState.blocked => ResponderPalette.warning,
+                  WebPushClientState.unsupported => ResponderPalette.warning,
+                  WebPushClientState.registering => ResponderPalette.accent,
+                  WebPushClientState.notEnabled => ResponderPalette.warning,
+                };
+
+                return _ReadinessRow(
+                  title: 'Closed-tab browser alerts',
+                  status: webPush.statusLabel,
+                  statusColor: statusColor,
+                  detail: webPush.detailText,
+                  action: webPush.canEnable
+                      ? FilledButton(
+                          onPressed: onEnableWebPush,
+                          child: const Text('Enable'),
+                        )
+                      : null,
+                );
+              },
+            ),
+          ],
         ],
       ),
     );

@@ -363,10 +363,6 @@
             "title": "Responses",
             "type": "array"
           },
-          "team": {
-            "title": "Team",
-            "type": "string"
-          },
           "team_public_id": {
             "anyOf": [
               {
@@ -386,7 +382,6 @@
         "required": [
           "public_id",
           "title",
-          "team",
           "location",
           "created",
           "notes",
@@ -426,18 +421,14 @@
       },
       "ResponseRecordCreate": {
         "properties": {
-          "detail": {
-            "title": "Detail",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
           "rank": {
             "default": 1,
             "title": "Rank",
             "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
           },
           "status": {
             "title": "Status",
@@ -445,23 +436,14 @@
           }
         },
         "required": [
-          "name",
           "status",
-          "detail"
+          "source"
         ],
         "title": "ResponseRecordCreate",
         "type": "object"
       },
       "ResponseRecordRead": {
         "properties": {
-          "detail": {
-            "title": "Detail",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
           "rank": {
             "title": "Rank",
             "type": "integer"
@@ -469,13 +451,22 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "updated": {
+            "format": "date-time",
+            "title": "Updated",
+            "type": "string"
+          },
+          "user_public_id": {
+            "title": "User Public Id",
+            "type": "string"
           }
         },
         "required": [
-          "name",
+          "user_public_id",
           "status",
-          "detail",
-          "rank"
+          "rank",
+          "updated"
         ],
         "title": "ResponseRecordRead",
         "type": "object"

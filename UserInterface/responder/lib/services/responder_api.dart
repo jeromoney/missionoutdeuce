@@ -17,7 +17,7 @@ class ResponderApi {
 
   Future<List<ResponderIncident>> fetchIncidents({
     String? userEmail,
-    String? userName,
+    String? userPublicId,
   }) async {
     final response = await _client.get(
       Uri.parse('$_baseUrl/incidents'),
@@ -36,7 +36,8 @@ class ResponderApi {
     return decoded
         .whereType<Map<String, dynamic>>()
         .map(
-          (item) => ResponderIncident.fromJson(item, responderName: userName),
+          (item) =>
+              ResponderIncident.fromJson(item, responderPublicId: userPublicId),
         )
         .toList();
   }
@@ -44,7 +45,7 @@ class ResponderApi {
   Future<void> submitResponse({
     required String incidentPublicId,
     required String status,
-    required String detail,
+    required String source,
     String? userEmail,
   }) async {
     final response = await _client.post(
@@ -53,7 +54,7 @@ class ResponderApi {
         'Content-Type': 'application/json',
         ..._headers(userEmail: userEmail),
       },
-      body: jsonEncode({'status': status, 'detail': detail}),
+      body: jsonEncode({'status': status, 'source': source}),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
