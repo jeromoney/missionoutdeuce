@@ -2,7 +2,6 @@ import 'package:shared_models/shared_models.dart';
 
 class ResponderIncident {
   const ResponderIncident({
-    required this.id,
     required this.publicId,
     required this.title,
     required this.location,
@@ -14,7 +13,6 @@ class ResponderIncident {
     this.priority,
   });
 
-  final int id;
   final String publicId;
   final String title;
   final String location;
@@ -42,7 +40,6 @@ class ResponderIncident {
     }
 
     return ResponderIncident(
-      id: json['id'] as int? ?? 0,
       publicId: json['public_id'] as String? ?? '',
       title: json['title'] as String? ?? 'Untitled incident',
       location: json['location'] as String? ?? 'Unknown location',

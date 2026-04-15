@@ -3,7 +3,6 @@ import 'package:shared_models/shared_models.dart';
 
 class Incident {
   const Incident({
-    required this.id,
     required this.publicId,
     required this.title,
     required this.teamPublicId,
@@ -15,7 +14,6 @@ class Incident {
     this.active = true,
   });
 
-  final int id;
   final String publicId;
   final String title;
   final String teamPublicId;
@@ -27,7 +25,6 @@ class Incident {
   final bool active;
 
   Incident copyWith({
-    int? id,
     String? publicId,
     String? title,
     String? teamPublicId,
@@ -39,7 +36,6 @@ class Incident {
     bool? active,
   }) {
     return Incident(
-      id: id ?? this.id,
       publicId: publicId ?? this.publicId,
       title: title ?? this.title,
       teamPublicId: teamPublicId ?? this.teamPublicId,
@@ -59,7 +55,6 @@ class Incident {
         .toList();
 
     return Incident(
-      id: json['id'] as int? ?? 0,
       publicId: json['public_id'] as String? ?? '',
       title: json['title'] as String? ?? 'Untitled incident',
       teamPublicId: json['team_public_id'] as String? ?? '',

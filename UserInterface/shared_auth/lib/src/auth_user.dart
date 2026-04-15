@@ -107,7 +107,6 @@ class AuthUser {
       'public_id': publicId,
       'name': name,
       'initials': initials,
-      'role': role,
       'email': email,
       'global_permissions': globalPermissions,
       'team_memberships': teamMemberships
