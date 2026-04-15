@@ -239,16 +239,27 @@ class _LoginPanel extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
+<<<<<<< HEAD
                 color: TeamAdminPalette.danger.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
                   color: TeamAdminPalette.danger.withValues(alpha: 0.18),
+=======
+                color: TeamAdminPalette.warning.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: TeamAdminPalette.warning.withValues(alpha: 0.18),
+>>>>>>> 1d18c20fbb0688648a82d9e3880b8f4344d8a160
                 ),
               ),
               child: Text(
                 errorText!,
                 style: const TextStyle(
+<<<<<<< HEAD
                   color: TeamAdminPalette.danger,
+=======
+                  color: TeamAdminPalette.warning,
+>>>>>>> 1d18c20fbb0688648a82d9e3880b8f4344d8a160
                   fontWeight: FontWeight.w600,
                   height: 1.4,
                 ),

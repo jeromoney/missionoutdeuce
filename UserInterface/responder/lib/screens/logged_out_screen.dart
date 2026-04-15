@@ -237,50 +237,10 @@ class _LoginPanel extends StatelessWidget {
             decoration: const InputDecoration(hintText: 'example@domain.com'),
           ),
           const SizedBox(height: 10),
-          Text(
-            awaitingCode
-                ? 'Enter the emailed code to finish responder sign-in.'
-                : 'We will send a one-time code for this responder account.',
-            style: const TextStyle(color: ResponderPalette.textSoft),
+          const Text(
+            'We will send a sign-in link for this responder account.',
+            style: TextStyle(color: ResponderPalette.textSoft),
           ),
-          if (errorText != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: ResponderPalette.danger.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: ResponderPalette.danger.withValues(alpha: 0.18),
-                ),
-              ),
-              child: Text(
-                errorText!,
-                style: const TextStyle(
-                  color: ResponderPalette.danger,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-          if (awaitingCode) ...[
-            const SizedBox(height: 18),
-            const Text(
-              'Code',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: ResponderPalette.text,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: codeController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(hintText: '123456'),
-            ),
-          ],
           if (successText != null) ...[
             const SizedBox(height: 14),
             Container(

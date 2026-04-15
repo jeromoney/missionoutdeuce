@@ -225,50 +225,10 @@ class _LoginPanel extends StatelessWidget {
             decoration: const InputDecoration(hintText: 'name@example.com'),
           ),
           const SizedBox(height: 10),
-          Text(
-            awaitingCode
-                ? 'Enter the emailed code to finish dispatcher sign-in.'
-                : 'We will send a one-time code for this dispatcher account.',
-            style: const TextStyle(color: AppPalette.textSoft),
+          const Text(
+            'We will send a sign-in link for this dispatcher account.',
+            style: TextStyle(color: AppPalette.textSoft),
           ),
-          if (errorText != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: MissionOutColors.alertRed.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: MissionOutColors.alertRed.withValues(alpha: 0.18),
-                ),
-              ),
-              child: Text(
-                errorText!,
-                style: const TextStyle(
-                  color: MissionOutColors.alertRed,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-          if (awaitingCode) ...[
-            const SizedBox(height: 18),
-            const Text(
-              'Code',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppPalette.text,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: codeController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(hintText: '123456'),
-            ),
-          ],
           if (successText != null) ...[
             const SizedBox(height: 14),
             Container(
