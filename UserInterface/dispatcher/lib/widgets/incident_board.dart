@@ -70,9 +70,9 @@ class IncidentBoard extends StatelessWidget {
                         child: Text(
                           incident.title,
                           style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.6,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.4,
                             color: AppPalette.text,
                           ),
                         ),

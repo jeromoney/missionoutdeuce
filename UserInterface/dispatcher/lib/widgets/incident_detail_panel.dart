@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
 import '../models/records.dart';
@@ -35,8 +36,8 @@ class IncidentDetailPanel extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppPalette.primary, AppPalette.panelSoft],
+              gradient: LinearGradient(
+                colors: [AppPalette.primary, MissionOutColors.ridge],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

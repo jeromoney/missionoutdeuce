@@ -1361,14 +1361,14 @@ class _LoadErrorBanner extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            color: ResponderPalette.warning,
+            color: ResponderPalette.danger,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: const TextStyle(
-                color: ResponderPalette.textSoft,
+                color: ResponderPalette.danger,
                 fontWeight: FontWeight.w600,
               ),
             ),

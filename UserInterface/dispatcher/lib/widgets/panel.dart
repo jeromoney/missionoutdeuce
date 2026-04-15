@@ -38,8 +38,6 @@ class Panel extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SectionEyebrow(label: title),
-                    const SizedBox(height: 8),
                     Text(
                       title,
                       style: const TextStyle(

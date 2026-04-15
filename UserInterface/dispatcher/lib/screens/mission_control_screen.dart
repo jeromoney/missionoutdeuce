@@ -472,7 +472,6 @@ class _EmptyIncidentState extends StatelessWidget {
                   color: AppPalette.text,
                 ),
               ),
-              const SizedBox(height: 10),
               const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: onCreateIncident,
@@ -498,13 +497,13 @@ class _LoadErrorBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppPalette.info),
+          const Icon(Icons.error_outline_rounded, color: MissionOutColors.alertRed),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: const TextStyle(
-                color: AppPalette.textSoft,
+                color: MissionOutColors.alertRed,
                 fontWeight: FontWeight.w600,
               ),
             ),

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs wc:*)",
+      "Bash(find /c/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface/dispatcher -type f -name *.dart)"
+    ]
+  }
+}

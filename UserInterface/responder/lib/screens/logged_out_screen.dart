@@ -249,16 +249,16 @@ class _LoginPanel extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: ResponderPalette.warning.withValues(alpha: 0.12),
+                color: ResponderPalette.danger.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: ResponderPalette.warning.withValues(alpha: 0.18),
+                  color: ResponderPalette.danger.withValues(alpha: 0.18),
                 ),
               ),
               child: Text(
                 errorText!,
                 style: const TextStyle(
-                  color: ResponderPalette.warning,
+                  color: ResponderPalette.danger,
                   fontWeight: FontWeight.w600,
                   height: 1.4,
                 ),

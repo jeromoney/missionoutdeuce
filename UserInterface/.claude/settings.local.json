@@ -1,0 +1,11 @@
+{
+  "enabledMcpjsonServers": [
+    "github",
+    "context7"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls *)"
+    ]
+  }
+}

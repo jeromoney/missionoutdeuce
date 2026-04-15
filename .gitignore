@@ -27,3 +27,5 @@ desktop.ini
 .env
 .env.*
 !.env.example
+
+.mcp.json
