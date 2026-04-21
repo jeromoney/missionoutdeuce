@@ -86,7 +86,7 @@ async def stream_events(request: Request, db: Session = Depends(get_db)):
     team_ids = {
         membership.team_id
         for membership in user.memberships
-        if membership.is_active and membership.team.is_active
+        if membership.team.is_active
     }
     if not team_ids:
         raise HTTPException(

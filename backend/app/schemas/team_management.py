@@ -27,7 +27,6 @@ class TeamMemberRead(BaseModel):
     roles: list[str]
     is_active: bool
     granted_at: datetime
-    revoked_at: datetime | None
 
 
 class DeviceRead(BaseModel):
@@ -39,6 +38,15 @@ class DeviceRead(BaseModel):
     last_seen: datetime
     is_active: bool
     is_verified: bool
+
+
+class UserActiveUpdate(BaseModel):
+    is_active: bool
+
+
+class UserActiveRead(BaseModel):
+    public_id: str
+    is_active: bool
 
 
 class WebPushKeys(BaseModel):

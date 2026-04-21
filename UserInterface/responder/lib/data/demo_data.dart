@@ -2,7 +2,6 @@ import '../models/incident.dart';
 
 const responderIncidents = [
   ResponderIncident(
-    id: 1234,
     publicId: 'incident_injured_climber_demo',
     title: 'Injured Climber Extraction',
     location: 'Mt. Princeton Southwest Gully',
@@ -21,7 +20,6 @@ const responderIncidents = [
     ],
   ),
   ResponderIncident(
-    id: 5678,
     publicId: 'incident_overdue_snowmobiler_demo',
     title: 'Overdue Snowmobiler',
     location: 'Georgia Pass East Approach',
@@ -40,7 +38,6 @@ const responderIncidents = [
     ],
   ),
   ResponderIncident(
-    id: 9012,
     publicId: 'incident_search_reassignment_demo',
     title: 'Search Area Reassignment',
     location: 'Cottonwood Creek Drainage',

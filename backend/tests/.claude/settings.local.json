@@ -1,0 +1,13 @@
+{
+  "enabledMcpjsonServers": [
+    "context7"
+  ],
+  "disabledMcpjsonServers": [
+    "github"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(python *)"
+    ]
+  }
+}

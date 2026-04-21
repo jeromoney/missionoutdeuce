@@ -1,5 +1,7 @@
-from collections.abc import Generator
-from datetime import datetime
+import json
+from collections.abc import Callable, Generator
+from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,8 +13,15 @@ from app.core.time import utc_now
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app
+from app.models.event import DeliveryEvent
 from app.models.incident import Incident, ResponseRecord
-from app.models.team_management import Team, TeamMembership, User
+from app.models.team_management import (
+    Device,
+    Team,
+    TeamMembership,
+    User,
+    WebPushSubscription,
+)
 
 
 TEST_DATABASE_URL = "sqlite+pysqlite:///:memory:"
@@ -80,9 +89,7 @@ def seeded_user(db_session: Session, seeded_team: Team) -> User:
         user_id=user.id,
         team_id=seeded_team.id,
         roles=["responder", "dispatcher", "team_admin"],
-        is_active=True,
         granted_at=utc_now(),
-        revoked_at=None,
     )
     db_session.add(membership)
     db_session.commit()
@@ -112,3 +119,107 @@ def seeded_incident(db_session: Session, seeded_team: Team, seeded_user: User) -
     db_session.commit()
     db_session.refresh(incident)
     return incident
+
+
+@pytest.fixture()
+def seeded_second_team(db_session: Session) -> Team:
+    team = Team(name="Pine Ridge Search", is_active=True)
+    db_session.add(team)
+    db_session.commit()
+    db_session.refresh(team)
+    return team
+
+
+@pytest.fixture()
+def seeded_second_user(db_session: Session, seeded_second_team: Team) -> User:
+    user = User(
+        name="Mateo Alvarez",
+        email="two@gmail.com",
+        phone="555-2002",
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.flush()
+
+    membership = TeamMembership(
+        user_id=user.id,
+        team_id=seeded_second_team.id,
+        roles=["responder"],
+        granted_at=utc_now(),
+    )
+    db_session.add(membership)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture()
+def seeded_device(db_session: Session, seeded_user: User) -> Device:
+    device = Device(
+        user_id=seeded_user.id,
+        platform="ios",
+        push_token="test-ios-token",
+        last_seen=utc_now(),
+        is_active=True,
+        is_verified=True,
+    )
+    db_session.add(device)
+    db_session.commit()
+    db_session.refresh(device)
+    return device
+
+
+@pytest.fixture()
+def seeded_web_push_subscription(
+    db_session: Session,
+    seeded_user: User,
+    seeded_team: Team,
+) -> WebPushSubscription:
+    subscription = WebPushSubscription(
+        user_id=seeded_user.id,
+        team_id=seeded_team.id,
+        endpoint="https://push.example.com/seeded",
+        p256dh="seed-p256dh",
+        auth="seed-auth",
+        user_agent="pytest/seed",
+        client="dispatcher",
+        last_seen=utc_now(),
+        is_active=True,
+    )
+    db_session.add(subscription)
+    db_session.commit()
+    db_session.refresh(subscription)
+    return subscription
+
+
+@pytest.fixture()
+def seeded_delivery_event(db_session: Session) -> DeliveryEvent:
+    event = DeliveryEvent(
+        title="Dispatch acknowledged",
+        detail="Nora Ellison acknowledged the Lost Day Hiker alert.",
+        time_label="2m",
+        icon="notifications",
+        color="#4F6F95",
+        created_at=utc_now() - timedelta(minutes=2),
+    )
+    db_session.add(event)
+    db_session.commit()
+    db_session.refresh(event)
+    return event
+
+
+@pytest.fixture()
+def auth_headers() -> Callable[[User], dict[str, str]]:
+    def _build(user: User) -> dict[str, str]:
+        return {"x-missionout-user-email": user.email}
+
+    return _build
+
+
+@pytest.fixture(scope="session")
+def openapi_spec() -> dict:
+    spec_path = (
+        Path(__file__).resolve().parents[2] / "contracts" / "openapi.json"
+    )
+    with spec_path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)

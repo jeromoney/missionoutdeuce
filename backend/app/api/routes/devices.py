@@ -29,7 +29,7 @@ def _get_authenticated_user(request: Request, db: Session) -> User:
         .options(joinedload(User.memberships))
         .where(func.lower(User.email) == user_email)
     )
-    if user is None:
+    if user is None or not user.is_active:
         raise HTTPException(status_code=404, detail="Authenticated user is not recognized.")
     return user
 
@@ -76,7 +76,6 @@ def register_web_push_subscription(
             .where(
                 TeamMembership.user_id == user.id,
                 TeamMembership.team.has(public_id=payload.team_public_id),
-                TeamMembership.is_active.is_(True),
             )
         )
         if membership is None:

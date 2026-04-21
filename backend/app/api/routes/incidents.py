@@ -68,8 +68,7 @@ def _authorized_dispatcher_memberships(user: User) -> list[TeamMembership]:
     return [
         membership
         for membership in user.memberships
-        if membership.is_active
-        and membership.team.is_active
+        if membership.team.is_active
         and "dispatcher" in membership.roles
     ]
 
@@ -81,7 +80,7 @@ def list_incidents(request: Request, db: Session = Depends(get_db)):
         {
             membership.team_id
             for membership in user.memberships
-            if membership.is_active and membership.team.is_active
+            if membership.team.is_active
         }
     )
     if not visible_team_ids:
@@ -210,7 +209,7 @@ def create_incident_response(
         (
             membership
             for membership in user.memberships
-            if membership.is_active and membership.team_id == incident.team_id
+            if membership.team_id == incident.team_id
         ),
         None,
     )

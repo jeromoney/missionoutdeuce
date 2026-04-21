@@ -29,6 +29,7 @@ Own high-level planning, architecture, shared semantics, and cross-thread handof
 - `data-model.md`
 - `boundaries.md`
 
+- all files in `C:\Users\justi\OneDrive\Documents\Projects\missionout\contracts`
 ## Handoff Rule
 
 When architecture work implies code changes, produce a clear handoff:

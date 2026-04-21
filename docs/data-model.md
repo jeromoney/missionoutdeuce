@@ -208,7 +208,6 @@ Likely API-facing fields:
 - `user_public_id`
 - `team_public_id`
 - `roles`
-- `is_active`
 - `granted_at`
 - `revoked_at`
 

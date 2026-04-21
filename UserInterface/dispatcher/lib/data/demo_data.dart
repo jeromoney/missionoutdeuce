@@ -4,7 +4,6 @@ import '../models/records.dart';
 
 const demoIncidents = [
   Incident(
-    id: 1,
     publicId: 'incident_injured_climber_demo',
     title: 'Injured Climber Extraction',
     teamPublicId: 'team_chaffee_sar_demo',
@@ -40,7 +39,6 @@ const demoIncidents = [
     ],
   ),
   Incident(
-    id: 2,
     publicId: 'incident_overdue_snowmobiler_demo',
     title: 'Overdue Snowmobiler',
     teamPublicId: 'team_summit_county_rescue_demo',
@@ -70,7 +68,6 @@ const demoIncidents = [
     ],
   ),
   Incident(
-    id: 3,
     publicId: 'incident_avalanche_report_demo',
     title: 'Avalanche Witness Report',
     teamPublicId: 'team_alpine_rescue_demo',

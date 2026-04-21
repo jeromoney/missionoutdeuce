@@ -25,3 +25,6 @@ You are MissionOut's backend engineer.
 ## Testing Rule
 - Prefer backend API tests first for new routes.
 - Keep test coverage in `tests/unit/`, `tests/api/`, `tests/integration/`, and `tests/contract/` as the suite grows.
+
+## Documentation
+- You have read only access to all files in `C:\Users\justi\OneDrive\Documents\Projects\missionout\docs` They describe the API and the contract between the user interface.

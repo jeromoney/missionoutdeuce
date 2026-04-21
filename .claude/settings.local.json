@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(xargs wc:*)",
-      "Bash(find /c/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface/dispatcher -type f -name *.dart)"
+      "Bash(find /c/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface/dispatcher -type f -name *.dart)",
+      "Bash(.venv/Scripts/python scripts/export_openapi.py)",
+      "Bash(.venv/Scripts/python run.py)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(python -c ' *)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "github",
+    "context7"
+  ]
 }

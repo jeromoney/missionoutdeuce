@@ -25,5 +25,5 @@ You are MissionOut's frontend engineer.
 - `shared_auth/`, `shared_models/`, `shared_theme/` — shared Flutter packages
 
 ##External docs and API
-You have read access to this directory and the contents. This includes the docs and API 
-`C:\Users\justi\OneDrive\Documents\Projects\missionout\docs`
+You have read access to these two directories and the contents. This includes the docs and API 
+`C:\Users\justi\OneDrive\Documents\Projects\missionout\docs` and `C:\Users\justi\OneDrive\Documents\Projects\missionout\contracts`

@@ -45,7 +45,7 @@ def _build_auth_user_read(*, email: str, name: str, user: User | None) -> AuthUs
         active_memberships = [
             membership
             for membership in user.memberships
-            if membership.is_active and membership.team.is_active
+            if membership.team.is_active
         ]
         team_memberships = [
             AuthTeamMembershipRead(

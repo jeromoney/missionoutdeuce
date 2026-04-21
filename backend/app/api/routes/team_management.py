@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from app.core.time import utc_now
 from app.db.session import get_db
 from app.models.team_management import Device, Team, TeamMembership, User
 from app.schemas.team_management import DeviceRead, TeamMemberCreate, TeamMemberRead, TeamMemberUpdate
@@ -29,9 +28,8 @@ def _serialize_membership(membership: TeamMembership) -> TeamMemberRead:
         email=membership.user.email,
         phone=membership.user.phone,
         roles=list(membership.roles),
-        is_active=membership.is_active,
+        is_active=membership.user.is_active,
         granted_at=membership.granted_at,
-        revoked_at=membership.revoked_at,
     )
 
 
@@ -83,8 +81,6 @@ def create_team_member(
         user_id=user.id,
         team_id=team.id,
         roles=payload.roles,
-        is_active=payload.is_active,
-        revoked_at=None if payload.is_active else utc_now(),
     )
     db.add(membership)
     db.commit()
@@ -120,13 +116,30 @@ def update_team_member(
         membership.roles = payload.roles
 
     if payload.is_active is not None:
-        membership.is_active = payload.is_active
         membership.user.is_active = payload.is_active
-        membership.revoked_at = None if payload.is_active else utc_now()
 
     db.commit()
     db.refresh(membership)
     return _serialize_membership(membership)
+
+
+@router.delete("/{team_public_id}/members/{membership_public_id}", status_code=204)
+def delete_team_member(
+    team_public_id: str,
+    membership_public_id: str,
+    db: Session = Depends(get_db),
+):
+    team = _get_team_or_404(team_public_id, db)
+    membership = db.scalar(
+        select(TeamMembership).where(
+            TeamMembership.public_id == membership_public_id,
+            TeamMembership.team_id == team.id,
+        )
+    )
+    if membership is None:
+        raise HTTPException(status_code=404, detail="Team membership not found")
+    db.delete(membership)
+    db.commit()
 
 
 @router.get("/{team_public_id}/devices", response_model=list[DeviceRead])

@@ -57,9 +57,7 @@ class TeamMembership(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     team_id: Mapped[int] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
     roles: Mapped[list[str]] = mapped_column(JSON, default=list)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     granted_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     user: Mapped[User] = relationship(back_populates="memberships")
     team: Mapped[Team] = relationship(back_populates="memberships")

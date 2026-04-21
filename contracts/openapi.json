@@ -1,862 +1,17 @@
 {
-  "components": {
-    "schemas": {
-      "AuthTeamMembershipRead": {
-        "properties": {
-          "roles": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Roles",
-            "type": "array"
-          },
-          "team_name": {
-            "title": "Team Name",
-            "type": "string"
-          },
-          "team_public_id": {
-            "title": "Team Public Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "team_public_id",
-          "team_name",
-          "roles"
-        ],
-        "title": "AuthTeamMembershipRead",
-        "type": "object"
-      },
-      "AuthUserRead": {
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "global_permissions": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Global Permissions",
-            "type": "array"
-          },
-          "initials": {
-            "title": "Initials",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "public_id": {
-            "title": "Public Id",
-            "type": "string"
-          },
-          "team_memberships": {
-            "items": {
-              "$ref": "#/components/schemas/AuthTeamMembershipRead"
-            },
-            "title": "Team Memberships",
-            "type": "array"
-          }
-        },
-        "required": [
-          "public_id",
-          "name",
-          "initials",
-          "global_permissions",
-          "team_memberships",
-          "email"
-        ],
-        "title": "AuthUserRead",
-        "type": "object"
-      },
-      "DeliveryEventRead": {
-        "properties": {
-          "color": {
-            "title": "Color",
-            "type": "string"
-          },
-          "detail": {
-            "title": "Detail",
-            "type": "string"
-          },
-          "icon": {
-            "title": "Icon",
-            "type": "string"
-          },
-          "time": {
-            "format": "date-time",
-            "title": "Time",
-            "type": "string"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "title",
-          "detail",
-          "time",
-          "icon",
-          "color"
-        ],
-        "title": "DeliveryEventRead",
-        "type": "object"
-      },
-      "DeviceRead": {
-        "properties": {
-          "is_active": {
-            "title": "Is Active",
-            "type": "boolean"
-          },
-          "is_verified": {
-            "title": "Is Verified",
-            "type": "boolean"
-          },
-          "last_seen": {
-            "format": "date-time",
-            "title": "Last Seen",
-            "type": "string"
-          },
-          "platform": {
-            "title": "Platform",
-            "type": "string"
-          },
-          "public_id": {
-            "title": "Public Id",
-            "type": "string"
-          },
-          "push_token": {
-            "title": "Push Token",
-            "type": "string"
-          },
-          "user_name": {
-            "title": "User Name",
-            "type": "string"
-          },
-          "user_public_id": {
-            "title": "User Public Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "public_id",
-          "user_public_id",
-          "user_name",
-          "platform",
-          "push_token",
-          "last_seen",
-          "is_active",
-          "is_verified"
-        ],
-        "title": "DeviceRead",
-        "type": "object"
-      },
-      "EmailCodeRequest": {
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "requested_client": {
-            "enum": [
-              "responder",
-              "dispatcher",
-              "team_admin"
-            ],
-            "title": "Requested Client",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "requested_client"
-        ],
-        "title": "EmailCodeRequest",
-        "type": "object"
-      },
-      "EmailCodeSentRead": {
-        "properties": {
-          "code_length": {
-            "default": 6,
-            "title": "Code Length",
-            "type": "integer"
-          },
-          "delivery": {
-            "const": "email_code",
-            "default": "email_code",
-            "title": "Delivery",
-            "type": "string"
-          },
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "expires_in_minutes": {
-            "title": "Expires In Minutes",
-            "type": "integer"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "expires_in_minutes",
-          "message"
-        ],
-        "title": "EmailCodeSentRead",
-        "type": "object"
-      },
-      "EmailCodeVerifyRequest": {
-        "properties": {
-          "code": {
-            "title": "Code",
-            "type": "string"
-          },
-          "email": {
-            "title": "Email",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "code"
-        ],
-        "title": "EmailCodeVerifyRequest",
-        "type": "object"
-      },
-      "GoogleAuthRequest": {
-        "properties": {
-          "access_token": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Access Token"
-          },
-          "id_token": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Id Token"
-          },
-          "requested_client": {
-            "enum": [
-              "responder",
-              "dispatcher",
-              "team_admin"
-            ],
-            "title": "Requested Client",
-            "type": "string"
-          }
-        },
-        "required": [
-          "requested_client"
-        ],
-        "title": "GoogleAuthRequest",
-        "type": "object"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "title": "Detail",
-            "type": "array"
-          }
-        },
-        "title": "HTTPValidationError",
-        "type": "object"
-      },
-      "HealthRead": {
-        "properties": {
-          "database": {
-            "title": "Database",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "status",
-          "database"
-        ],
-        "title": "HealthRead",
-        "type": "object"
-      },
-      "IncidentCreate": {
-        "properties": {
-          "active": {
-            "default": true,
-            "title": "Active",
-            "type": "boolean"
-          },
-          "location": {
-            "title": "Location",
-            "type": "string"
-          },
-          "notes": {
-            "title": "Notes",
-            "type": "string"
-          },
-          "team_public_id": {
-            "title": "Team Public Id",
-            "type": "string"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "title",
-          "team_public_id",
-          "location",
-          "notes"
-        ],
-        "title": "IncidentCreate",
-        "type": "object"
-      },
-      "IncidentRead": {
-        "properties": {
-          "active": {
-            "title": "Active",
-            "type": "boolean"
-          },
-          "created": {
-            "format": "date-time",
-            "title": "Created",
-            "type": "string"
-          },
-          "location": {
-            "title": "Location",
-            "type": "string"
-          },
-          "notes": {
-            "title": "Notes",
-            "type": "string"
-          },
-          "public_id": {
-            "title": "Public Id",
-            "type": "string"
-          },
-          "responses": {
-            "items": {
-              "$ref": "#/components/schemas/ResponseRecordRead"
-            },
-            "title": "Responses",
-            "type": "array"
-          },
-          "team_public_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Team Public Id"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "public_id",
-          "title",
-          "location",
-          "created",
-          "notes",
-          "active",
-          "responses"
-        ],
-        "title": "IncidentRead",
-        "type": "object"
-      },
-      "IncidentUpdate": {
-        "properties": {
-          "active": {
-            "title": "Active",
-            "type": "boolean"
-          },
-          "location": {
-            "title": "Location",
-            "type": "string"
-          },
-          "notes": {
-            "title": "Notes",
-            "type": "string"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "title",
-          "location",
-          "notes",
-          "active"
-        ],
-        "title": "IncidentUpdate",
-        "type": "object"
-      },
-      "ResponseRecordCreate": {
-        "properties": {
-          "rank": {
-            "default": 1,
-            "title": "Rank",
-            "type": "integer"
-          },
-          "source": {
-            "title": "Source",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "status",
-          "source"
-        ],
-        "title": "ResponseRecordCreate",
-        "type": "object"
-      },
-      "ResponseRecordRead": {
-        "properties": {
-          "rank": {
-            "title": "Rank",
-            "type": "integer"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "updated": {
-            "format": "date-time",
-            "title": "Updated",
-            "type": "string"
-          },
-          "user_public_id": {
-            "title": "User Public Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "user_public_id",
-          "status",
-          "rank",
-          "updated"
-        ],
-        "title": "ResponseRecordRead",
-        "type": "object"
-      },
-      "RootRead": {
-        "properties": {
-          "docs": {
-            "title": "Docs",
-            "type": "string"
-          },
-          "health": {
-            "title": "Health",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "status",
-          "health",
-          "docs"
-        ],
-        "title": "RootRead",
-        "type": "object"
-      },
-      "TeamMemberCreate": {
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "is_active": {
-            "default": true,
-            "title": "Is Active",
-            "type": "boolean"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "phone": {
-            "default": "",
-            "title": "Phone",
-            "type": "string"
-          },
-          "roles": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Roles",
-            "type": "array"
-          }
-        },
-        "required": [
-          "name",
-          "email",
-          "roles"
-        ],
-        "title": "TeamMemberCreate",
-        "type": "object"
-      },
-      "TeamMemberRead": {
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "granted_at": {
-            "format": "date-time",
-            "title": "Granted At",
-            "type": "string"
-          },
-          "is_active": {
-            "title": "Is Active",
-            "type": "boolean"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "phone": {
-            "title": "Phone",
-            "type": "string"
-          },
-          "public_id": {
-            "title": "Public Id",
-            "type": "string"
-          },
-          "revoked_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Revoked At"
-          },
-          "roles": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Roles",
-            "type": "array"
-          },
-          "team_public_id": {
-            "title": "Team Public Id",
-            "type": "string"
-          },
-          "user_public_id": {
-            "title": "User Public Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "public_id",
-          "user_public_id",
-          "team_public_id",
-          "name",
-          "email",
-          "phone",
-          "roles",
-          "is_active",
-          "granted_at",
-          "revoked_at"
-        ],
-        "title": "TeamMemberRead",
-        "type": "object"
-      },
-      "TeamMemberUpdate": {
-        "properties": {
-          "is_active": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Active"
-          },
-          "roles": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Roles"
-          }
-        },
-        "title": "TeamMemberUpdate",
-        "type": "object"
-      },
-      "ValidationError": {
-        "properties": {
-          "ctx": {
-            "title": "Context",
-            "type": "object"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "title": "Location",
-            "type": "array"
-          },
-          "msg": {
-            "title": "Message",
-            "type": "string"
-          },
-          "type": {
-            "title": "Error Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
-        "title": "ValidationError",
-        "type": "object"
-      },
-      "WebPushKeys": {
-        "properties": {
-          "auth": {
-            "title": "Auth",
-            "type": "string"
-          },
-          "p256dh": {
-            "title": "P256Dh",
-            "type": "string"
-          }
-        },
-        "required": [
-          "p256dh",
-          "auth"
-        ],
-        "title": "WebPushKeys",
-        "type": "object"
-      },
-      "WebPushPublicKeyRead": {
-        "properties": {
-          "public_key": {
-            "title": "Public Key",
-            "type": "string"
-          },
-          "subject": {
-            "title": "Subject",
-            "type": "string"
-          }
-        },
-        "required": [
-          "public_key",
-          "subject"
-        ],
-        "title": "WebPushPublicKeyRead",
-        "type": "object"
-      },
-      "WebPushSubscriptionCreate": {
-        "properties": {
-          "client": {
-            "enum": [
-              "responder",
-              "dispatcher",
-              "team_admin"
-            ],
-            "title": "Client",
-            "type": "string"
-          },
-          "endpoint": {
-            "title": "Endpoint",
-            "type": "string"
-          },
-          "keys": {
-            "$ref": "#/components/schemas/WebPushKeys"
-          },
-          "team_public_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Team Public Id"
-          },
-          "user_agent": {
-            "default": "",
-            "title": "User Agent",
-            "type": "string"
-          }
-        },
-        "required": [
-          "endpoint",
-          "keys",
-          "client"
-        ],
-        "title": "WebPushSubscriptionCreate",
-        "type": "object"
-      },
-      "WebPushSubscriptionDelete": {
-        "properties": {
-          "endpoint": {
-            "title": "Endpoint",
-            "type": "string"
-          }
-        },
-        "required": [
-          "endpoint"
-        ],
-        "title": "WebPushSubscriptionDelete",
-        "type": "object"
-      },
-      "WebPushSubscriptionRead": {
-        "properties": {
-          "client": {
-            "title": "Client",
-            "type": "string"
-          },
-          "endpoint": {
-            "title": "Endpoint",
-            "type": "string"
-          },
-          "is_active": {
-            "title": "Is Active",
-            "type": "boolean"
-          },
-          "last_seen": {
-            "format": "date-time",
-            "title": "Last Seen",
-            "type": "string"
-          },
-          "platform": {
-            "const": "web",
-            "default": "web",
-            "title": "Platform",
-            "type": "string"
-          },
-          "public_id": {
-            "title": "Public Id",
-            "type": "string"
-          },
-          "team_public_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Team Public Id"
-          },
-          "user_public_id": {
-            "title": "User Public Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "public_id",
-          "user_public_id",
-          "team_public_id",
-          "endpoint",
-          "client",
-          "last_seen",
-          "is_active"
-        ],
-        "title": "WebPushSubscriptionRead",
-        "type": "object"
-      }
-    }
-  },
+  "openapi": "3.1.0",
   "info": {
-    "description": "MissionOut API contract for dispatcher, team admin, and responder clients. The exported OpenAPI document in contracts/openapi.json is the cross-stack source of truth.",
     "title": "MissionOut API",
+    "description": "MissionOut API contract for dispatcher, team admin, and responder clients. The exported OpenAPI document in contracts/openapi.json is the cross-stack source of truth.",
     "version": "0.1.0"
   },
-  "openapi": "3.1.0",
   "paths": {
-    "/": {
-      "get": {
-        "operationId": "root__get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RootRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Root",
-        "tags": [
-          "meta"
-        ]
-      }
-    },
     "/auth/email-code": {
       "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Request Email Sign-In Code",
         "description": "Starts email-based sign-in by asking the backend to send a one-time verification code to the supplied email address. The code is entered directly into the MissionOut client for the requested surface.",
         "operationId": "request_email_code_auth_email_code_post",
         "requestBody": {
@@ -871,34 +26,34 @@
         },
         "responses": {
           "202": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EmailCodeSentRead"
                 }
               }
-            },
-            "description": "Successful Response"
+            }
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Validation Error"
+            }
           }
-        },
-        "summary": "Request Email Sign-In Code",
-        "tags": [
-          "auth"
-        ]
+        }
       }
     },
     "/auth/email-code/verify": {
       "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Verify Email Sign-In Code",
         "description": "Completes email-code sign-in by exchanging a one-time emailed code for the authenticated MissionOut user payload.",
         "operationId": "verify_email_code_auth_email_code_verify_post",
         "requestBody": {
@@ -913,34 +68,34 @@
         },
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthUserRead"
                 }
               }
-            },
-            "description": "Successful Response"
+            }
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Validation Error"
+            }
           }
-        },
-        "summary": "Verify Email Sign-In Code",
-        "tags": [
-          "auth"
-        ]
+        }
       }
     },
     "/auth/google": {
       "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Google Auth",
         "operationId": "google_auth_auth_google_post",
         "requestBody": {
           "content": {
@@ -954,34 +109,334 @@
         },
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthUserRead"
                 }
               }
-            },
-            "description": "Successful Response"
+            }
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Validation Error"
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthRead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incidents": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "List Incidents",
+        "operationId": "list_incidents_incidents_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IncidentRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Incidents Incidents Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Create Incident",
+        "operationId": "create_incident_incidents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incidents/{incident_public_id}": {
+      "patch": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "Update Incident",
+        "operationId": "update_incident_incidents__incident_public_id__patch",
+        "parameters": [
+          {
+            "name": "incident_public_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Incident Public Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IncidentUpdate"
+              }
+            }
           }
         },
-        "summary": "Google Auth",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/incidents/{incident_public_id}/responses": {
+      "post": {
         "tags": [
-          "auth"
-        ]
+          "incidents"
+        ],
+        "summary": "Create Incident Response",
+        "operationId": "create_incident_response_incidents__incident_public_id__responses_post",
+        "parameters": [
+          {
+            "name": "incident_public_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Incident Public Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponseRecordCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseRecordRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/delivery-feed": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "List Delivery Feed",
+        "operationId": "list_delivery_feed_events_delivery_feed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryEventRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Delivery Feed Events Delivery Feed Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/stream": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Stream Open-Tab Events",
+        "description": "Streams supplemental open-tab event notifications over Server-Sent Events for authenticated web clients. Incident events are scoped to the caller's active team memberships.",
+        "operationId": "stream_events_events_stream_get",
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events stream.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "example": "event: incident.created\ndata: {\"incident_public_id\":\"2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b\",\"team_public_id\":\"58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591\",\"title\":\"Injured Climber Extraction\"}\n\n"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/devices/web-push/public-key": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Get Web Push Public Key",
+        "operationId": "get_web_push_public_key_devices_web_push_public_key_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebPushPublicKeyRead"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/devices/web-push": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Register Web Push Subscription",
+        "operationId": "register_web_push_subscription_devices_web_push_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebPushSubscriptionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebPushSubscriptionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Delete Web Push Subscription",
         "operationId": "delete_web_push_subscription_devices_web_push_delete",
         "requestBody": {
           "content": {
@@ -998,492 +453,275 @@
             "description": "Successful Response"
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Delete Web Push Subscription",
-        "tags": [
-          "devices"
-        ]
-      },
-      "post": {
-        "operationId": "register_web_push_subscription_devices_web_push_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WebPushSubscriptionCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WebPushSubscriptionRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Register Web Push Subscription",
-        "tags": [
-          "devices"
-        ]
-      }
-    },
-    "/devices/web-push/public-key": {
-      "get": {
-        "operationId": "get_web_push_public_key_devices_web_push_public_key_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WebPushPublicKeyRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Get Web Push Public Key",
-        "tags": [
-          "devices"
-        ]
-      }
-    },
-    "/events/delivery-feed": {
-      "get": {
-        "operationId": "list_delivery_feed_events_delivery_feed_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/DeliveryEventRead"
-                  },
-                  "title": "Response List Delivery Feed Events Delivery Feed Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "List Delivery Feed",
-        "tags": [
-          "events"
-        ]
-      }
-    },
-    "/events/stream": {
-      "get": {
-        "description": "Streams supplemental open-tab event notifications over Server-Sent Events for authenticated web clients. Incident events are scoped to the caller's active team memberships.",
-        "operationId": "stream_events_events_stream_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              },
-              "text/event-stream": {
-                "schema": {
-                  "example": "event: incident.created\ndata: {\"incident_public_id\":\"2cb1d6d9-7c83-4dc9-a9c6-54be6beea10b\",\"team_public_id\":\"58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591\",\"title\":\"Injured Climber Extraction\"}\n\n",
-                  "type": "string"
-                }
-              }
-            },
-            "description": "Server-Sent Events stream."
-          }
-        },
-        "summary": "Stream Open-Tab Events",
-        "tags": [
-          "events"
-        ]
-      }
-    },
-    "/health": {
-      "get": {
-        "operationId": "health_check_health_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HealthRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Health Check",
-        "tags": [
-          "health"
-        ]
-      }
-    },
-    "/incidents": {
-      "get": {
-        "operationId": "list_incidents_incidents_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/IncidentRead"
-                  },
-                  "title": "Response List Incidents Incidents Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "List Incidents",
-        "tags": [
-          "incidents"
-        ]
-      },
-      "post": {
-        "operationId": "create_incident_incidents_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IncidentCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IncidentRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Create Incident",
-        "tags": [
-          "incidents"
-        ]
-      }
-    },
-    "/incidents/{incident_public_id}": {
-      "patch": {
-        "operationId": "update_incident_incidents__incident_public_id__patch",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "incident_public_id",
-            "required": true,
-            "schema": {
-              "title": "Incident Public Id",
-              "type": "string"
             }
           }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IncidentUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IncidentRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Update Incident",
-        "tags": [
-          "incidents"
-        ]
-      }
-    },
-    "/incidents/{incident_public_id}/responses": {
-      "post": {
-        "operationId": "create_incident_response_incidents__incident_public_id__responses_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "incident_public_id",
-            "required": true,
-            "schema": {
-              "title": "Incident Public Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResponseRecordCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponseRecordRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Create Incident Response",
-        "tags": [
-          "incidents"
-        ]
-      }
-    },
-    "/teams/{team_public_id}/devices": {
-      "get": {
-        "operationId": "list_team_devices_teams__team_public_id__devices_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "team_public_id",
-            "required": true,
-            "schema": {
-              "title": "Team Public Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/DeviceRead"
-                  },
-                  "title": "Response List Team Devices Teams  Team Public Id  Devices Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "List Team Devices",
-        "tags": [
-          "teams"
-        ]
+        }
       }
     },
     "/teams/{team_public_id}/members": {
       "get": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "List Team Members",
         "operationId": "list_team_members_teams__team_public_id__members_get",
         "parameters": [
           {
-            "in": "path",
             "name": "team_public_id",
+            "in": "path",
             "required": true,
             "schema": {
-              "title": "Team Public Id",
-              "type": "string"
+              "type": "string",
+              "title": "Team Public Id"
             }
           }
         ],
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/TeamMemberRead"
                   },
-                  "title": "Response List Team Members Teams  Team Public Id  Members Get",
-                  "type": "array"
+                  "title": "Response List Team Members Teams  Team Public Id  Members Get"
                 }
               }
-            },
-            "description": "Successful Response"
+            }
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Validation Error"
+            }
           }
-        },
-        "summary": "List Team Members",
-        "tags": [
-          "teams"
-        ]
+        }
       },
       "post": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Create Team Member",
         "operationId": "create_team_member_teams__team_public_id__members_post",
         "parameters": [
           {
-            "in": "path",
             "name": "team_public_id",
+            "in": "path",
             "required": true,
             "schema": {
-              "title": "Team Public Id",
-              "type": "string"
+              "type": "string",
+              "title": "Team Public Id"
             }
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TeamMemberCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamMemberRead"
                 }
               }
-            },
-            "description": "Successful Response"
+            }
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
-            },
-            "description": "Validation Error"
+            }
           }
-        },
-        "summary": "Create Team Member",
-        "tags": [
-          "teams"
-        ]
+        }
       }
     },
     "/teams/{team_public_id}/members/{membership_public_id}": {
       "patch": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Update Team Member",
         "operationId": "update_team_member_teams__team_public_id__members__membership_public_id__patch",
         "parameters": [
           {
-            "in": "path",
             "name": "team_public_id",
+            "in": "path",
             "required": true,
             "schema": {
-              "title": "Team Public Id",
-              "type": "string"
+              "type": "string",
+              "title": "Team Public Id"
             }
           },
           {
-            "in": "path",
             "name": "membership_public_id",
+            "in": "path",
             "required": true,
             "schema": {
-              "title": "Membership Public Id",
-              "type": "string"
+              "type": "string",
+              "title": "Membership Public Id"
             }
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TeamMemberUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "Delete Team Member",
+        "operationId": "delete_team_member_teams__team_public_id__members__membership_public_id__delete",
+        "parameters": [
+          {
+            "name": "team_public_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Team Public Id"
+            }
+          },
+          {
+            "name": "membership_public_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Membership Public Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/teams/{team_public_id}/devices": {
+      "get": {
+        "tags": [
+          "teams"
+        ],
+        "summary": "List Team Devices",
+        "operationId": "list_team_devices_teams__team_public_id__devices_get",
+        "parameters": [
+          {
+            "name": "team_public_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Team Public Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceRead"
+                  },
+                  "title": "Response List Team Devices Teams  Team Public Id  Devices Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/active": {
+      "patch": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Set User Active",
+        "operationId": "set_user_active_user_active_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserActiveUpdate"
               }
             }
           },
@@ -1491,30 +729,893 @@
         },
         "responses": {
           "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TeamMemberRead"
+                  "$ref": "#/components/schemas/UserActiveRead"
                 }
               }
-            },
-            "description": "Successful Response"
+            }
           },
           "422": {
+            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RootRead"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthTeamMembershipRead": {
+        "properties": {
+          "team_public_id": {
+            "type": "string",
+            "title": "Team Public Id"
+          },
+          "team_name": {
+            "type": "string",
+            "title": "Team Name"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
             },
-            "description": "Validation Error"
+            "type": "array",
+            "title": "Roles"
           }
         },
-        "summary": "Update Team Member",
-        "tags": [
-          "teams"
-        ]
+        "type": "object",
+        "required": [
+          "team_public_id",
+          "team_name",
+          "roles"
+        ],
+        "title": "AuthTeamMembershipRead"
+      },
+      "AuthUserRead": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "initials": {
+            "type": "string",
+            "title": "Initials"
+          },
+          "global_permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Global Permissions"
+          },
+          "team_memberships": {
+            "items": {
+              "$ref": "#/components/schemas/AuthTeamMembershipRead"
+            },
+            "type": "array",
+            "title": "Team Memberships"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "name",
+          "initials",
+          "global_permissions",
+          "team_memberships",
+          "email"
+        ],
+        "title": "AuthUserRead"
+      },
+      "DeliveryEventRead": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time"
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "detail",
+          "time",
+          "icon",
+          "color"
+        ],
+        "title": "DeliveryEventRead"
+      },
+      "DeviceRead": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "user_public_id": {
+            "type": "string",
+            "title": "User Public Id"
+          },
+          "user_name": {
+            "type": "string",
+            "title": "User Name"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "push_token": {
+            "type": "string",
+            "title": "Push Token"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "user_public_id",
+          "user_name",
+          "platform",
+          "push_token",
+          "last_seen",
+          "is_active",
+          "is_verified"
+        ],
+        "title": "DeviceRead"
+      },
+      "EmailCodeRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "requested_client": {
+            "type": "string",
+            "enum": [
+              "responder",
+              "dispatcher",
+              "team_admin"
+            ],
+            "title": "Requested Client"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "requested_client"
+        ],
+        "title": "EmailCodeRequest"
+      },
+      "EmailCodeSentRead": {
+        "properties": {
+          "delivery": {
+            "type": "string",
+            "const": "email_code",
+            "title": "Delivery",
+            "default": "email_code"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "expires_in_minutes": {
+            "type": "integer",
+            "title": "Expires In Minutes"
+          },
+          "code_length": {
+            "type": "integer",
+            "title": "Code Length",
+            "default": 6
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "expires_in_minutes",
+          "message"
+        ],
+        "title": "EmailCodeSentRead"
+      },
+      "EmailCodeVerifyRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "code"
+        ],
+        "title": "EmailCodeVerifyRequest"
+      },
+      "GoogleAuthRequest": {
+        "properties": {
+          "id_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Token"
+          },
+          "access_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Token"
+          },
+          "requested_client": {
+            "type": "string",
+            "enum": [
+              "responder",
+              "dispatcher",
+              "team_admin"
+            ],
+            "title": "Requested Client"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requested_client"
+        ],
+        "title": "GoogleAuthRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthRead": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "database": {
+            "type": "string",
+            "title": "Database"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "database"
+        ],
+        "title": "HealthRead"
+      },
+      "IncidentCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "team_public_id": {
+            "type": "string",
+            "title": "Team Public Id"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "team_public_id",
+          "location",
+          "notes"
+        ],
+        "title": "IncidentCreate"
+      },
+      "IncidentRead": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "team_public_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Public Id"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/ResponseRecordRead"
+            },
+            "type": "array",
+            "title": "Responses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "title",
+          "location",
+          "created",
+          "notes",
+          "active",
+          "responses"
+        ],
+        "title": "IncidentRead"
+      },
+      "IncidentUpdate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "location",
+          "notes",
+          "active"
+        ],
+        "title": "IncidentUpdate"
+      },
+      "ResponseRecordCreate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "source"
+        ],
+        "title": "ResponseRecordCreate"
+      },
+      "ResponseRecordRead": {
+        "properties": {
+          "user_public_id": {
+            "type": "string",
+            "title": "User Public Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_public_id",
+          "status",
+          "rank",
+          "updated"
+        ],
+        "title": "ResponseRecordRead"
+      },
+      "RootRead": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "health": {
+            "type": "string",
+            "title": "Health"
+          },
+          "docs": {
+            "type": "string",
+            "title": "Docs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "status",
+          "health",
+          "docs"
+        ],
+        "title": "RootRead"
+      },
+      "TeamMemberCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone",
+            "default": ""
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "roles"
+        ],
+        "title": "TeamMemberCreate"
+      },
+      "TeamMemberRead": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "user_public_id": {
+            "type": "string",
+            "title": "User Public Id"
+          },
+          "team_public_id": {
+            "type": "string",
+            "title": "Team Public Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "granted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Granted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "user_public_id",
+          "team_public_id",
+          "name",
+          "email",
+          "phone",
+          "roles",
+          "is_active",
+          "granted_at"
+        ],
+        "title": "TeamMemberRead"
+      },
+      "TeamMemberUpdate": {
+        "properties": {
+          "roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roles"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "TeamMemberUpdate"
+      },
+      "UserActiveRead": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "is_active"
+        ],
+        "title": "UserActiveRead"
+      },
+      "UserActiveUpdate": {
+        "properties": {
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_active"
+        ],
+        "title": "UserActiveUpdate"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WebPushKeys": {
+        "properties": {
+          "p256dh": {
+            "type": "string",
+            "title": "P256Dh"
+          },
+          "auth": {
+            "type": "string",
+            "title": "Auth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "p256dh",
+          "auth"
+        ],
+        "title": "WebPushKeys"
+      },
+      "WebPushPublicKeyRead": {
+        "properties": {
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_key",
+          "subject"
+        ],
+        "title": "WebPushPublicKeyRead"
+      },
+      "WebPushSubscriptionCreate": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          },
+          "keys": {
+            "$ref": "#/components/schemas/WebPushKeys"
+          },
+          "user_agent": {
+            "type": "string",
+            "title": "User Agent",
+            "default": ""
+          },
+          "client": {
+            "type": "string",
+            "enum": [
+              "responder",
+              "dispatcher",
+              "team_admin"
+            ],
+            "title": "Client"
+          },
+          "team_public_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Public Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint",
+          "keys",
+          "client"
+        ],
+        "title": "WebPushSubscriptionCreate"
+      },
+      "WebPushSubscriptionDelete": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "WebPushSubscriptionDelete"
+      },
+      "WebPushSubscriptionRead": {
+        "properties": {
+          "public_id": {
+            "type": "string",
+            "title": "Public Id"
+          },
+          "user_public_id": {
+            "type": "string",
+            "title": "User Public Id"
+          },
+          "team_public_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Public Id"
+          },
+          "platform": {
+            "type": "string",
+            "const": "web",
+            "title": "Platform",
+            "default": "web"
+          },
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          },
+          "client": {
+            "type": "string",
+            "title": "Client"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "public_id",
+          "user_public_id",
+          "team_public_id",
+          "endpoint",
+          "client",
+          "last_seen",
+          "is_active"
+        ],
+        "title": "WebPushSubscriptionRead"
       }
     }
   }

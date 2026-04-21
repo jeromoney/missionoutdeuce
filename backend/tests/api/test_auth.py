@@ -188,3 +188,120 @@ def test_post_google_returns_provisioned_user(client, seeded_user, monkeypatch):
     body = response.json()
     assert body["public_id"] == seeded_user.public_id
     assert body["email"] == seeded_user.email
+
+
+def test_post_email_code_verify_happy_path(client, seeded_user, monkeypatch, db_session):
+    import app.api.routes.auth as auth_routes
+
+    captured: dict[str, str] = {}
+
+    def fake_send(*, recipient_email: str, code: str, requested_client: str):
+        captured["code"] = code
+
+    monkeypatch.setattr(auth_routes, "_send_email_code_via_resend", fake_send)
+
+    request = client.post(
+        "/auth/email-code",
+        json={"email": seeded_user.email, "requested_client": "dispatcher"},
+    )
+    assert request.status_code == 202
+
+    verify = client.post(
+        "/auth/email-code/verify",
+        json={"email": seeded_user.email, "code": captured["code"]},
+    )
+
+    assert verify.status_code == 200
+    body = verify.json()
+    assert body["public_id"] == seeded_user.public_id
+    assert body["email"] == seeded_user.email
+    assert body["team_memberships"][0]["team_name"] == "Cinder Valley Rescue"
+
+    token_record = (
+        db_session.query(EmailCodeToken).filter_by(email=seeded_user.email).one()
+    )
+    assert token_record.consumed_at is not None
+
+
+def test_post_email_code_verify_rejects_expired_code(client, seeded_user, db_session):
+    import app.api.routes.auth as auth_routes
+
+    expired_token = EmailCodeToken(
+        email=seeded_user.email,
+        code_hash=auth_routes._hash_email_code(email=seeded_user.email, code="111111"),
+        requested_client="dispatcher",
+        expires_at=utc_now() - timedelta(minutes=1),
+    )
+    db_session.add(expired_token)
+    db_session.commit()
+
+    response = client.post(
+        "/auth/email-code/verify",
+        json={"email": seeded_user.email, "code": "111111"},
+    )
+
+    assert response.status_code == 401
+    assert "expired" in response.json()["detail"].lower()
+
+
+def test_post_email_code_verify_rejects_reused_code(client, seeded_user, db_session):
+    import app.api.routes.auth as auth_routes
+
+    consumed_token = EmailCodeToken(
+        email=seeded_user.email,
+        code_hash=auth_routes._hash_email_code(email=seeded_user.email, code="222222"),
+        requested_client="dispatcher",
+        expires_at=utc_now() + timedelta(minutes=15),
+        consumed_at=utc_now(),
+    )
+    db_session.add(consumed_token)
+    db_session.commit()
+
+    response = client.post(
+        "/auth/email-code/verify",
+        json={"email": seeded_user.email, "code": "222222"},
+    )
+
+    assert response.status_code == 401
+    assert "already been used" in response.json()["detail"].lower()
+
+
+def test_post_google_rejects_aud_not_in_allowed_ids(client, monkeypatch):
+    import app.api.routes.auth as auth_routes
+    from app.core.config import settings
+
+    def fake_verify_oauth2_token(token, request, audience):
+        return {"aud": "unapproved-client-id", "email": "one@gmail.com", "name": "x"}
+
+    monkeypatch.setattr(
+        auth_routes.id_token, "verify_oauth2_token", fake_verify_oauth2_token
+    )
+    monkeypatch.setattr(settings, "google_client_id", "approved-client-id")
+
+    response = client.post(
+        "/auth/google",
+        json={"id_token": "fake-google-token", "requested_client": "dispatcher"},
+    )
+
+    assert response.status_code == 401
+    assert "audience" in response.json()["detail"].lower()
+
+
+def test_post_google_rejects_verified_payload_missing_email(client, monkeypatch):
+    import app.api.routes.auth as auth_routes
+    from app.core.config import settings
+
+    monkeypatch.setattr(
+        auth_routes,
+        "_verify_google_identity",
+        lambda payload: {"aud": "test-client-id", "name": "Nameless"},
+    )
+    monkeypatch.setattr(settings, "google_client_id", "test-client-id")
+
+    response = client.post(
+        "/auth/google",
+        json={"id_token": "fake-google-token", "requested_client": "dispatcher"},
+    )
+
+    assert response.status_code == 400
+    assert "email" in response.json()["detail"].lower()

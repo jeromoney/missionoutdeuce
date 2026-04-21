@@ -294,8 +294,7 @@ class TeamAdminRepository {
     final roles = (json['roles'] as List<dynamic>? ?? const [])
         .whereType<String>()
         .toList();
-    final isActive =
-        json['is_active'] as bool? ?? json['active'] as bool? ?? true;
+    final isActive = json['is_active'] as bool? ?? true;
     final lastSeenRaw = device?['last_seen'] as String?;
     final isVerified = device?['is_verified'] as bool?;
     final isDeviceActive = device?['is_active'] as bool?;

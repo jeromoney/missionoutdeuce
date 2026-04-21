@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python -c ' *)",
+      "Bash(.venv/Scripts/python -m pytest tests/ -q)",
+      "Bash(python *)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "context7"
+  ],
+  "disabledMcpjsonServers": [
+    "github"
+  ]
+}
