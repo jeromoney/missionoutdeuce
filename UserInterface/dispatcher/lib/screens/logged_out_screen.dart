@@ -11,6 +11,7 @@ class LoggedOutScreen extends StatefulWidget {
     required this.onVerifyEmailCode,
     required this.onGoogleLogin,
     this.googleLoginEnabled = true,
+    this.googleSignInButton,
     this.roleLabel = 'Dispatcher',
   });
 
@@ -19,6 +20,7 @@ class LoggedOutScreen extends StatefulWidget {
   onVerifyEmailCode;
   final Future<void> Function() onGoogleLogin;
   final bool googleLoginEnabled;
+  final Widget? googleSignInButton;
   final String roleLabel;
 
   @override
@@ -59,6 +61,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
                   isSubmitting: isSubmitting,
                   awaitingCode: awaitingCode,
                   googleLoginEnabled: widget.googleLoginEnabled,
+                  googleSignInButton: widget.googleSignInButton,
                   onSubmitEmailCode: _submitEmailCode,
                   onGoogleLogin: _submitGoogle,
                   roleLabel: widget.roleLabel,
@@ -155,6 +158,7 @@ class _LoginPanel extends StatelessWidget {
     required this.isSubmitting,
     required this.awaitingCode,
     required this.googleLoginEnabled,
+    required this.googleSignInButton,
     required this.onSubmitEmailCode,
     required this.onGoogleLogin,
     required this.roleLabel,
@@ -167,6 +171,7 @@ class _LoginPanel extends StatelessWidget {
   final bool isSubmitting;
   final bool awaitingCode;
   final bool googleLoginEnabled;
+  final Widget? googleSignInButton;
   final Future<void> Function() onSubmitEmailCode;
   final Future<void> Function() onGoogleLogin;
   final String roleLabel;
@@ -265,20 +270,23 @@ class _LoginPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: isSubmitting || !googleLoginEnabled || awaitingCode
-                  ? null
-                  : onGoogleLogin,
-              icon: const Icon(Icons.login_rounded),
-              label: Text(
-                googleLoginEnabled
-                    ? 'Continue with Google'
-                    : 'Google login not configured',
+          if (googleSignInButton != null && googleLoginEnabled)
+            SizedBox(width: double.infinity, child: googleSignInButton!)
+          else
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: isSubmitting || !googleLoginEnabled || awaitingCode
+                    ? null
+                    : onGoogleLogin,
+                icon: const Icon(Icons.login_rounded),
+                label: Text(
+                  googleLoginEnabled
+                      ? 'Continue with Google'
+                      : 'Google login not configured',
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

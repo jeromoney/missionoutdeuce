@@ -1,11 +1,17 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls *)",
+      "Bash(flutter analyze *)",
+      "Bash(xargs grep *)",
+      "Bash(flutter pub *)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(flutter test *)"
+    ]
+  },
   "enabledMcpjsonServers": [
     "github",
     "context7"
-  ],
-  "permissions": {
-    "allow": [
-      "Bash(xargs ls *)"
-    ]
-  }
+  ]
 }

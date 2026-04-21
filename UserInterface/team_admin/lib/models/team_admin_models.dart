@@ -160,20 +160,10 @@ class TeamAdminMemberDraft {
     required this.email,
     required this.phone,
     required this.roles,
-    required this.status,
-    required this.lastSeen,
-    required this.devicePlatform,
-    required this.deviceHealth,
-    required this.isActive,
   });
 
   final String name;
   final String email;
   final String phone;
   final List<String> roles;
-  final String status;
-  final String lastSeen;
-  final String devicePlatform;
-  final String deviceHealth;
-  final bool isActive;
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
@@ -45,6 +46,9 @@ class _MissionOutTeamAdminAppState extends State<MissionOutTeamAdminApp> {
                   onVerifyEmailCode: auth.verifyEmailCode,
                   onGoogleLogin: auth.loginWithGoogle,
                   googleLoginEnabled: auth.canUseGoogleLogin,
+                  googleSignInButton: kIsWeb && auth.canUseGoogleLogin
+                      ? MissionOutGoogleLoginButton(controller: auth)
+                      : null,
                   roleLabel: auth.roleLabel,
                 );
         },

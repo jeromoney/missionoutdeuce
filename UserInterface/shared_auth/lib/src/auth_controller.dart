@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth_user.dart';
 
+const _googleScopes = <String>['email', 'profile'];
+
 class AuthController extends ChangeNotifier {
   AuthController({
     required this.loggedOutRoleLabel,
@@ -24,8 +26,10 @@ class AuthController extends ChangeNotifier {
   final String? googleClientId;
 
   AuthUser? _currentUser;
-  GoogleSignIn? _googleSignIn;
   bool _isRestoring = true;
+
+  Future<void>? _googleInit;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleEventSub;
 
   AuthUser? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null;
@@ -36,11 +40,18 @@ class AuthController extends ChangeNotifier {
 
   String get _sessionStorageKey => 'missionout.auth.$requestedClient';
 
-  GoogleSignIn _getGoogleSignIn() {
-    return _googleSignIn ??= GoogleSignIn(
-      scopes: const ['email', 'profile'],
-      clientId: googleClientId,
-    );
+  Future<void> initializeGoogleSignIn() {
+    return _googleInit ??= GoogleSignIn.instance
+        .initialize(clientId: googleClientId)
+        .then((_) {
+          _googleEventSub ??= GoogleSignIn.instance.authenticationEvents.listen(
+            _handleGoogleAuthEvent,
+          );
+        })
+        .catchError((Object error) {
+          _googleInit = null;
+          throw error;
+        });
   }
 
   Future<void> loginWithEmailCode({required String email}) async {
@@ -90,19 +101,40 @@ class AuthController extends ChangeNotifier {
       );
     }
 
-    final googleSignIn = _getGoogleSignIn();
-    final account = await googleSignIn.signIn();
-    if (account == null) {
-      throw Exception('Google sign-in cancelled.');
+    await initializeGoogleSignIn();
+
+    if (!GoogleSignIn.instance.supportsAuthenticate()) {
+      throw Exception(
+        'On web, embed MissionOutGoogleLoginButton instead of calling loginWithGoogle().',
+      );
     }
 
-    await _completeGoogleLogin(account);
+    await GoogleSignIn.instance.authenticate(scopeHint: _googleScopes);
+  }
+
+  Future<void> _handleGoogleAuthEvent(
+    GoogleSignInAuthenticationEvent event,
+  ) async {
+    if (event is GoogleSignInAuthenticationEventSignIn) {
+      try {
+        await _completeGoogleLogin(event.user);
+      } catch (_) {
+        // Surfaced via the next sign-in attempt; the stream API has no
+        // direct callback path back to the UI.
+      }
+    } else if (event is GoogleSignInAuthenticationEventSignOut) {
+      _currentUser = null;
+      unawaited(_clearSession());
+      notifyListeners();
+    }
   }
 
   Future<void> _completeGoogleLogin(GoogleSignInAccount account) async {
-    final authentication = await account.authentication;
-    final idToken = authentication.idToken;
-    final accessToken = authentication.accessToken;
+    final idToken = account.authentication.idToken;
+    final authorization = await account.authorizationClient
+        .authorizationForScopes(_googleScopes);
+    final accessToken = authorization?.accessToken;
+
     if ((idToken == null || idToken.isEmpty) &&
         (accessToken == null || accessToken.isEmpty)) {
       throw Exception(
@@ -149,11 +181,17 @@ class AuthController extends ChangeNotifier {
   void logout() {
     unawaited(_clearSession());
     _currentUser = null;
-    final googleSignIn = _googleSignIn;
-    if (googleSignIn != null) {
-      unawaited(googleSignIn.signOut().catchError((_) => null));
+    if (_googleInit != null) {
+      unawaited(GoogleSignIn.instance.signOut().catchError((_) => null));
     }
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_googleEventSub?.cancel());
+    _googleEventSub = null;
+    super.dispose();
   }
 
   String _buildBackendError(http.Response response) {

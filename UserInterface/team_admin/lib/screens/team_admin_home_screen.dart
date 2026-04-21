@@ -1016,11 +1016,6 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
   late final TextEditingController nameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
-  late final TextEditingController lastSeenController;
-  late final TextEditingController devicePlatformController;
-  late final TextEditingController deviceHealthController;
-  late String status;
-  late bool isActive;
   late bool isTeamAdmin;
   late bool isDispatcher;
   late bool isResponder;
@@ -1032,17 +1027,6 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
     nameController = TextEditingController(text: member?.name ?? '');
     emailController = TextEditingController(text: member?.email ?? '');
     phoneController = TextEditingController(text: member?.phone ?? '');
-    lastSeenController = TextEditingController(
-      text: member?.lastSeen ?? 'Just now',
-    );
-    devicePlatformController = TextEditingController(
-      text: member?.devicePlatform ?? 'Android',
-    );
-    deviceHealthController = TextEditingController(
-      text: member?.deviceHealth ?? 'Healthy',
-    );
-    status = member?.status ?? 'Available';
-    isActive = member?.isActive ?? true;
     isTeamAdmin = member?.roles.contains('team_admin') ?? false;
     isDispatcher = member?.roles.contains('dispatcher') ?? false;
     isResponder = member?.roles.contains('responder') ?? true;
@@ -1053,9 +1037,6 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
-    lastSeenController.dispose();
-    devicePlatformController.dispose();
-    deviceHealthController.dispose();
     super.dispose();
   }
 
@@ -1087,49 +1068,6 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                 decoration: const InputDecoration(labelText: 'Phone'),
                 validator: _required,
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: status,
-                decoration: const InputDecoration(labelText: 'Status'),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'Available',
-                    child: Text('Available'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Responding',
-                    child: Text('Responding'),
-                  ),
-                  DropdownMenuItem(value: 'Pending', child: Text('Pending')),
-                  DropdownMenuItem(
-                    value: 'Unavailable',
-                    child: Text('Unavailable'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => status = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: devicePlatformController,
-                decoration: const InputDecoration(labelText: 'Device platform'),
-                validator: _required,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: deviceHealthController,
-                decoration: const InputDecoration(labelText: 'Device health'),
-                validator: _required,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: lastSeenController,
-                decoration: const InputDecoration(labelText: 'Last seen'),
-                validator: _required,
-              ),
               const SizedBox(height: 16),
               CheckboxListTile(
                 value: isTeamAdmin,
@@ -1154,13 +1092,6 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                 },
                 title: const Text('Responder'),
                 contentPadding: EdgeInsets.zero,
-              ),
-              SwitchListTile.adaptive(
-                value: isActive,
-                title: const Text('Membership active'),
-                onChanged: (value) {
-                  setState(() => isActive = value);
-                },
               ),
             ],
           ),
@@ -1207,11 +1138,6 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
         email: emailController.text.trim(),
         phone: phoneController.text.trim(),
         roles: roles,
-        status: status,
-        lastSeen: lastSeenController.text.trim(),
-        devicePlatform: devicePlatformController.text.trim(),
-        deviceHealth: deviceHealthController.text.trim(),
-        isActive: isActive,
       ),
     );
   }

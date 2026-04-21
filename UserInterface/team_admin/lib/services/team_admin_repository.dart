@@ -180,7 +180,7 @@ class TeamAdminRepository {
         'email': draft.email,
         'phone': draft.phone,
         'roles': draft.roles,
-        'is_active': draft.isActive,
+        'is_active': true,
       }),
     );
 
@@ -202,7 +202,7 @@ class TeamAdminRepository {
         'Content-Type': 'application/json',
         ..._headers(userEmail: _currentUserEmail),
       },
-      body: jsonEncode({'roles': draft.roles, 'is_active': draft.isActive}),
+      body: jsonEncode({'roles': draft.roles}),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
