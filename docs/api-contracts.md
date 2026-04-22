@@ -580,6 +580,60 @@ Response:
 
 - updated membership record
 
+Notes:
+
+- `PATCH … is_active: false` is a temporary deactivation. The membership row, its assigned roles, and `revoked_at` are preserved, and the membership can be reactivated by a later `PATCH … is_active: true`. For permanent removal of a user from a team, use `DELETE /teams/{team_public_id}/members/{membership_public_id}` instead.
+
+## `DELETE /teams/{team_public_id}/members/{membership_public_id}`
+
+Purpose:
+
+- Permanently revokes a user's membership in a single team.
+- This is the team-admin path for "removing a user from the team."
+
+Path parameters:
+
+- `team_public_id`: non-sequential public team identifier
+- `membership_public_id`: non-sequential public membership identifier
+
+Request body:
+
+- none
+
+Success response:
+
+- status `204`
+
+Error responses:
+
+- `403`: caller is not a `team_admin` for `{team_public_id}`
+- `404`: no membership with `{membership_public_id}` exists in `{team_public_id}`
+- `409`: revoking this membership would leave the team without any active `team_admin`
+
+Authorization:
+
+- Only callers whose authenticated `team_memberships` for `{team_public_id}` include the `team_admin` role may call this route.
+- Dispatcher or responder roles do not imply revocation authority, consistent with the role-boundary rule that "Dispatcher permissions should not imply Team Admin access."
+- A team admin may not revoke their own membership if they are the last active `team_admin` on the team. The backend rejects that case with `409` so a team is never left without an admin.
+
+Semantics:
+
+- Revocation is a soft operation. The `TeamMembership` row is not deleted from storage.
+- The backend stamps `revoked_at` with the current timestamp and sets the membership's `is_active` to `false`.
+- The user is removed from this team's incident-targeting set going forward. Active `Device` and `WebPushSubscription` records that derive their team scope from this membership stop receiving fanout for this team's incidents.
+- The user's `User` account, their memberships in other teams, their historical `ResponseRecord` rows, and `DeliveryEvent` history are untouched and remain auditable.
+- To restore a revoked user, a `team_admin` re-invites them with a fresh `POST /teams/{team_public_id}/members`. Revoked memberships are not "un-revoked" via `PATCH`.
+
+Idempotency:
+
+- Revoking an already-revoked membership returns `204` so clients can safely retry.
+
+Relationship to PATCH:
+
+- `PATCH … is_active: false` is a temporary deactivation that preserves roles and leaves `revoked_at` null. It supports flows like "this responder is on extended leave but will return."
+- `DELETE` is a permanent revocation that sets `revoked_at`. It supports flows like "this person is no longer on the team."
+- These two routes are intentionally not interchangeable. UI clients should not implement "delete" by issuing `PATCH … is_active: false`.
+
 ## `GET /teams/{team_public_id}/devices`
 
 Purpose:

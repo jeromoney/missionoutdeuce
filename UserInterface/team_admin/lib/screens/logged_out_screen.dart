@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
@@ -83,9 +84,10 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
       isSubmitting = true;
     });
 
-    if (email.isEmpty || !email.contains('@')) {
+    final emailError = EmailValidator.validate(email);
+    if (emailError != null) {
       setState(() {
-        errorText = 'Enter a valid email address.';
+        errorText = emailError;
         isSubmitting = false;
       });
       return;

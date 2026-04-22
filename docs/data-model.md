@@ -211,7 +211,7 @@ Likely API-facing fields:
 - `granted_at`
 - `revoked_at`
 
-Expected roles:
+Roles:
 
 - `responder`
 - `dispatcher`
@@ -225,6 +225,9 @@ Notes:
 - `super_admin` should be modeled outside team membership or as a separate global permission concept, not as a normal team-scoped role.
 - The Team Management app should use Team Admin permissions only for one existing team and should prefer deactivation over hard deletion so historical incidents and responses remain auditable.
 - Team membership administration supports readiness before and between missions; it is not part of the live dispatch interrupt loop.
+- `revoked_at` is the canonical timestamp for permanent membership revocation. A membership with a non-null `revoked_at` is considered terminated and is excluded from incident-targeting and from active-member rollups, regardless of `is_active`.
+- Membership revocation is the team-admin path for removing a user from a team and is exposed as `DELETE /teams/{team_public_id}/members/{membership_public_id}`. It is a soft operation: the membership row is preserved so historical `ResponseRecord` and audit lookups continue to resolve. Restoring a revoked user requires a new membership via `POST /teams/{team_public_id}/members`, not an un-revoke `PATCH`.
+- A team admin may not revoke their own membership if doing so would leave the team without any active `team_admin`. The backend should reject that case so a team is never left without an admin.
 
 ## AlertDelivery
 

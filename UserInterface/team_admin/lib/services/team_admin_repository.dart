@@ -86,6 +86,7 @@ class TeamAdminRepository {
                     deviceByUserPublicId[member['user_public_id']],
                   ),
                 )
+                .where((member) => member.revokedAt == null)
                 .toList();
       final memberNamesByUserPublicId = {
         for (final member in members)
@@ -235,6 +236,26 @@ class TeamAdminRepository {
     return _reloadTeam(teamPublicId);
   }
 
+  Future<TeamAdminTeam> deleteMember(String membershipPublicId) async {
+    final teamPublicId = _requireTeamPublicId();
+    final response = await _client.delete(
+      Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
+      headers: _headers(userEmail: _currentUserEmail),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final reason = switch (response.statusCode) {
+        403 => 'You are not a team admin for this team.',
+        404 => 'That member no longer exists.',
+        409 => 'Cannot revoke the last active team admin on the team.',
+        _ => 'Failed to remove team member (${response.statusCode}).',
+      };
+      throw Exception(reason);
+    }
+
+    return _reloadTeam(teamPublicId);
+  }
+
   Future<List<Map<String, dynamic>>> _getList(
     String path, {
     String? userEmail,
@@ -316,6 +337,7 @@ class TeamAdminRepository {
         hasDevice: device != null,
       ),
       isActive: isActive,
+      revokedAt: json['revoked_at'] as String?,
     );
   }
 

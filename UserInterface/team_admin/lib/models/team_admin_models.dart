@@ -74,6 +74,7 @@ class TeamAdminMember {
     required this.devicePlatform,
     required this.deviceHealth,
     required this.isActive,
+    this.revokedAt,
   });
 
   final String publicId;
@@ -88,6 +89,7 @@ class TeamAdminMember {
   final String devicePlatform;
   final String deviceHealth;
   final bool isActive;
+  final String? revokedAt;
 
   TeamAdminMember copyWith({
     String? publicId,
@@ -102,6 +104,7 @@ class TeamAdminMember {
     String? devicePlatform,
     String? deviceHealth,
     bool? isActive,
+    String? revokedAt,
   }) {
     return TeamAdminMember(
       publicId: publicId ?? this.publicId,
@@ -116,6 +119,7 @@ class TeamAdminMember {
       devicePlatform: devicePlatform ?? this.devicePlatform,
       deviceHealth: deviceHealth ?? this.deviceHealth,
       isActive: isActive ?? this.isActive,
+      revokedAt: revokedAt ?? this.revokedAt,
     );
   }
 }

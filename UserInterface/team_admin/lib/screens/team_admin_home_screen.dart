@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
@@ -130,6 +131,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
                                 onCreateMember: _openCreateMember,
                                 onEditMember: _openEditMember,
                                 onToggleMember: _toggleMemberActive,
+                                onDeleteMember: _deleteMember,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -160,6 +162,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
                                 onCreateMember: _openCreateMember,
                                 onEditMember: _openEditMember,
                                 onToggleMember: _toggleMemberActive,
+                                onDeleteMember: _deleteMember,
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -362,6 +365,64 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       );
     }
   }
+
+  Future<void> _deleteMember(TeamAdminMember member) async {
+    if (!memberCrudSupported) {
+      setState(() {
+        statusMessage =
+            'This backend does not expose membership deletion yet. Operational history is live, but permanent removals still need backend support.';
+      });
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete member?'),
+        content: Text(
+          'Permanently remove ${member.name} from ${team.name}? This cannot be undone — re-add them via "Add member" if you change your mind. Deactivate instead if they may return.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: TeamAdminPalette.warning,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    try {
+      final updatedTeam = await repository.deleteMember(member.publicId);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        team = updatedTeam;
+        statusMessage = 'Removed ${member.name} from ${team.name}.';
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(
+        () => statusMessage = error.toString().replaceFirst(
+          'Exception: ',
+          '',
+        ),
+      );
+    }
+  }
 }
 
 class _Header extends StatelessWidget {
@@ -477,6 +538,7 @@ class _MembersPanel extends StatelessWidget {
     required this.onCreateMember,
     required this.onEditMember,
     required this.onToggleMember,
+    required this.onDeleteMember,
   });
 
   final TeamAdminTeam team;
@@ -484,6 +546,7 @@ class _MembersPanel extends StatelessWidget {
   final VoidCallback onCreateMember;
   final ValueChanged<TeamAdminMember> onEditMember;
   final ValueChanged<TeamAdminMember> onToggleMember;
+  final ValueChanged<TeamAdminMember> onDeleteMember;
 
   @override
   Widget build(BuildContext context) {
@@ -616,6 +679,29 @@ class _MembersPanel extends StatelessWidget {
                             color: member.isActive
                                 ? TeamAdminPalette.warning
                                 : TeamAdminPalette.success,
+                          ),
+                          PopupMenuButton<String>(
+                            enabled: memberCrudSupported,
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: TeamAdminPalette.text,
+                            ),
+                            tooltip: 'More actions',
+                            onSelected: (value) {
+                              if (value == 'delete') onDeleteMember(member);
+                            },
+                            itemBuilder: (_) => const [
+                              PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_outline),
+                                    SizedBox(width: 8),
+                                    Text('Delete member...'),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1060,7 +1146,8 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
               TextFormField(
                 controller: emailController,
                 decoration: const InputDecoration(labelText: 'Email'),
-                validator: _required,
+                keyboardType: TextInputType.emailAddress,
+                validator: _validateEmail,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -1115,6 +1202,14 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
       return 'Required';
     }
     return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final required = _required(value);
+    if (required != null) {
+      return required;
+    }
+    return EmailValidator.validate(value);
   }
 
   void _submit() {

@@ -3,7 +3,10 @@
     "allow": [
       "Bash(.venv/Scripts/python -c ' *)",
       "Bash(.venv/Scripts/python -m pytest tests/ -q)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Read(//c/Users/justi/OneDrive/Documents/Projects/missionout/docs/**)",
+      "Read(//c/Users/justi/OneDrive/Documents/Projects/missionout/contracts/**)",
+      "Bash(xargs grep *)"
     ]
   },
   "enabledMcpjsonServers": [
