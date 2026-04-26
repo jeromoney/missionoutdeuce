@@ -7,7 +7,9 @@
       "Read(//c/Users/justi/OneDrive/Documents/Projects/missionout/docs/**)",
       "Read(//c/Users/justi/OneDrive/Documents/Projects/missionout/contracts/**)",
       "Bash(xargs grep *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(grep -E \"^\\(app\\\\\\\\\\\\\\\\\\(api\\\\\\\\\\\\\\\\routes\\\\\\\\\\\\\\\\events|api\\\\\\\\\\\\\\\\deps|seed|services\\\\\\\\\\\\\\\\formatters\\)|TOTAL|Name|---\\)\")",
+      "Bash(grep -E \"passed|failed|error\" \"C:\\\\\\\\Users\\\\\\\\justi\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-justi-OneDrive-Documents-Projects-missionout-backend\\\\\\\\ded1d69e-f5d1-4699-bb74-e3cb34491db1\\\\\\\\tasks\\\\\\\\b8lpuc5zv.output\")"
     ]
   },
   "enabledMcpjsonServers": [

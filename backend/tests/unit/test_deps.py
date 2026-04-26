@@ -117,6 +117,34 @@ def test_effective_membership_prefers_highest_privilege_role(db_session):
     assert effective.team_id == team_b.id
 
 
+def test_effective_membership_falls_back_for_unknown_role(db_session):
+    user = User(name="Off-Roster", email="off@example.com", phone="", is_active=True)
+    db_session.add(user)
+    db_session.flush()
+
+    team = Team(name="Roster Team", is_active=True)
+    db_session.add(team)
+    db_session.flush()
+
+    db_session.add(
+        TeamMembership(
+            user_id=user.id,
+            team_id=team.id,
+            roles=["observer"],
+            role="observer",
+            granted_at=utc_now(),
+        )
+    )
+    db_session.commit()
+    db_session.refresh(user)
+
+    # Membership exists but the role string is unknown to the precedence
+    # tuple; the fallback ranks it last and still returns the membership.
+    membership = _select_effective_membership(user)
+    assert membership is not None
+    assert membership.role == "observer"
+
+
 def test_effective_membership_skips_inactive_teams(db_session):
     user = User(name="Hidden", email="hidden@example.com", phone="", is_active=True)
     db_session.add(user)
