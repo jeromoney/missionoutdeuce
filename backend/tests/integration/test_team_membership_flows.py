@@ -5,10 +5,13 @@ from app.models.team_management import Device, TeamMembership
 
 
 def test_add_then_deactivate_member_blocks_incidents_access(
-    client, seeded_team, db_session
+    client, seeded_team, seeded_user, db_session
 ):
+    admin_headers = {"x-missionout-user-email": seeded_user.email}
+
     create = client.post(
         f"/teams/{seeded_team.public_id}/members",
+        headers=admin_headers,
         json={
             "name": "Ada Kepler",
             "email": "ada@gmail.com",
@@ -20,7 +23,10 @@ def test_add_then_deactivate_member_blocks_incidents_access(
     assert create.status_code == 201
     membership_public_id = create.json()["public_id"]
 
-    members = client.get(f"/teams/{seeded_team.public_id}/members")
+    members = client.get(
+        f"/teams/{seeded_team.public_id}/members",
+        headers=admin_headers,
+    )
     emails = [m["email"] for m in members.json()]
     assert "ada@gmail.com" in emails
 
@@ -29,6 +35,7 @@ def test_add_then_deactivate_member_blocks_incidents_access(
 
     deactivate = client.patch(
         f"/teams/{seeded_team.public_id}/members/{membership_public_id}",
+        headers=admin_headers,
         json={"is_active": False},
     )
     assert deactivate.status_code == 200
@@ -51,7 +58,10 @@ def test_user_device_surfaces_in_team_device_listing(
     db_session.add(device)
     db_session.commit()
 
-    response = client.get(f"/teams/{seeded_team.public_id}/devices")
+    response = client.get(
+        f"/teams/{seeded_team.public_id}/devices",
+        headers={"x-missionout-user-email": seeded_user.email},
+    )
 
     assert response.status_code == 200
     tokens = [d["push_token"] for d in response.json()]

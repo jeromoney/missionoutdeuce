@@ -1,3 +1,4 @@
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_models/shared_models.dart';
@@ -1102,6 +1103,8 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
   late final TextEditingController nameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
+  String selectedCountryIso = 'US';
+  String selectedDialCode = '+1';
   late bool isTeamAdmin;
   late bool isDispatcher;
   late bool isResponder;
@@ -1140,7 +1143,7 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
               TextFormField(
                 controller: nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
-                validator: _required,
+                validator: _validateName,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -1150,10 +1153,36 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                 validator: _validateEmail,
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: phoneController,
-                decoration: const InputDecoration(labelText: 'Phone'),
-                validator: _required,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  CountryCodePicker(
+                    onChanged: (code) {
+                      setState(() {
+                        selectedCountryIso = code.code ?? 'US';
+                        selectedDialCode = code.dialCode ?? '+1';
+                      });
+                    },
+                    initialSelection: selectedCountryIso,
+                    favorite: const ['+1', 'US'],
+                    showFlag: true,
+                    showCountryOnly: false,
+                    showOnlyCountryWhenClosed: false,
+                    alignLeft: false,
+                    padding: EdgeInsets.zero,
+                  ),
+                  Expanded(
+                    child: TextFormField(
+                      controller: phoneController,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone',
+                        hintText: '555 123 4567',
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: _validatePhone,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
@@ -1212,6 +1241,43 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
     return EmailValidator.validate(value);
   }
 
+  String? _validateName(String? value) {
+    final required = _required(value);
+    if (required != null) {
+      return required;
+    }
+    return NameValidator.validate(value);
+  }
+
+  String? _validatePhone(String? value) {
+    final required = _required(value);
+    if (required != null) {
+      return required;
+    }
+    return PhoneValidator.validate(
+      _composePhone(value),
+      isoCode: _selectedIsoCode(),
+    );
+  }
+
+  String _composePhone(String? localInput) {
+    final local = (localInput ?? '').trim();
+    if (local.isEmpty) {
+      return '';
+    }
+    if (local.startsWith('+')) {
+      return local;
+    }
+    return '$selectedDialCode$local';
+  }
+
+  IsoCode _selectedIsoCode() {
+    return IsoCode.values.firstWhere(
+      (code) => code.name == selectedCountryIso,
+      orElse: () => IsoCode.US,
+    );
+  }
+
   void _submit() {
     if (!formKey.currentState!.validate()) {
       return;
@@ -1227,11 +1293,16 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
       return;
     }
 
+    final phoneInput = _composePhone(phoneController.text);
+    final phoneE164 =
+        PhoneValidator.toE164(phoneInput, isoCode: _selectedIsoCode()) ??
+        phoneInput;
+
     Navigator.of(context).pop(
       TeamAdminMemberDraft(
         name: nameController.text.trim(),
         email: emailController.text.trim(),
-        phone: phoneController.text.trim(),
+        phone: phoneE164,
         roles: roles,
       ),
     );

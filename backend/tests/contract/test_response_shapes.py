@@ -68,15 +68,23 @@ def test_get_team_members_matches_live_schema(client, seeded_team, seeded_user, 
     )
     assert schema is not None
 
-    response = client.get(f"/teams/{seeded_team.public_id}/members")
+    response = client.get(
+        f"/teams/{seeded_team.public_id}/members",
+        headers={"x-missionout-user-email": seeded_user.email},
+    )
     assert response.status_code == 200
     jsonschema.validate(response.json(), schema)
 
 
-def test_get_delivery_feed_matches_live_schema(client, seeded_delivery_event, live_spec):
+def test_get_delivery_feed_matches_live_schema(
+    client, seeded_user, seeded_delivery_event, live_spec
+):
     schema = _response_schema(live_spec, "/events/delivery-feed", "get", "200")
     assert schema is not None
 
-    response = client.get("/events/delivery-feed")
+    response = client.get(
+        "/events/delivery-feed",
+        headers={"x-missionout-user-email": seeded_user.email},
+    )
     assert response.status_code == 200
     jsonschema.validate(response.json(), schema)

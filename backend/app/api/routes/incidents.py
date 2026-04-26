@@ -1,13 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.api.deps import Principal, get_current_principal
 from app.core.time import utc_now
 from app.db.session import get_db
 from app.models.incident import Incident, ResponseRecord
-from app.models.team_management import Team, TeamMembership, User
+from app.models.team_management import TeamMembership
 from app.realtime import event_broker
 from app.schemas.incident import (
     IncidentCreate,
@@ -16,9 +17,12 @@ from app.schemas.incident import (
     ResponseRecordCreate,
     ResponseRecordRead,
 )
+from app.services import incidents as incident_service
 
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
+
+_DISPATCH_ROLES = {"team_admin", "dispatcher"}
 
 
 def _serialize_incident(incident: Incident) -> IncidentRead:
@@ -42,44 +46,27 @@ def _serialize_incident(incident: Incident) -> IncidentRead:
     )
 
 
-def _load_authenticated_user(*, request: Request, db: Session) -> User:
-    user_email = request.headers.get("x-missionout-user-email", "").strip().lower()
-    if not user_email:
-        raise HTTPException(
-            status_code=401,
-            detail="Missing authenticated user context.",
-        )
-
-    user = db.scalar(
-        select(User)
-        .options(selectinload(User.memberships).selectinload(TeamMembership.team))
-        .where(func.lower(User.email) == user_email)
-    )
-    if user is None or not user.is_active:
-        raise HTTPException(
-            status_code=401,
-            detail="Authenticated user is not recognized.",
-        )
-
-    return user
-
-
-def _authorized_dispatcher_memberships(user: User) -> list[TeamMembership]:
+def _dispatch_memberships(principal: Principal) -> list[TeamMembership]:
     return [
         membership
-        for membership in user.memberships
+        for membership in principal.user.memberships
         if membership.team.is_active
-        and "dispatcher" in membership.roles
+        and (
+            membership.role in _DISPATCH_ROLES
+            or _DISPATCH_ROLES.intersection(membership.roles or [])
+        )
     ]
 
 
 @router.get("", response_model=list[IncidentRead])
-def list_incidents(request: Request, db: Session = Depends(get_db)):
-    user = _load_authenticated_user(request=request, db=db)
+def list_incidents(
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
     visible_team_ids = sorted(
         {
             membership.team_id
-            for membership in user.memberships
+            for membership in principal.user.memberships
             if membership.team.is_active
         }
     )
@@ -104,51 +91,39 @@ def list_incidents(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=IncidentRead, status_code=201)
-def create_incident(payload: IncidentCreate, request: Request, db: Session = Depends(get_db)):
-    team: Team | None = None
-    user_email = request.headers.get("x-missionout-user-email", "").strip()
-    if user_email:
-        user = _load_authenticated_user(request=request, db=db)
-        dispatcher_memberships = _authorized_dispatcher_memberships(user)
-        if not dispatcher_memberships:
-            raise HTTPException(
-                status_code=403,
-                detail="Authenticated user does not have dispatcher access for any team.",
-            )
-
-        matching_membership = next(
-            (
-                membership
-                for membership in dispatcher_memberships
-                if membership.team.public_id == payload.team_public_id
-            ),
-            None,
+def create_incident(
+    payload: IncidentCreate,
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
+    dispatch_memberships = _dispatch_memberships(principal)
+    if not dispatch_memberships:
+        raise HTTPException(
+            status_code=403,
+            detail="Authenticated user does not have dispatcher access for any team.",
         )
-        if matching_membership is not None:
-            team = matching_membership.team
-        elif len(dispatcher_memberships) == 1:
-            team = dispatcher_memberships[0].team
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Requested team is not available to the authenticated dispatcher.",
-            )
-    else:
-        team = db.scalar(select(Team).where(Team.public_id == payload.team_public_id))
-        if team is None:
-            raise HTTPException(status_code=400, detail="Unknown team")
 
-    incident = Incident(
-        title=payload.title,
-        team_id=team.id,
-        location=payload.location,
-        notes=payload.notes,
-        active=payload.active,
+    matching_membership = next(
+        (
+            membership
+            for membership in dispatch_memberships
+            if membership.team.public_id == payload.team_public_id
+        ),
+        None,
     )
-    db.add(incident)
-    db.commit()
-    db.refresh(incident)
+    if matching_membership is not None:
+        team = matching_membership.team
+    elif len(dispatch_memberships) == 1:
+        team = dispatch_memberships[0].team
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Requested team is not available to the authenticated dispatcher.",
+        )
+
+    incident = incident_service.create_incident(db=db, payload=payload, team=team)
     db.refresh(team)
+
     event_broker.publish(
         event_type="incident.created",
         team_id=team.id,
@@ -166,6 +141,7 @@ def create_incident(payload: IncidentCreate, request: Request, db: Session = Dep
 def update_incident(
     incident_public_id: str,
     payload: IncidentUpdate,
+    principal: Principal = Depends(get_current_principal),
     db: Session = Depends(get_db),
 ):
     incident = db.scalar(
@@ -179,13 +155,22 @@ def update_incident(
     if incident is None:
         raise HTTPException(status_code=404, detail="Incident not found")
 
-    incident.title = payload.title
-    incident.location = payload.location
-    incident.notes = payload.notes
-    incident.active = payload.active
+    authorized = any(
+        membership.team_id == incident.team_id
+        and membership.team.is_active
+        and (
+            membership.role in _DISPATCH_ROLES
+            or _DISPATCH_ROLES.intersection(membership.roles or [])
+        )
+        for membership in principal.user.memberships
+    )
+    if not authorized:
+        raise HTTPException(
+            status_code=403,
+            detail="Authenticated user does not have dispatcher access for this incident.",
+        )
 
-    db.commit()
-    db.refresh(incident)
+    incident = incident_service.update_incident(db=db, incident=incident, payload=payload)
     return _serialize_incident(incident)
 
 
@@ -193,10 +178,9 @@ def update_incident(
 def create_incident_response(
     incident_public_id: str,
     payload: ResponseRecordCreate,
-    request: Request,
+    principal: Principal = Depends(get_current_principal),
     db: Session = Depends(get_db),
 ):
-    user = _load_authenticated_user(request=request, db=db)
     incident = db.scalar(
         select(Incident)
         .options(selectinload(Incident.team_ref))
@@ -208,7 +192,7 @@ def create_incident_response(
     authorized_membership = next(
         (
             membership
-            for membership in user.memberships
+            for membership in principal.user.memberships
             if membership.team_id == incident.team_id
         ),
         None,
@@ -224,14 +208,14 @@ def create_incident_response(
         .options(selectinload(ResponseRecord.user))
         .where(
             ResponseRecord.incident_id == incident.id,
-            ResponseRecord.user_id == user.id,
+            ResponseRecord.user_id == principal.user.id,
         )
     )
 
     if response is None:
         response = ResponseRecord(
             incident_id=incident.id,
-            user_id=user.id,
+            user_id=principal.user.id,
             status=payload.status,
             source=payload.source,
             rank=payload.rank,
@@ -244,9 +228,9 @@ def create_incident_response(
 
     db.commit()
     db.refresh(response)
-    db.refresh(user)
+    db.refresh(principal.user)
     return ResponseRecordRead(
-        user_public_id=user.public_id,
+        user_public_id=principal.user.public_id,
         status=response.status,
         rank=response.rank,
         updated=response.updated_at,

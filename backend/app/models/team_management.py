@@ -57,6 +57,10 @@ class TeamMembership(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     team_id: Mapped[int] = mapped_column(ForeignKey("teams.id", ondelete="CASCADE"))
     roles: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # Scalar role used by Postgres RLS policies. Nullable at the SQLAlchemy
+    # layer so the bootstrap backfill path can insert and fill in afterwards;
+    # `ensure_team_membership_role` adds a NOT NULL constraint on Postgres.
+    role: Mapped[str | None] = mapped_column(String(32), nullable=True, default="responder")
     granted_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     user: Mapped[User] = relationship(back_populates="memberships")

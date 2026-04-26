@@ -6,13 +6,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import auth, devices, events, health, incidents, team_management, users
 from app.core.config import settings
 from app.db.base import Base
-from app.db.bootstrap import ensure_incident_team_fk, ensure_public_ids, ensure_response_record_fields
+from app.db.bootstrap import (
+    ensure_incident_team_fk,
+    ensure_incident_version,
+    ensure_public_ids,
+    ensure_response_record_fields,
+    ensure_team_membership_role,
+)
+from app.db.rls import apply_rls_policies
 from app.db.session import engine
 from app.models import (
     DeliveryEvent,
     Device,
     EmailCodeToken,
     Incident,
+    IncidentEvent,
+    PushDelivery,
     ResponseRecord,
     Team,
     TeamMembership,
@@ -28,6 +37,9 @@ async def lifespan(_: FastAPI):
     ensure_incident_team_fk(engine)
     ensure_public_ids(engine)
     ensure_response_record_fields(engine)
+    ensure_incident_version(engine)
+    ensure_team_membership_role(engine)
+    apply_rls_policies(engine)
     yield
 
 

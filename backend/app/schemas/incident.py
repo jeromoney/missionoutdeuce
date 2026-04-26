@@ -1,6 +1,10 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
+
+
+PageGroup = Literal["responder", "dispatchers"]
 
 
 # Keep these request and response shapes aligned with contracts/openapi.json.
@@ -41,3 +45,7 @@ class IncidentUpdate(BaseModel):
     location: str
     notes: str
     active: bool
+    # Page-group selector for the optional incident.paged event that follows
+    # incident.updated. Defaults to "responder" (page everyone) per
+    # docs/page-logic.md. `null` skips paging entirely.
+    page_group: PageGroup | None = "responder"

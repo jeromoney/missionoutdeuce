@@ -28,3 +28,6 @@ You are MissionOut's backend engineer.
 
 ## Documentation
 - You have read only access to all files in `C:\Users\justi\OneDrive\Documents\Projects\missionout\docs` They describe the API and the contract between the user interface.
+
+## Database Security
+ - The postgres RLS policy is explained here C:\Users\justi\OneDrive\Documents\Projects\missionout\docs\security.md

@@ -1,14 +1,13 @@
 import asyncio
 
-from fastapi import APIRouter, Depends
-from fastapi import HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
+from app.api.deps import Principal, get_current_principal
 from app.db.session import get_db
 from app.models.event import DeliveryEvent
-from app.models.team_management import TeamMembership, User
 from app.realtime import event_broker
 from app.schemas.event import DeliveryEventRead
 
@@ -17,7 +16,10 @@ router = APIRouter(prefix="/events", tags=["events"])
 
 
 @router.get("/delivery-feed", response_model=list[DeliveryEventRead])
-def list_delivery_feed(db: Session = Depends(get_db)):
+def list_delivery_feed(
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
     events = db.scalars(
         select(DeliveryEvent).order_by(DeliveryEvent.created_at.desc())
     ).all()
@@ -32,28 +34,6 @@ def list_delivery_feed(db: Session = Depends(get_db)):
         )
         for event in events
     ]
-
-
-def _load_authenticated_user(*, request: Request, db: Session) -> User:
-    user_email = request.headers.get("x-missionout-user-email", "").strip().lower()
-    if not user_email:
-        raise HTTPException(
-            status_code=401,
-            detail="Missing authenticated user context.",
-        )
-
-    user = db.scalar(
-        select(User)
-        .options(selectinload(User.memberships).selectinload(TeamMembership.team))
-        .where(User.email == user_email)
-    )
-    if user is None or not user.is_active:
-        raise HTTPException(
-            status_code=401,
-            detail="Authenticated user is not recognized.",
-        )
-
-    return user
 
 
 @router.get(
@@ -81,11 +61,13 @@ def _load_authenticated_user(*, request: Request, db: Session) -> User:
         }
     },
 )
-async def stream_events(request: Request, db: Session = Depends(get_db)):
-    user = _load_authenticated_user(request=request, db=db)
+async def stream_events(
+    request: Request,
+    principal: Principal = Depends(get_current_principal),
+):
     team_ids = {
         membership.team_id
-        for membership in user.memberships
+        for membership in principal.user.memberships
         if membership.team.is_active
     }
     if not team_ids:

@@ -22,6 +22,9 @@ class Incident(Base):
     location: Mapped[str] = mapped_column(String(255))
     notes: Mapped[str] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Monotonic per-incident version. Incremented on every PATCH; paired with
+    # the matching incident_events row via UNIQUE (incident_id, version).
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     team_ref: Mapped["Team | None"] = relationship()

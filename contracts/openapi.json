@@ -405,6 +405,22 @@
             "title": "Notes",
             "type": "string"
           },
+          "page_group": {
+            "anyOf": [
+              {
+                "enum": [
+                  "responder",
+                  "dispatchers"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "responder",
+            "title": "Page Group"
+          },
           "title": {
             "title": "Title",
             "type": "string"

@@ -26,9 +26,10 @@ def test_get_incidents_returns_team_scoped_incidents(client, seeded_user, seeded
     assert "detail" not in body[0]["responses"][0]
 
 
-def test_post_incidents_creates_incident(client, seeded_team):
+def test_post_incidents_creates_incident(client, seeded_user, seeded_team):
     response = client.post(
         "/incidents",
+        headers={"x-missionout-user-email": seeded_user.email},
         json={
             "title": "Injured Climber Extraction",
             "team_public_id": seeded_team.public_id,
@@ -51,9 +52,10 @@ def test_post_incidents_creates_incident(client, seeded_team):
     assert "team" not in body
 
 
-def test_patch_incident_updates_fields(client, seeded_incident):
+def test_patch_incident_updates_fields(client, seeded_user, seeded_incident):
     response = client.patch(
         f"/incidents/{seeded_incident.public_id}",
+        headers={"x-missionout-user-email": seeded_user.email},
         json={
             "title": "Updated Incident Title",
             "location": "Updated Location",
@@ -120,9 +122,27 @@ def test_get_incidents_filters_out_other_team_incidents(
     assert "Not My Team Incident" not in titles
 
 
-def test_post_incidents_rejects_unknown_team_for_anonymous(client):
+def test_post_incidents_requires_authentication(client, seeded_team):
     response = client.post(
         "/incidents",
+        json={
+            "title": "Ghost Incident",
+            "team_public_id": seeded_team.public_id,
+            "location": "Nowhere",
+            "notes": "",
+            "active": True,
+        },
+    )
+
+    assert response.status_code == 401
+
+
+def test_post_incidents_rejects_unknown_team_for_authenticated_dispatcher(
+    client, seeded_user
+):
+    response = client.post(
+        "/incidents",
+        headers={"x-missionout-user-email": seeded_user.email},
         json={
             "title": "Ghost Incident",
             "team_public_id": "no-such-team",
@@ -132,12 +152,15 @@ def test_post_incidents_rejects_unknown_team_for_anonymous(client):
         },
     )
 
-    assert response.status_code == 400
+    # seeded_user has exactly one active membership, so the dispatcher falls
+    # through to that team when the payload team is unknown.
+    assert response.status_code == 201
 
 
-def test_post_incidents_requires_title(client, seeded_team):
+def test_post_incidents_requires_title(client, seeded_user, seeded_team):
     response = client.post(
         "/incidents",
+        headers={"x-missionout-user-email": seeded_user.email},
         json={
             "team_public_id": seeded_team.public_id,
             "location": "Somewhere",
@@ -167,9 +190,10 @@ def test_post_incidents_requires_dispatcher_role_when_authenticated(
     assert response.status_code == 403
 
 
-def test_patch_incident_returns_404_for_unknown_public_id(client):
+def test_patch_incident_returns_404_for_unknown_public_id(client, seeded_user):
     response = client.patch(
         "/incidents/does-not-exist",
+        headers={"x-missionout-user-email": seeded_user.email},
         json={
             "title": "x",
             "location": "x",

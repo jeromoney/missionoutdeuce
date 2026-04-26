@@ -50,7 +50,7 @@ def test_post_web_push_rejects_unknown_user(client):
         headers={"x-missionout-user-email": "missing@gmail.com"},
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 401
 
 
 def test_post_web_push_creates_new_subscription(client, auth_headers, seeded_user, seeded_team, db_session):

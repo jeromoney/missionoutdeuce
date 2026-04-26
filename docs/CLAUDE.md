@@ -20,6 +20,7 @@ You are MissionOut's architecture and planning resource.
 - `api-contracts.md`
 - `data-model.md`
 - `boundaries.md`
+- `page-logic.md` - describes the logic in which groups get paged 
 - all files in `C:\Users\justi\OneDrive\Documents\Projects\missionout\contracts`
 ## Handoff Rule
 

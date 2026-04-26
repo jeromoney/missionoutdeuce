@@ -22,7 +22,7 @@ Backend storage models and UI view models may differ internally, but the concept
 
 ## Core Entities
 
-## Incident
+## Incidents
 
 Represents an operational mission or callout.
 
@@ -55,6 +55,29 @@ Notes:
 - Incident visibility for that route is derived from the authenticated user's team memberships and global permissions rather than a client-provided team selector.
 - Incident dispatch targeting is team-scoped: when an incident is created, it should get pushed to all active devices owned by active members of that incident's team.
 - Browser Web Push targeting follows the same team-scoped rule through active backend-owned subscriptions for active team members.
+
+## IncidentEvent
+
+A backend table that records edits of incidents. event_type is string but will practically be enumerated with incident.created, incident.updated, incident.paged, incident.resolved
+
+For incident.paged, page_group is not null and is the role: either responder (everyone) or dispatchers (limited group)
+
+- CREATE TABLE incident_events (
+  id bigserial PRIMARY KEY,
+  incident_id bigint NOT NULL,
+  version int NOT NULL,
+  event_type text NOT NULL,
+  page_group text,
+  payload jsonb NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  FOREIGN KEY (incident_id)
+  REFERENCES Incident (id)
+  UNIQUE (incident_id, version)
+);
+
+## PushDeliveries
+
+A backend table that is skip locked for workers to push out notifications. These are created for each appropiate devices and includes information on type and whether the push is created, attempted, finished. 
 
 ## ResponseRecord
 

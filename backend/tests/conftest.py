@@ -89,6 +89,7 @@ def seeded_user(db_session: Session, seeded_team: Team) -> User:
         user_id=user.id,
         team_id=seeded_team.id,
         roles=["responder", "dispatcher", "team_admin"],
+        role="team_admin",
         granted_at=utc_now(),
     )
     db_session.add(membership)
@@ -145,6 +146,31 @@ def seeded_second_user(db_session: Session, seeded_second_team: Team) -> User:
         user_id=user.id,
         team_id=seeded_second_team.id,
         roles=["responder"],
+        role="responder",
+        granted_at=utc_now(),
+    )
+    db_session.add(membership)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture()
+def seeded_second_admin(db_session: Session, seeded_second_team: Team) -> User:
+    user = User(
+        name="Quentin Vega",
+        email="admin2@gmail.com",
+        phone="555-3003",
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.flush()
+
+    membership = TeamMembership(
+        user_id=user.id,
+        team_id=seeded_second_team.id,
+        roles=["team_admin"],
+        role="team_admin",
         granted_at=utc_now(),
     )
     db_session.add(membership)

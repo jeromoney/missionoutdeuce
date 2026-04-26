@@ -6,7 +6,8 @@
       "Bash(python *)",
       "Read(//c/Users/justi/OneDrive/Documents/Projects/missionout/docs/**)",
       "Read(//c/Users/justi/OneDrive/Documents/Projects/missionout/contracts/**)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(git *)"
     ]
   },
   "enabledMcpjsonServers": [

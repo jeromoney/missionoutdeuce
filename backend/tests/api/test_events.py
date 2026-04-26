@@ -5,14 +5,17 @@ from app.models.event import DeliveryEvent
 from app.models.team_management import User
 
 
-def test_get_delivery_feed_empty(client):
-    response = client.get("/events/delivery-feed")
+def test_get_delivery_feed_empty(client, seeded_user):
+    response = client.get(
+        "/events/delivery-feed",
+        headers={"x-missionout-user-email": seeded_user.email},
+    )
 
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_get_delivery_feed_returns_events_ordered_desc(client, db_session):
+def test_get_delivery_feed_returns_events_ordered_desc(client, seeded_user, db_session):
     now = utc_now()
     older = DeliveryEvent(
         title="Older event",
@@ -33,7 +36,10 @@ def test_get_delivery_feed_returns_events_ordered_desc(client, db_session):
     db_session.add_all([older, newer])
     db_session.commit()
 
-    response = client.get("/events/delivery-feed")
+    response = client.get(
+        "/events/delivery-feed",
+        headers={"x-missionout-user-email": seeded_user.email},
+    )
 
     assert response.status_code == 200
     body = response.json()

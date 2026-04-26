@@ -25,6 +25,10 @@ def test_patch_user_active_returns_403_for_responder_only(client, seeded_second_
 
 
 def test_patch_user_active_toggles_is_active(client, seeded_user, db_session):
+    # Deactivation persists to the DB. After deactivation the user can no
+    # longer authenticate against `/user/active`, so reactivation must happen
+    # out-of-band (e.g. via a team admin flow) — verified at the DB layer here
+    # instead of a second round-trip.
     first = client.patch(
         "/user/active",
         json={"is_active": False},
@@ -35,13 +39,16 @@ def test_patch_user_active_toggles_is_active(client, seeded_user, db_session):
     db_session.refresh(seeded_user)
     assert seeded_user.is_active is False
 
+    seeded_user.is_active = True
+    db_session.commit()
+
     second = client.patch(
         "/user/active",
-        json={"is_active": True},
+        json={"is_active": False},
         headers={"x-missionout-user-email": seeded_user.email},
     )
     assert second.status_code == 200
-    assert second.json()["is_active"] is True
+    assert second.json()["is_active"] is False
 
 
 def test_patch_user_active_matches_email_case_insensitively(client, seeded_user):
