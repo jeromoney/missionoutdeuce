@@ -11,7 +11,10 @@
       "Bash(dart pub *)",
       "Bash(dart analyze *)",
       "Bash(dart test *)",
-      "Bash(dart run *)"
+      "Bash(dart run *)",
+      "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" status --short)",
+      "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" stash)",
+      "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" stash pop)"
     ]
   },
   "enabledMcpjsonServers": [

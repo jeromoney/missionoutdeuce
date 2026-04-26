@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
 
@@ -8,6 +9,33 @@ import '../models/dashboard_snapshot.dart';
 import '../models/incident_draft.dart';
 import '../models/incident_update.dart';
 import '../models/records.dart';
+
+typedef UserEmailProvider = String? Function();
+
+// Wraps an http.Client and stamps the X-MissionOut-User-Email header onto
+// every outbound request. Centralizing this prevents call sites from forgetting
+// to forward the email and silently issuing unauthenticated requests.
+class AuthHeaderClient extends http.BaseClient {
+  AuthHeaderClient(this._inner, this._emailProvider);
+
+  final http.Client _inner;
+  final UserEmailProvider _emailProvider;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    final email = _emailProvider()?.trim();
+    if (email != null && email.isNotEmpty) {
+      request.headers['X-MissionOut-User-Email'] = email;
+    }
+    return _inner.send(request);
+  }
+
+  @override
+  void close() {
+    _inner.close();
+    super.close();
+  }
+}
 
 class MissionOutApi {
   MissionOutApi({http.Client? client, String? baseUrl})
@@ -21,19 +49,21 @@ class MissionOutApi {
 
   // The UI/backend contract for these routes lives in docs/api-contracts.md.
   Future<DashboardSnapshot> fetchDashboard({
-    String? userEmail,
     List<AuthTeamMembership> memberships = const [],
   }) async {
-    final incidentsFuture = _getList('/incidents', userEmail: userEmail);
-    final eventsFuture = _getList('/events/delivery-feed');
+    // /incidents is the primary panel — its failure aborts the load. Other
+    // panels are fetched optionally so a single 4xx doesn't blank the screen.
+    final incidentsFuture = _getList('/incidents');
+    final eventsFuture = _getOptionalList(
+      '/events/delivery-feed',
+      onError: (error) =>
+          debugPrint('[Dispatcher] delivery feed unavailable: $error'),
+    );
     final memberFutures = memberships
         .map((membership) => membership.teamPublicId.trim())
         .where((teamPublicId) => teamPublicId.isNotEmpty)
         .map(
-          (teamPublicId) => _getOptionalList(
-            '/teams/$teamPublicId/members',
-            userEmail: userEmail,
-          ),
+          (teamPublicId) => _getOptionalList('/teams/$teamPublicId/members'),
         )
         .toList();
 
@@ -77,14 +107,10 @@ class MissionOutApi {
   Future<Incident> createIncident(
     IncidentDraft draft, {
     required String teamPublicId,
-    String? userEmail,
   }) async {
     final response = await _client.post(
       Uri.parse('$_baseUrl/incidents'),
-      headers: {
-        'Content-Type': 'application/json',
-        ..._headers(userEmail: userEmail),
-      },
+      headers: const {'Content-Type': 'application/json'},
       body: jsonEncode({
         'title': draft.title,
         'team_public_id': teamPublicId,
@@ -103,7 +129,7 @@ class MissionOutApi {
   ) async {
     final response = await _client.patch(
       Uri.parse('$_baseUrl/incidents/$incidentPublicId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: const {'Content-Type': 'application/json'},
       body: jsonEncode({
         'title': update.title,
         'location': update.location,
@@ -115,15 +141,9 @@ class MissionOutApi {
     return _decodeIncidentResponse(response, 'update incident');
   }
 
-  Future<List<Map<String, dynamic>>> _getList(
-    String path, {
-    String? userEmail,
-  }) async {
+  Future<List<Map<String, dynamic>>> _getList(String path) async {
     final uri = Uri.parse('$_baseUrl$path');
-    final response = await _client.get(
-      uri,
-      headers: _headers(userEmail: userEmail),
-    );
+    final response = await _client.get(uri);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Request failed for $path (${response.statusCode})');
     }
@@ -145,11 +165,12 @@ class MissionOutApi {
 
   Future<List<Map<String, dynamic>>> _getOptionalList(
     String path, {
-    String? userEmail,
+    void Function(Object error)? onError,
   }) async {
     try {
-      return await _getList(path, userEmail: userEmail);
-    } catch (_) {
+      return await _getList(path);
+    } catch (error) {
+      onError?.call(error);
       return const [];
     }
   }
@@ -165,14 +186,5 @@ class MissionOutApi {
     }
 
     throw Exception('Expected a JSON object when attempting to $action');
-  }
-
-  Map<String, String> _headers({String? userEmail}) {
-    final trimmedEmail = userEmail?.trim();
-    if (trimmedEmail == null || trimmedEmail.isEmpty) {
-      return const {};
-    }
-
-    return {'X-MissionOut-User-Email': trimmedEmail};
   }
 }

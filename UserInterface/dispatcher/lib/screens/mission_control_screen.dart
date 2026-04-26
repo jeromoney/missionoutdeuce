@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
 
@@ -26,7 +27,7 @@ class MissionControlScreen extends StatefulWidget {
 }
 
 class _MissionControlScreenState extends State<MissionControlScreen> {
-  final api = MissionOutApi();
+  late final MissionOutApi api;
 
   List<Incident> incidents = const [];
   List<EventRecord> events = const [];
@@ -39,6 +40,12 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
   @override
   void initState() {
     super.initState();
+    api = MissionOutApi(
+      client: AuthHeaderClient(
+        http.Client(),
+        () => widget.auth.currentUser?.email,
+      ),
+    );
     _loadDashboard();
   }
 
@@ -154,7 +161,6 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
 
     try {
       final DashboardSnapshot snapshot = await api.fetchDashboard(
-        userEmail: widget.auth.currentUser?.email,
         memberships: widget.auth.currentUser?.teamMemberships ?? const [],
       );
 
@@ -221,7 +227,6 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
       final newIncident = await api.createIncident(
         draft,
         teamPublicId: teamPublicId,
-        userEmail: widget.auth.currentUser?.email,
       );
       debugPrint(
         '[Dispatcher] Incident created: public_id=${newIncident.publicId}, title=${newIncident.title}',
