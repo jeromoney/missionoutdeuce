@@ -1,10 +1,11 @@
 """FastAPI dependencies for authenticated request handling.
 
-`get_current_principal` resolves the authenticated user from the
-`x-missionout-user-email` header, picks their effective role, and — when the
-database is Postgres — primes the session with `SET LOCAL app.user_id` and
-`SET LOCAL app.role` so RLS policies in `app/db/rls.py` see the caller's
-identity.
+`get_current_principal` resolves the authenticated user from a
+`Authorization: Bearer <jwt>` header, verifies the access token signature
+and expiry, picks the effective role from the user's active memberships, and
+— when the database is Postgres — primes the session with `SET LOCAL
+app.user_id` and `SET LOCAL app.role` so RLS policies in `app/db/rls.py` see
+the caller's identity.
 
 Note that `SET LOCAL` only persists within the current transaction; a
 `db.commit()` inside a handler will clear the setting. Handlers that need to
@@ -18,9 +19,10 @@ no-op for the context-setting step.
 from dataclasses import dataclass
 
 from fastapi import Depends, HTTPException, Request
-from sqlalchemy import func, select, text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models.team_management import TeamMembership, User
 
@@ -51,21 +53,33 @@ def _select_effective_membership(user: User) -> TeamMembership | None:
     return min(active, key=rank)
 
 
+def _extract_bearer_token(request: Request) -> str:
+    header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not header:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing Authorization header.",
+        )
+    scheme, _, token = header.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header must use Bearer scheme.",
+        )
+    return token.strip()
+
+
 def get_current_principal(
     request: Request,
     db: Session = Depends(get_db),
 ) -> Principal:
-    email = request.headers.get("x-missionout-user-email", "").strip().lower()
-    if not email:
-        raise HTTPException(
-            status_code=401,
-            detail="Missing authenticated user context.",
-        )
+    token = _extract_bearer_token(request)
+    claims = decode_access_token(token)
 
     user = db.scalar(
         select(User)
         .options(selectinload(User.memberships).selectinload(TeamMembership.team))
-        .where(func.lower(User.email) == email)
+        .where(User.public_id == claims["sub"])
     )
     if user is None or not user.is_active:
         raise HTTPException(

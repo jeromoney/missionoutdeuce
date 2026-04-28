@@ -9,6 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import settings
+from app.core.security import create_access_token
 from app.core.time import utc_now
 from app.db.base import Base
 from app.db.session import get_db
@@ -22,6 +24,12 @@ from app.models.team_management import (
     User,
     WebPushSubscription,
 )
+
+
+# Tests run without the production secrets file. Inject a deterministic
+# signing key so JWT mint+verify works end-to-end in the suite.
+if not settings.jwt_signing_key:
+    settings.jwt_signing_key = "d88ea38654a8c1db42e26530aec41989024a30137b4502824c165170e4ccfbd3"
 
 
 TEST_DATABASE_URL = "sqlite+pysqlite:///:memory:"
@@ -237,7 +245,8 @@ def seeded_delivery_event(db_session: Session) -> DeliveryEvent:
 @pytest.fixture()
 def auth_headers() -> Callable[[User], dict[str, str]]:
     def _build(user: User) -> dict[str, str]:
-        return {"x-missionout-user-email": user.email}
+        token, _ = create_access_token(user)
+        return {"Authorization": f"Bearer {token}"}
 
     return _build
 

@@ -10,6 +10,9 @@ import 'auth_user.dart';
 
 const _googleScopes = <String>['email', 'profile'];
 
+/// How close to expiry an access token must be before we proactively refresh.
+const _accessTokenRefreshSkew = Duration(seconds: 60);
+
 class AuthController extends ChangeNotifier {
   AuthController({
     required this.loggedOutRoleLabel,
@@ -27,6 +30,7 @@ class AuthController extends ChangeNotifier {
 
   AuthUser? _currentUser;
   bool _isRestoring = true;
+  Future<String?>? _inFlightRefresh;
 
   Future<void>? _googleInit;
   StreamSubscription<GoogleSignInAuthenticationEvent>? _googleEventSub;
@@ -85,7 +89,7 @@ class AuthController extends ChangeNotifier {
       throw Exception('Invalid auth response.');
     }
 
-    _currentUser = AuthUser.fromJson(
+    _currentUser = AuthUser.fromSessionJson(
       decoded,
       requestedClient: requestedClient,
       fallbackRole: loggedOutRoleLabel,
@@ -171,16 +175,114 @@ class AuthController extends ChangeNotifier {
       throw Exception('Invalid auth response.');
     }
 
-    return AuthUser.fromJson(
+    return AuthUser.fromSessionJson(
       decoded,
       requestedClient: requestedClient,
       fallbackRole: loggedOutRoleLabel,
     );
   }
 
-  void logout() {
-    unawaited(_clearSession());
+  /// Returns a fresh access token, transparently refreshing it via
+  /// `/auth/refresh` if it is within [_accessTokenRefreshSkew] of expiry. If
+  /// no session is loaded or the refresh fails, returns null and forces a
+  /// sign-out so the UI can route to the login screen.
+  Future<String?> ensureFreshAccessToken() async {
+    final user = _currentUser;
+    if (user == null) {
+      return null;
+    }
+
+    final expiresAt = user.accessTokenExpiresAt;
+    final mustRefresh = expiresAt == null
+        ? user.accessToken == null
+        : DateTime.now()
+            .toUtc()
+            .add(_accessTokenRefreshSkew)
+            .isAfter(expiresAt);
+
+    if (!mustRefresh) {
+      return user.accessToken;
+    }
+
+    return _inFlightRefresh ??= _performRefresh().whenComplete(() {
+      _inFlightRefresh = null;
+    });
+  }
+
+  Future<String?> _performRefresh() async {
+    final refreshToken = _currentUser?.refreshToken;
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await _forceSignOut();
+      return null;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$backendBaseUrl/auth/refresh'),
+        headers: const {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh_token': refreshToken}),
+      );
+
+      if (response.statusCode == 401) {
+        await _forceSignOut();
+        return null;
+      }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception(_buildBackendError(response));
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw Exception('Invalid refresh response.');
+      }
+
+      _currentUser = AuthUser.fromSessionJson(
+        decoded,
+        requestedClient: requestedClient,
+        fallbackRole: loggedOutRoleLabel,
+      );
+      await _persistSession();
+      notifyListeners();
+      return _currentUser?.accessToken;
+    } on Exception {
+      await _forceSignOut();
+      rethrow;
+    }
+  }
+
+  Future<void> _forceSignOut() async {
     _currentUser = null;
+    await _clearSession();
+    notifyListeners();
+  }
+
+  /// Service clients invoke this on a 401 response. Triggers one refresh; if
+  /// it succeeds, callers can retry the original request with the new token.
+  Future<String?> handleUnauthorized() async {
+    final user = _currentUser;
+    if (user?.refreshToken == null) {
+      await _forceSignOut();
+      return null;
+    }
+    return _performRefresh();
+  }
+
+  Future<void> logout() async {
+    final refreshToken = _currentUser?.refreshToken;
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      try {
+        await http.post(
+          Uri.parse('$backendBaseUrl/auth/logout'),
+          headers: const {'Content-Type': 'application/json'},
+          body: jsonEncode({'refresh_token': refreshToken}),
+        );
+      } catch (_) {
+        // Best-effort revocation; the local session is cleared regardless.
+      }
+    }
+
+    _currentUser = null;
+    await _clearSession();
     if (_googleInit != null) {
       unawaited(GoogleSignIn.instance.signOut().catchError((_) => null));
     }
@@ -195,7 +297,7 @@ class AuthController extends ChangeNotifier {
   }
 
   String _buildBackendError(http.Response response) {
-    final prefix = 'Google auth failed (${response.statusCode})';
+    final prefix = 'Auth request failed (${response.statusCode})';
     try {
       final decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {
@@ -233,11 +335,20 @@ class AuthController extends ChangeNotifier {
       if (storedSession != null && storedSession.isNotEmpty) {
         final decoded = jsonDecode(storedSession);
         if (decoded is Map<String, dynamic>) {
-          _currentUser = AuthUser.fromJson(
+          _currentUser = AuthUser.fromSessionJson(
             decoded,
             requestedClient: requestedClient,
             fallbackRole: loggedOutRoleLabel,
           );
+          // If the persisted access token is already expired, attempt a
+          // background refresh so the UI doesn't have to wait until the
+          // first authenticated call to discover the staleness.
+          final expiresAt = _currentUser?.accessTokenExpiresAt;
+          if (expiresAt != null &&
+              DateTime.now().toUtc().isAfter(expiresAt) &&
+              (_currentUser?.refreshToken?.isNotEmpty ?? false)) {
+            unawaited(ensureFreshAccessToken());
+          }
         }
       }
     } catch (_) {

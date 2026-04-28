@@ -9,7 +9,25 @@
       "Bash(xargs grep *)",
       "Bash(git *)",
       "Bash(grep -E \"^\\(app\\\\\\\\\\\\\\\\\\(api\\\\\\\\\\\\\\\\routes\\\\\\\\\\\\\\\\events|api\\\\\\\\\\\\\\\\deps|seed|services\\\\\\\\\\\\\\\\formatters\\)|TOTAL|Name|---\\)\")",
-      "Bash(grep -E \"passed|failed|error\" \"C:\\\\\\\\Users\\\\\\\\justi\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-justi-OneDrive-Documents-Projects-missionout-backend\\\\\\\\ded1d69e-f5d1-4699-bb74-e3cb34491db1\\\\\\\\tasks\\\\\\\\b8lpuc5zv.output\")"
+      "Bash(grep -E \"passed|failed|error\" \"C:\\\\\\\\Users\\\\\\\\justi\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-justi-OneDrive-Documents-Projects-missionout-backend\\\\\\\\ded1d69e-f5d1-4699-bb74-e3cb34491db1\\\\\\\\tasks\\\\\\\\b8lpuc5zv.output\")",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -20 {}')",
+      "Bash(.venv/Scripts/python.exe -m pip install \"pyjwt[crypto]>=2.9.0\")",
+      "Bash(.venv/Scripts/python.exe -m pytest -x -q)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/api/test_incidents.py -q)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q)",
+      "Bash(.venv/Scripts/python.exe -m pip show pytest-asyncio)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/integration/test_sse_stream.py tests/unit/test_events_stream.py tests/contract/test_openapi_drift.py -q)",
+      "Bash(.venv/Scripts/python.exe scripts/export_openapi.py)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/contract -q)",
+      "Bash(.venv/Scripts/python.exe -m pytest -q --ignore=tests/integration/test_sse_stream.py --ignore=tests/unit/test_events_stream.py)",
+      "Bash(.venv/Scripts/python.exe -m pytest tests/unit/test_security.py tests/api/test_auth_sessions.py -q)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter test *)",
+      "Bash(.venv/Scripts/python.exe scripts/check_openapi.py)",
+      "Bash(rm \"C:/Users/justi/OneDrive/Documents/Projects/missionout/backend/.vscode/launch.json\")",
+      "Bash(rmdir \"C:/Users/justi/OneDrive/Documents/Projects/missionout/backend/.vscode\")",
+      "Bash(.venv/Scripts/python -m pytest)",
+      "Bash(.venv/Scripts/python -m pytest --collect-only -q)"
     ]
   },
   "enabledMcpjsonServers": [

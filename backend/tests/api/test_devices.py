@@ -44,10 +44,27 @@ def test_post_web_push_requires_user_header(client):
 
 
 def test_post_web_push_rejects_unknown_user(client):
+    from datetime import timedelta
+
+    import jwt
+
+    from app.core.config import settings
+    from app.core.time import utc_now
+
+    payload = {
+        "sub": "nonexistent-public-id",
+        "email": "missing@gmail.com",
+        "type": "access",
+        "iss": settings.jwt_issuer,
+        "iat": int(utc_now().timestamp()),
+        "exp": int((utc_now() + timedelta(minutes=5)).timestamp()),
+    }
+    token = jwt.encode(payload, settings.jwt_signing_key, algorithm="HS256")
+
     response = client.post(
         "/devices/web-push",
         json=_subscription_payload(),
-        headers={"x-missionout-user-email": "missing@gmail.com"},
+        headers={"Authorization": f"Bearer {token}"},
     )
 
     assert response.status_code == 401

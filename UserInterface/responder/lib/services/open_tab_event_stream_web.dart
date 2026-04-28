@@ -12,7 +12,7 @@ extension type _MissionOutEventStreamBridge._(js.JSObject _)
     implements js.JSObject {
   external js.JSObject connect(
     String url,
-    String userEmail,
+    String accessToken,
     js.JSFunction onEvent,
     js.JSFunction onError,
   );
@@ -30,18 +30,18 @@ class _WebOpenTabEventStream implements OpenTabEventStream {
   Timer? _reconnectTimer;
   js.JSObject? _connectionHandle;
   bool _disposed = false;
-  String _userEmail = '';
+  String _accessToken = '';
 
   @override
   Stream<OpenTabEvent> get events => _eventsController.stream;
 
   @override
-  Future<void> connect({required String userEmail}) async {
-    if (_disposed || _connectionHandle != null || userEmail.trim().isEmpty) {
+  Future<void> connect({required String accessToken}) async {
+    if (_disposed || _connectionHandle != null || accessToken.trim().isEmpty) {
       return;
     }
 
-    _userEmail = userEmail.trim();
+    _accessToken = accessToken.trim();
     final bridge = _bridge;
     if (bridge == null) {
       return;
@@ -49,7 +49,7 @@ class _WebOpenTabEventStream implements OpenTabEventStream {
 
     _connectionHandle = bridge.connect(
       streamUrl,
-      _userEmail,
+      _accessToken,
       ((String type, String data) {
         _emitEvent(type: type, data: data);
       }).toJS,
@@ -75,7 +75,7 @@ class _WebOpenTabEventStream implements OpenTabEventStream {
 
     _reconnectTimer = Timer(const Duration(seconds: 4), () {
       _reconnectTimer = null;
-      connect(userEmail: _userEmail);
+      connect(accessToken: _accessToken);
     });
   }
 

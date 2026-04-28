@@ -11,7 +11,7 @@ class _StubOpenTabEventStream implements OpenTabEventStream {
   Stream<OpenTabEvent> get events => _eventsController.stream;
 
   @override
-  Future<void> connect({required String userEmail}) async {}
+  Future<void> connect({required String accessToken}) async {}
 
   @override
   void dispose() {

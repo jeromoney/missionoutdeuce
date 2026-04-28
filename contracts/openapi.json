@@ -1,6 +1,40 @@
 {
   "components": {
     "schemas": {
+      "AuthSessionRead": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "access_token_expires_at": {
+            "format": "date-time",
+            "title": "Access Token Expires At",
+            "type": "string"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          },
+          "refresh_token_expires_at": {
+            "format": "date-time",
+            "title": "Refresh Token Expires At",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUserRead"
+          }
+        },
+        "required": [
+          "user",
+          "access_token",
+          "access_token_expires_at",
+          "refresh_token",
+          "refresh_token_expires_at"
+        ],
+        "title": "AuthSessionRead",
+        "type": "object"
+      },
       "AuthTeamMembershipRead": {
         "properties": {
           "roles": {
@@ -433,6 +467,19 @@
           "active"
         ],
         "title": "IncidentUpdate",
+        "type": "object"
+      },
+      "RefreshTokenRequest": {
+        "properties": {
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenRequest",
         "type": "object"
       },
       "ResponseRecordCreate": {
@@ -933,7 +980,7 @@
     },
     "/auth/email-code/verify": {
       "post": {
-        "description": "Completes email-code sign-in by exchanging a one-time emailed code for the authenticated MissionOut user payload.",
+        "description": "Completes email-code sign-in by exchanging a one-time emailed code for an authenticated MissionOut session (access token + refresh token).",
         "operationId": "verify_email_code_auth_email_code_verify_post",
         "requestBody": {
           "content": {
@@ -950,7 +997,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthUserRead"
+                  "$ref": "#/components/schemas/AuthSessionRead"
                 }
               }
             },
@@ -991,7 +1038,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthUserRead"
+                  "$ref": "#/components/schemas/AuthSessionRead"
                 }
               }
             },
@@ -1009,6 +1056,83 @@
           }
         },
         "summary": "Google Auth",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "description": "Revokes the supplied refresh token. Idempotent: an unknown or already-revoked token returns 204.",
+        "operationId": "logout_auth_logout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Refresh Token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "description": "Exchanges a valid refresh token for a new access token and a rotated refresh token. The presented refresh token is invalidated; replaying it will revoke every active refresh token for the owning user.",
+        "operationId": "refresh_session_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Refresh Session",
         "tags": [
           "auth"
         ]

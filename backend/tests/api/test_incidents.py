@@ -2,13 +2,13 @@ def test_get_incidents_requires_user_header(client, seeded_incident):
     response = client.get("/incidents")
 
     assert response.status_code == 401
-    assert response.json()["detail"] == "Missing authenticated user context."
+    assert response.json()["detail"] == "Missing Authorization header."
 
 
-def test_get_incidents_returns_team_scoped_incidents(client, seeded_user, seeded_incident):
+def test_get_incidents_returns_team_scoped_incidents(client, seeded_user, seeded_incident, auth_headers):
     response = client.get(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
 
     assert response.status_code == 200
@@ -26,10 +26,10 @@ def test_get_incidents_returns_team_scoped_incidents(client, seeded_user, seeded
     assert "detail" not in body[0]["responses"][0]
 
 
-def test_post_incidents_creates_incident(client, seeded_user, seeded_team):
+def test_post_incidents_creates_incident(client, seeded_user, seeded_team, auth_headers):
     response = client.post(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "Injured Climber Extraction",
             "team_public_id": seeded_team.public_id,
@@ -52,10 +52,10 @@ def test_post_incidents_creates_incident(client, seeded_user, seeded_team):
     assert "team" not in body
 
 
-def test_patch_incident_updates_fields(client, seeded_user, seeded_incident):
+def test_patch_incident_updates_fields(client, seeded_user, seeded_incident, auth_headers):
     response = client.patch(
         f"/incidents/{seeded_incident.public_id}",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "Updated Incident Title",
             "location": "Updated Location",
@@ -73,10 +73,10 @@ def test_patch_incident_updates_fields(client, seeded_user, seeded_incident):
     assert body["active"] is False
 
 
-def test_post_incident_response_creates_response_record(client, seeded_user, seeded_incident):
+def test_post_incident_response_creates_response_record(client, seeded_user, seeded_incident, auth_headers):
     response = client.post(
         f"/incidents/{seeded_incident.public_id}/responses",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "status": "Responding",
             "source": "mobile",
@@ -95,7 +95,7 @@ def test_post_incident_response_creates_response_record(client, seeded_user, see
 
 
 def test_get_incidents_filters_out_other_team_incidents(
-    client, seeded_user, seeded_incident, seeded_second_team, db_session
+    client, seeded_user, seeded_incident, seeded_second_team, db_session, auth_headers
 ):
     from app.core.time import utc_now
     from app.models.incident import Incident
@@ -113,7 +113,7 @@ def test_get_incidents_filters_out_other_team_incidents(
 
     response = client.get(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
 
     assert response.status_code == 200
@@ -138,11 +138,11 @@ def test_post_incidents_requires_authentication(client, seeded_team):
 
 
 def test_post_incidents_rejects_unknown_team_for_authenticated_dispatcher(
-    client, seeded_user
+    client, seeded_user, auth_headers
 ):
     response = client.post(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "Ghost Incident",
             "team_public_id": "no-such-team",
@@ -157,10 +157,10 @@ def test_post_incidents_rejects_unknown_team_for_authenticated_dispatcher(
     assert response.status_code == 201
 
 
-def test_post_incidents_requires_title(client, seeded_user, seeded_team):
+def test_post_incidents_requires_title(client, seeded_user, seeded_team, auth_headers):
     response = client.post(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "team_public_id": seeded_team.public_id,
             "location": "Somewhere",
@@ -173,11 +173,11 @@ def test_post_incidents_requires_title(client, seeded_user, seeded_team):
 
 
 def test_post_incidents_requires_dispatcher_role_when_authenticated(
-    client, seeded_second_user, seeded_second_team
+    client, seeded_second_user, seeded_second_team, auth_headers
 ):
     response = client.post(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_second_user.email},
+        headers=auth_headers(seeded_second_user),
         json={
             "title": "Responder Attempt",
             "team_public_id": seeded_second_team.public_id,
@@ -190,10 +190,10 @@ def test_post_incidents_requires_dispatcher_role_when_authenticated(
     assert response.status_code == 403
 
 
-def test_patch_incident_returns_404_for_unknown_public_id(client, seeded_user):
+def test_patch_incident_returns_404_for_unknown_public_id(client, seeded_user, auth_headers):
     response = client.patch(
         "/incidents/does-not-exist",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "x",
             "location": "x",
@@ -215,11 +215,11 @@ def test_post_incident_response_requires_user_header(client, seeded_incident):
 
 
 def test_post_incident_response_rejects_user_not_on_team(
-    client, seeded_incident, seeded_second_user
+    client, seeded_incident, seeded_second_user, auth_headers
 ):
     response = client.post(
         f"/incidents/{seeded_incident.public_id}/responses",
-        headers={"x-missionout-user-email": seeded_second_user.email},
+        headers=auth_headers(seeded_second_user),
         json={"status": "Responding", "source": "mobile", "rank": 1},
     )
 
@@ -227,7 +227,7 @@ def test_post_incident_response_rejects_user_not_on_team(
 
 
 def test_post_incident_response_upserts_single_record(
-    client, seeded_user, seeded_incident, db_session
+    client, seeded_user, seeded_incident, db_session, auth_headers
 ):
     from app.models.incident import ResponseRecord
 
@@ -241,7 +241,7 @@ def test_post_incident_response_upserts_single_record(
     for rank in (1, 2, 3):
         response = client.post(
             f"/incidents/{seeded_incident.public_id}/responses",
-            headers={"x-missionout-user-email": seeded_user.email},
+            headers=auth_headers(seeded_user),
             json={"status": "Standby", "source": "mobile", "rank": rank},
         )
         assert response.status_code == 201

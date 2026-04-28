@@ -14,7 +14,9 @@
       "Bash(dart run *)",
       "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" status --short)",
       "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" stash)",
-      "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" stash pop)"
+      "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" stash pop)",
+      "Bash(flutter *)",
+      "mcp__dart__analyze_files"
     ]
   },
   "enabledMcpjsonServers": [

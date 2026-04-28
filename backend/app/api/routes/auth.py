@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import hashlib
 import logging
 import secrets
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 import requests
@@ -10,16 +10,24 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    revoke_refresh_token,
+    rotate_refresh_token,
+)
 from app.core.time import ensure_utc, utc_now
 from app.db.session import get_db
 from app.models.team_management import EmailCodeToken, TeamMembership, User
 from app.schemas.auth import (
+    AuthSessionRead,
     AuthTeamMembershipRead,
     AuthUserRead,
     EmailCodeRequest,
     EmailCodeSentRead,
     EmailCodeVerifyRequest,
     GoogleAuthRequest,
+    RefreshTokenRequest,
 )
 
 
@@ -282,16 +290,41 @@ def request_email_code(payload: EmailCodeRequest, db: Session = Depends(get_db))
     )
 
 
+def _issue_session(
+    db: Session,
+    *,
+    user: User,
+    name: str,
+    email: str,
+    user_agent: str | None,
+) -> AuthSessionRead:
+    access_token, access_expires_at = create_access_token(user)
+    refresh_plaintext, refresh_expires_at = create_refresh_token(
+        db, user, user_agent=user_agent
+    )
+    return AuthSessionRead(
+        user=_build_auth_user_read(email=email, name=name, user=user),
+        access_token=access_token,
+        access_token_expires_at=access_expires_at,
+        refresh_token=refresh_plaintext,
+        refresh_token_expires_at=refresh_expires_at,
+    )
+
+
 @router.post(
     "/email-code/verify",
-    response_model=AuthUserRead,
+    response_model=AuthSessionRead,
     summary="Verify Email Sign-In Code",
     description=(
         "Completes email-code sign-in by exchanging a one-time emailed code for "
-        "the authenticated MissionOut user payload."
+        "an authenticated MissionOut session (access token + refresh token)."
     ),
 )
-def verify_email_code(payload: EmailCodeVerifyRequest, db: Session = Depends(get_db)):
+def verify_email_code(
+    payload: EmailCodeVerifyRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     normalized_email = _normalize_email(payload.email)
     token_record = db.scalar(
         select(EmailCodeToken)
@@ -315,13 +348,24 @@ def verify_email_code(payload: EmailCodeVerifyRequest, db: Session = Depends(get
     if user is None or not user.is_active:
         raise HTTPException(status_code=401, detail="Invalid email sign-in code.")
     token_record.consumed_at = now
+
+    session = _issue_session(
+        db,
+        user=user,
+        name=user.name,
+        email=user.email,
+        user_agent=request.headers.get("user-agent"),
+    )
     db.commit()
+    return session
 
-    return _build_auth_user_read(email=user.email, name=user.name, user=user)
 
-
-@router.post("/google", response_model=AuthUserRead)
-def google_auth(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
+@router.post("/google", response_model=AuthSessionRead)
+def google_auth(
+    payload: GoogleAuthRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     if not settings.google_client_ids:
         raise HTTPException(
             status_code=500,
@@ -345,4 +389,60 @@ def google_auth(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
             detail=f"Contact your administrator for support referencing {email}.",
         )
 
-    return _build_auth_user_read(email=email, name=name, user=user)
+    session = _issue_session(
+        db,
+        user=user,
+        name=name,
+        email=email,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.commit()
+    return session
+
+
+@router.post(
+    "/refresh",
+    response_model=AuthSessionRead,
+    summary="Refresh Session",
+    description=(
+        "Exchanges a valid refresh token for a new access token and a rotated "
+        "refresh token. The presented refresh token is invalidated; replaying "
+        "it will revoke every active refresh token for the owning user."
+    ),
+)
+def refresh_session(
+    payload: RefreshTokenRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user, access_token, access_expires_at, new_refresh, refresh_expires_at = (
+        rotate_refresh_token(
+            db,
+            payload.refresh_token,
+            user_agent=request.headers.get("user-agent"),
+        )
+    )
+    body = AuthSessionRead(
+        user=_build_auth_user_read(email=user.email, name=user.name, user=user),
+        access_token=access_token,
+        access_token_expires_at=access_expires_at,
+        refresh_token=new_refresh,
+        refresh_token_expires_at=refresh_expires_at,
+    )
+    db.commit()
+    return body
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Revoke Refresh Token",
+    description=(
+        "Revokes the supplied refresh token. Idempotent: an unknown or "
+        "already-revoked token returns 204."
+    ),
+)
+def logout(payload: RefreshTokenRequest, db: Session = Depends(get_db)):
+    revoke_refresh_token(db, payload.refresh_token)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

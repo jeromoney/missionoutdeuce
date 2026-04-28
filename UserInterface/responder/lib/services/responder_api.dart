@@ -16,12 +16,12 @@ class ResponderApi {
   String get baseUrl => _baseUrl;
 
   Future<List<ResponderIncident>> fetchIncidents({
-    String? userEmail,
+    String? accessToken,
     String? userPublicId,
   }) async {
     final response = await _client.get(
       Uri.parse('$_baseUrl/incidents'),
-      headers: _headers(userEmail: userEmail),
+      headers: _headers(accessToken: accessToken),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -42,17 +42,17 @@ class ResponderApi {
         .toList();
   }
 
-  Future<void> submitResponse({
+  Future<ResponderIncidentResponse> submitResponse({
     required String incidentPublicId,
     required String status,
     required String source,
-    String? userEmail,
+    String? accessToken,
   }) async {
     final response = await _client.post(
       Uri.parse('$_baseUrl/incidents/$incidentPublicId/responses'),
       headers: {
         'Content-Type': 'application/json',
-        ..._headers(userEmail: userEmail),
+        ..._headers(accessToken: accessToken),
       },
       body: jsonEncode({'status': status, 'source': source}),
     );
@@ -62,14 +62,22 @@ class ResponderApi {
         'Request failed for /incidents/$incidentPublicId/responses (${response.statusCode})',
       );
     }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception(
+        'Expected a JSON object from POST /incidents/$incidentPublicId/responses',
+      );
+    }
+    return ResponderIncidentResponse.fromJson(decoded);
   }
 
-  Map<String, String> _headers({String? userEmail}) {
-    final trimmedEmail = userEmail?.trim();
-    if (trimmedEmail == null || trimmedEmail.isEmpty) {
+  Map<String, String> _headers({String? accessToken}) {
+    final trimmed = accessToken?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
       return const {};
     }
 
-    return {'X-MissionOut-User-Email': trimmedEmail};
+    return {'Authorization': 'Bearer $trimmed'};
   }
 }

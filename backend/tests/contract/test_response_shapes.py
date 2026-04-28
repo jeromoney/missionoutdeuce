@@ -50,19 +50,19 @@ def _response_schema(spec: dict, path: str, method: str, status: str):
     return _resolve_schema(spec, raw) if raw is not None else None
 
 
-def test_get_incidents_matches_live_schema(client, seeded_user, seeded_incident, live_spec):
+def test_get_incidents_matches_live_schema(client, seeded_user, seeded_incident, live_spec, auth_headers):
     schema = _response_schema(live_spec, "/incidents", "get", "200")
     assert schema is not None
 
     response = client.get(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
     assert response.status_code == 200
     jsonschema.validate(response.json(), schema)
 
 
-def test_get_team_members_matches_live_schema(client, seeded_team, seeded_user, live_spec):
+def test_get_team_members_matches_live_schema(client, seeded_team, seeded_user, live_spec, auth_headers):
     schema = _response_schema(
         live_spec, "/teams/{team_public_id}/members", "get", "200"
     )
@@ -70,21 +70,21 @@ def test_get_team_members_matches_live_schema(client, seeded_team, seeded_user, 
 
     response = client.get(
         f"/teams/{seeded_team.public_id}/members",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
     assert response.status_code == 200
     jsonschema.validate(response.json(), schema)
 
 
 def test_get_delivery_feed_matches_live_schema(
-    client, seeded_user, seeded_delivery_event, live_spec
+    client, seeded_user, seeded_delivery_event, live_spec, auth_headers
 ):
     schema = _response_schema(live_spec, "/events/delivery-feed", "get", "200")
     assert schema is not None
 
     response = client.get(
         "/events/delivery-feed",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
     assert response.status_code == 200
     jsonschema.validate(response.json(), schema)

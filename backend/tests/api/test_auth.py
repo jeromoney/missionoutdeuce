@@ -186,8 +186,10 @@ def test_post_google_returns_provisioned_user(client, seeded_user, monkeypatch):
 
     assert response.status_code == 200
     body = response.json()
-    assert body["public_id"] == seeded_user.public_id
-    assert body["email"] == seeded_user.email
+    assert body["user"]["public_id"] == seeded_user.public_id
+    assert body["user"]["email"] == seeded_user.email
+    assert body["access_token"]
+    assert body["refresh_token"]
 
 
 def test_post_email_code_verify_happy_path(client, seeded_user, monkeypatch, db_session):
@@ -213,9 +215,11 @@ def test_post_email_code_verify_happy_path(client, seeded_user, monkeypatch, db_
 
     assert verify.status_code == 200
     body = verify.json()
-    assert body["public_id"] == seeded_user.public_id
-    assert body["email"] == seeded_user.email
-    assert body["team_memberships"][0]["team_name"] == "Cinder Valley Rescue"
+    assert body["user"]["public_id"] == seeded_user.public_id
+    assert body["user"]["email"] == seeded_user.email
+    assert body["user"]["team_memberships"][0]["team_name"] == "Cinder Valley Rescue"
+    assert body["access_token"]
+    assert body["refresh_token"]
 
     token_record = (
         db_session.query(EmailCodeToken).filter_by(email=seeded_user.email).one()

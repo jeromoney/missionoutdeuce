@@ -206,9 +206,10 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       statusMessage = null;
     });
 
+    final accessToken = await widget.auth.ensureFreshAccessToken();
     final workspace = await repository.loadWorkspace(
       memberships: widget.auth.currentUser?.teamMemberships ?? const [],
-      userEmail: widget.auth.currentUser?.email,
+      accessToken: accessToken,
     );
 
     if (!mounted) {

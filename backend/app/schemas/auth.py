@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, model_validator
@@ -47,3 +48,15 @@ class AuthUserRead(BaseModel):
     global_permissions: list[str]
     team_memberships: list[AuthTeamMembershipRead]
     email: str
+
+
+class AuthSessionRead(BaseModel):
+    user: AuthUserRead
+    access_token: str
+    access_token_expires_at: datetime
+    refresh_token: str
+    refresh_token_expires_at: datetime
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str

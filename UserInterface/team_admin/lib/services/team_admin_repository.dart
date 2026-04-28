@@ -16,7 +16,7 @@ class TeamAdminRepository {
   final String _baseUrl;
   String? _currentTeamPublicId;
   String? _currentTeamName;
-  String? _currentUserEmail;
+  String? _currentAccessToken;
 
   String get baseUrl => _baseUrl;
 
@@ -28,9 +28,9 @@ class TeamAdminRepository {
 
   Future<TeamAdminWorkspace> loadWorkspace({
     List<AuthTeamMembership> memberships = const [],
-    String? userEmail,
+    String? accessToken,
   }) async {
-    _currentUserEmail = userEmail;
+    _currentAccessToken = accessToken;
     final teamPublicId = memberships.isNotEmpty
         ? memberships.first.teamPublicId
         : '';
@@ -40,7 +40,7 @@ class TeamAdminRepository {
 
     try {
       final healthFuture = _getMap('/health');
-      final incidentsFuture = _getList('/incidents', userEmail: userEmail);
+      final incidentsFuture = _getList('/incidents', accessToken: accessToken);
       final membersFuture = teamPublicId.isEmpty
           ? Future.value(null)
           : _getOptionalList('/teams/$teamPublicId/members');
@@ -174,7 +174,7 @@ class TeamAdminRepository {
       Uri.parse('$_baseUrl/teams/$teamPublicId/members'),
       headers: {
         'Content-Type': 'application/json',
-        ..._headers(userEmail: _currentUserEmail),
+        ..._headers(accessToken: _currentAccessToken),
       },
       body: jsonEncode({
         'name': draft.name,
@@ -201,7 +201,7 @@ class TeamAdminRepository {
       Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
       headers: {
         'Content-Type': 'application/json',
-        ..._headers(userEmail: _currentUserEmail),
+        ..._headers(accessToken: _currentAccessToken),
       },
       body: jsonEncode({'roles': draft.roles}),
     );
@@ -222,7 +222,7 @@ class TeamAdminRepository {
       Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
       headers: {
         'Content-Type': 'application/json',
-        ..._headers(userEmail: _currentUserEmail),
+        ..._headers(accessToken: _currentAccessToken),
       },
       body: jsonEncode({'is_active': isActive}),
     );
@@ -240,7 +240,7 @@ class TeamAdminRepository {
     final teamPublicId = _requireTeamPublicId();
     final response = await _client.delete(
       Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
-      headers: _headers(userEmail: _currentUserEmail),
+      headers: _headers(accessToken: _currentAccessToken),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -258,12 +258,12 @@ class TeamAdminRepository {
 
   Future<List<Map<String, dynamic>>> _getList(
     String path, {
-    String? userEmail,
+    String? accessToken,
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
     final response = await _client.get(
       uri,
-      headers: _headers(userEmail: userEmail),
+      headers: _headers(accessToken: accessToken),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Request failed for $path (${response.statusCode})');
@@ -350,7 +350,7 @@ class TeamAdminRepository {
           roles: const [],
         ),
       ],
-      userEmail: _currentUserEmail,
+      accessToken: _currentAccessToken,
     );
     return workspace.team;
   }
@@ -391,13 +391,13 @@ class TeamAdminRepository {
     return 'Needs review';
   }
 
-  Map<String, String> _headers({String? userEmail}) {
-    final trimmedEmail = userEmail?.trim();
-    if (trimmedEmail == null || trimmedEmail.isEmpty) {
+  Map<String, String> _headers({String? accessToken}) {
+    final trimmed = accessToken?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
       return const {};
     }
 
-    return {'X-MissionOut-User-Email': trimmedEmail};
+    return {'Authorization': 'Bearer $trimmed'};
   }
 
   TeamAdminTeam _buildTeam({

@@ -1,13 +1,13 @@
 from datetime import timedelta
 
 from app.core.time import utc_now
-from app.models.team_management import Device, TeamMembership
+from app.models.team_management import Device, TeamMembership, User
 
 
 def test_add_then_deactivate_member_blocks_incidents_access(
-    client, seeded_team, seeded_user, db_session
+    client, seeded_team, seeded_user, db_session, auth_headers
 ):
-    admin_headers = {"x-missionout-user-email": seeded_user.email}
+    admin_headers = auth_headers(seeded_user)
 
     create = client.post(
         f"/teams/{seeded_team.public_id}/members",
@@ -30,7 +30,10 @@ def test_add_then_deactivate_member_blocks_incidents_access(
     emails = [m["email"] for m in members.json()]
     assert "ada@gmail.com" in emails
 
-    working = client.get("/incidents", headers={"x-missionout-user-email": "ada@gmail.com"})
+    ada = db_session.query(User).filter_by(email="ada@gmail.com").one()
+    ada_headers = auth_headers(ada)
+
+    working = client.get("/incidents", headers=ada_headers)
     assert working.status_code == 200
 
     deactivate = client.patch(
@@ -40,12 +43,12 @@ def test_add_then_deactivate_member_blocks_incidents_access(
     )
     assert deactivate.status_code == 200
 
-    blocked = client.get("/incidents", headers={"x-missionout-user-email": "ada@gmail.com"})
+    blocked = client.get("/incidents", headers=ada_headers)
     assert blocked.status_code == 401
 
 
 def test_user_device_surfaces_in_team_device_listing(
-    client, seeded_team, seeded_user, db_session
+    client, seeded_team, seeded_user, db_session, auth_headers
 ):
     device = Device(
         user_id=seeded_user.id,
@@ -60,7 +63,7 @@ def test_user_device_surfaces_in_team_device_listing(
 
     response = client.get(
         f"/teams/{seeded_team.public_id}/devices",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
 
     assert response.status_code == 200

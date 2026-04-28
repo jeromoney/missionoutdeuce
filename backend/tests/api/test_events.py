@@ -5,17 +5,17 @@ from app.models.event import DeliveryEvent
 from app.models.team_management import User
 
 
-def test_get_delivery_feed_empty(client, seeded_user):
+def test_get_delivery_feed_empty(client, seeded_user, auth_headers):
     response = client.get(
         "/events/delivery-feed",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
 
     assert response.status_code == 200
     assert response.json() == []
 
 
-def test_get_delivery_feed_returns_events_ordered_desc(client, seeded_user, db_session):
+def test_get_delivery_feed_returns_events_ordered_desc(client, seeded_user, db_session, auth_headers):
     now = utc_now()
     older = DeliveryEvent(
         title="Older event",
@@ -38,7 +38,7 @@ def test_get_delivery_feed_returns_events_ordered_desc(client, seeded_user, db_s
 
     response = client.get(
         "/events/delivery-feed",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
 
     assert response.status_code == 200
@@ -53,19 +53,17 @@ def test_get_events_stream_requires_user_header(client):
     assert response.status_code == 401
 
 
-def test_get_events_stream_rejects_inactive_user(client, db_session, seeded_user):
+def test_get_events_stream_rejects_inactive_user(client, db_session, seeded_user, auth_headers):
+    headers = auth_headers(seeded_user)
     seeded_user.is_active = False
     db_session.commit()
 
-    response = client.get(
-        "/events/stream",
-        headers={"x-missionout-user-email": seeded_user.email},
-    )
+    response = client.get("/events/stream", headers=headers)
 
     assert response.status_code == 401
 
 
-def test_get_events_stream_rejects_user_without_active_teams(client, db_session):
+def test_get_events_stream_rejects_user_without_active_teams(client, db_session, auth_headers):
     user = User(
         name="Solo Sam",
         email="solo@gmail.com",
@@ -74,10 +72,8 @@ def test_get_events_stream_rejects_user_without_active_teams(client, db_session)
     )
     db_session.add(user)
     db_session.commit()
+    db_session.refresh(user)
 
-    response = client.get(
-        "/events/stream",
-        headers={"x-missionout-user-email": user.email},
-    )
+    response = client.get("/events/stream", headers=auth_headers(user))
 
     assert response.status_code == 403

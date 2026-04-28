@@ -43,6 +43,14 @@ This file exists to explain the intent, ownership, and usage of that contract al
 The full request and response schema, status codes, and component definitions are in [contracts/openapi.json](/C:/Users/justi/OneDrive/Documents/Projects/missionout/contracts/openapi.json).
 This section is a quick human summary of the routes the clients currently rely on.
 
+## Authentication transport
+
+- Every authenticated route requires the header `Authorization: Bearer <access_token>`. The access token is the JWT returned in the `AuthSessionRead` envelope from any successful sign-in (`POST /auth/google`, `POST /auth/email-code/verify`) or refresh (`POST /auth/refresh`).
+- Access tokens are short-lived (1 hour). Clients call `POST /auth/refresh` with the stored refresh token to rotate the session before expiry. Refresh tokens last 180 days and are single-use (rotate-on-use).
+- Clients call `POST /auth/logout` with the stored refresh token to revoke a session. Access tokens minted from a logged-out chain remain valid until their natural ≤1h expiry.
+- Identity claims in the access token (`sub`, `email`) are the only thing trusted from the JWT. Roles and team memberships are recomputed from the database on every request, so demotions and removals take effect immediately without a token denylist.
+- Earlier scaffold versions of this API trusted a client-supplied user-email request header. That header model has been removed; any client still sending it must migrate to Bearer.
+
 ## `POST /auth/email-code`
 
 Purpose:
@@ -83,7 +91,7 @@ Notes:
 
 Purpose:
 
-- Complete email-based sign-in by exchanging the one-time code from the emailed message for the authenticated MissionOut user payload.
+- Complete email-based sign-in by exchanging the one-time code from the emailed message for an authenticated MissionOut session.
 
 Request shape:
 
@@ -94,29 +102,35 @@ Request shape:
 }
 ```
 
-Response shape:
+Response shape (`AuthSessionRead`):
 
 ```json
 {
-  "public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
-  "name": "Justin Mercer",
-  "initials": "JM",
-  "global_permissions": [],
-  "team_memberships": [
-    {
-      "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
-      "team_name": "Chaffee SAR",
-      "roles": ["responder", "dispatcher"]
-    }
-  ],
-  "email": "justin@example.com"
+  "user": {
+    "public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
+    "name": "Justin Mercer",
+    "initials": "JM",
+    "global_permissions": [],
+    "team_memberships": [
+      {
+        "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
+        "team_name": "Chaffee SAR",
+        "roles": ["responder", "dispatcher"]
+      }
+    ],
+    "email": "justin@example.com"
+  },
+  "access_token": "<jwt>",
+  "access_token_expires_at": "2026-04-27T13:00:00+00:00",
+  "refresh_token": "<opaque>",
+  "refresh_token_expires_at": "2026-10-24T12:00:00+00:00"
 }
 ```
 
 Notes:
 
 - The code is expected to be short-lived and single-use.
-- Once verified, this route returns the same authenticated user shape as other successful auth flows.
+- Once verified, this route returns the canonical `AuthSessionRead` envelope: the user payload nested under `user`, plus the access/refresh token pair the client must present on subsequent calls.
 - If the code is expired, malformed, or already consumed, the backend should reject the verification attempt.
 - Verification should not create new user accounts. Email-code sign-in is only for already provisioned users.
 - Verification failures should use generic invalid-code responses rather than disclosing whether the email exists.
@@ -125,7 +139,7 @@ Notes:
 
 Purpose:
 
-- Exchange a Google ID token for a verified MissionOut user payload.
+- Exchange a Google ID token for a MissionOut session credential (access + refresh tokens) and the authenticated user payload.
 
 Request shape:
 
@@ -136,33 +150,99 @@ Request shape:
 }
 ```
 
-Response shape:
+Response shape (`AuthSessionRead`):
 
 ```json
 {
-  "public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
-  "name": "Justin Mercer",
-  "initials": "JM",
-  "global_permissions": [],
-  "team_memberships": [
-    {
-      "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
-      "team_name": "Chaffee SAR",
-      "roles": ["responder", "dispatcher"]
-    }
-  ],
-  "email": "justin@example.com"
+  "user": {
+    "public_id": "4d7718dc-f4fa-4d4a-9a91-f20c34d27875",
+    "name": "Justin Mercer",
+    "initials": "JM",
+    "global_permissions": [],
+    "team_memberships": [
+      {
+        "team_public_id": "58ceaf6e-4f7d-4d0a-bca0-90d7a3b31591",
+        "team_name": "Chaffee SAR",
+        "roles": ["responder", "dispatcher"]
+      }
+    ],
+    "email": "justin@example.com"
+  },
+  "access_token": "<jwt>",
+  "access_token_expires_at": "2026-04-27T13:00:00+00:00",
+  "refresh_token": "<opaque>",
+  "refresh_token_expires_at": "2026-10-24T12:00:00+00:00"
 }
 ```
 
 Notes:
 
-- Users may authenticate with either email-code sign-in or Google auth.
-- Google auth is provisioned-user-only. The backend should verify the Google ID token, resolve the verified email address, and then look up an existing active MissionOut user before returning an authenticated payload.
+- Users may authenticate with either email-code sign-in or Google auth. Both successful flows return the same `AuthSessionRead` envelope.
+- The response is a MissionOut session credential, not just an identity confirmation. The client must store and present `access_token` on subsequent requests, and use `refresh_token` to rotate before access expiry.
+- Google auth is provisioned-user-only. The backend should verify the Google ID token, resolve the verified email address, and then look up an existing active MissionOut user before issuing a session.
 - Google auth should not auto-create users or grant access solely because the Google account is valid.
-- Authentication should return the caller's effective memberships and roles, not collapse them into a single role string.
+- Authentication should return the caller's effective memberships and roles (under `user`), not collapse them into a single role string.
 - Client selection such as `responder`, `dispatcher`, or `team_admin` determines the requested app surface, not the full authorization set.
 - The `team_admin` client surface represents the Team Management app, not a global admin console.
+
+## `POST /auth/refresh`
+
+Purpose:
+
+- Exchange a valid refresh token for a fresh `AuthSessionRead` envelope (new access token plus a rotated refresh token).
+- Lets long-lived clients (mobile, browser tabs) maintain a session past the 1-hour access-token expiry without forcing re-authentication.
+
+Request shape:
+
+```json
+{
+  "refresh_token": "<opaque>"
+}
+```
+
+Response shape (`AuthSessionRead`):
+
+```json
+{
+  "user": { "public_id": "...", "name": "...", "initials": "...", "global_permissions": [], "team_memberships": [], "email": "..." },
+  "access_token": "<new-jwt>",
+  "access_token_expires_at": "2026-04-27T14:00:00+00:00",
+  "refresh_token": "<new-opaque>",
+  "refresh_token_expires_at": "2026-10-24T13:00:00+00:00"
+}
+```
+
+Notes:
+
+- Refresh tokens are **single-use**: every successful `/auth/refresh` rotates the presented token and returns a new one. Clients must replace the stored refresh token after every call.
+- **Replay detection:** presenting an already-rotated refresh token returns `401` and revokes every active refresh token in that user's chain. The client must restart sign-in.
+- Access tokens last 1 hour. Refresh tokens last 180 days.
+- Membership and permission state in the returned `user` payload is recomputed from the database at refresh time, so role/team changes propagate as soon as the client rotates.
+- A revoked, expired, or unknown refresh token returns `401`.
+
+## `POST /auth/logout`
+
+Purpose:
+
+- Revoke a refresh token so it can no longer be used to mint new access tokens.
+
+Request shape:
+
+```json
+{
+  "refresh_token": "<opaque>"
+}
+```
+
+Response:
+
+- status `204`
+
+Notes:
+
+- Idempotent: revoking an already-revoked, unknown, or expired refresh token still returns `204` so clients can safely retry on flaky networks or sign-out flows that may double-fire.
+- Logout revokes the refresh chain only. Outstanding access tokens minted from that chain remain valid until their natural expiry (≤1 hour). This is the accepted revocation window.
+- Clients should also discard the access token locally when calling logout.
 
 ## Email-Code Flow
 
@@ -170,7 +250,7 @@ Notes:
 2. The backend returns a generic success response. If the email is already provisioned and active, it generates a short-lived one-time code and sends that code by email.
 3. The user reads the code from their email app.
 4. The client submits the email address and code to `POST /auth/email-code/verify`.
-5. The backend validates the code, resolves the user identity and memberships, and returns the authenticated user payload.
+5. The backend validates the code, resolves the user identity and memberships, and returns an `AuthSessionRead` envelope: the user payload plus the access/refresh token pair the client uses on subsequent calls.
 
 ## Multi-Client Routing
 
@@ -352,7 +432,7 @@ Suggested response shape:
 
 Notes:
 
-- In the current scaffold, authenticated user context is provided through the same `x-missionout-user-email` request header used by `GET /incidents`.
+- Authenticated user context is provided through the standard MissionOut auth transport: every authenticated route (including this one) requires `Authorization: Bearer <access_token>`. Clients call `POST /auth/refresh` to rotate the session before access expiry and `POST /auth/logout` to revoke a session.
 - The backend owns the subscription record and should not trust a client-supplied user id.
 - The backend may scope subscriptions by authenticated membership or active client surface, but the registration entry point stays centralized.
 

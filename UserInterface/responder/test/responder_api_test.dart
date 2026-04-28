@@ -7,8 +7,10 @@ import 'package:missionout_responder/services/responder_api.dart';
 
 void main() {
   test('fetchIncidents resolves responder status via user_public_id', () async {
+    String? capturedAuth;
     final api = ResponderApi(
       client: MockClient((request) async {
+        capturedAuth = request.headers['Authorization'];
         return http.Response(
           jsonEncode([
             {
@@ -42,10 +44,11 @@ void main() {
     );
 
     final incidents = await api.fetchIncidents(
-      userEmail: 'responder@example.com',
+      accessToken: 'test-jwt',
       userPublicId: 'responder-user',
     );
 
+    expect(capturedAuth, 'Bearer test-jwt');
     expect(incidents, hasLength(1));
     final incident = incidents.first;
     expect(incident.teamPublicId, 'team-public-id');
@@ -62,23 +65,37 @@ void main() {
 
   test('submitResponse sends canonical source field', () async {
     late Map<String, dynamic> requestBody;
+    String? capturedAuth;
     final api = ResponderApi(
       client: MockClient((request) async {
+        capturedAuth = request.headers['Authorization'];
         requestBody = jsonDecode(request.body) as Map<String, dynamic>;
-        return http.Response('{}', 200);
+        return http.Response(
+          jsonEncode({
+            'user_public_id': 'responder-user',
+            'status': 'Responding',
+            'rank': 0,
+            'updated': '2026-04-27T12:00:00Z',
+          }),
+          201,
+        );
       }),
       baseUrl: 'http://example.test',
     );
 
-    await api.submitResponse(
+    final result = await api.submitResponse(
       incidentPublicId: 'incident-public-id',
       status: 'Responding',
       source: 'android_app',
-      userEmail: 'responder@example.com',
+      accessToken: 'test-jwt',
     );
 
+    expect(capturedAuth, 'Bearer test-jwt');
     expect(requestBody['status'], 'Responding');
     expect(requestBody['source'], 'android_app');
     expect(requestBody.containsKey('detail'), isFalse);
+    expect(result.userPublicId, 'responder-user');
+    expect(result.status, 'Responding');
+    expect(result.rank, 0);
   });
 }

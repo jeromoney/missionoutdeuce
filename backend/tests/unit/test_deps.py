@@ -1,10 +1,14 @@
+from datetime import timedelta
 from unittest.mock import patch
 
+import jwt
 import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
 
 from app.api.deps import Principal, _select_effective_membership, get_current_principal
+from app.core.config import settings
+from app.core.security import create_access_token
 from app.core.time import utc_now
 from app.models.team_management import Team, TeamMembership, User
 
@@ -18,21 +22,90 @@ def _make_request(headers: dict[str, str] | None = None) -> Request:
     return Request(scope)
 
 
+def _bearer(user: User) -> dict[str, str]:
+    token, _ = create_access_token(user)
+    return {"Authorization": f"Bearer {token}"}
+
+
 def test_missing_header_returns_401(db_session):
     with pytest.raises(HTTPException) as exc_info:
         get_current_principal(_make_request(), db_session)
     assert exc_info.value.status_code == 401
-    assert exc_info.value.detail == "Missing authenticated user context."
+    assert exc_info.value.detail == "Missing Authorization header."
 
 
-def test_unknown_email_returns_401(db_session):
+def test_non_bearer_scheme_returns_401(db_session):
     with pytest.raises(HTTPException) as exc_info:
         get_current_principal(
-            _make_request({"x-missionout-user-email": "ghost@example.com"}),
+            _make_request({"Authorization": "Basic dXNlcjpwYXNz"}),
+            db_session,
+        )
+    assert exc_info.value.status_code == 401
+
+
+def test_malformed_token_returns_401(db_session):
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_principal(
+            _make_request({"Authorization": "Bearer not-a-jwt"}),
+            db_session,
+        )
+    assert exc_info.value.status_code == 401
+
+
+def test_token_with_unknown_subject_returns_401(db_session):
+    payload = {
+        "sub": "missing-public-id",
+        "email": "ghost@example.com",
+        "type": "access",
+        "iss": settings.jwt_issuer,
+        "iat": int(utc_now().timestamp()),
+        "exp": int((utc_now() + timedelta(minutes=5)).timestamp()),
+    }
+    token = jwt.encode(payload, settings.jwt_signing_key, algorithm="HS256")
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_principal(
+            _make_request({"Authorization": f"Bearer {token}"}),
             db_session,
         )
     assert exc_info.value.status_code == 401
     assert exc_info.value.detail == "Authenticated user is not recognized."
+
+
+def test_expired_token_returns_401(db_session, seeded_user):
+    issued = utc_now() - timedelta(hours=2)
+    payload = {
+        "sub": seeded_user.public_id,
+        "email": seeded_user.email,
+        "type": "access",
+        "iss": settings.jwt_issuer,
+        "iat": int(issued.timestamp()),
+        "exp": int((issued + timedelta(minutes=1)).timestamp()),
+    }
+    token = jwt.encode(payload, settings.jwt_signing_key, algorithm="HS256")
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_principal(
+            _make_request({"Authorization": f"Bearer {token}"}),
+            db_session,
+        )
+    assert exc_info.value.status_code == 401
+
+
+def test_token_signed_with_wrong_key_returns_401(db_session, seeded_user):
+    payload = {
+        "sub": seeded_user.public_id,
+        "email": seeded_user.email,
+        "type": "access",
+        "iss": settings.jwt_issuer,
+        "iat": int(utc_now().timestamp()),
+        "exp": int((utc_now() + timedelta(minutes=5)).timestamp()),
+    }
+    token = jwt.encode(payload, "different-secret", algorithm="HS256")
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_principal(
+            _make_request({"Authorization": f"Bearer {token}"}),
+            db_session,
+        )
+    assert exc_info.value.status_code == 401
 
 
 def test_user_without_membership_returns_403(db_session):
@@ -41,29 +114,18 @@ def test_user_without_membership_returns_403(db_session):
     db_session.commit()
 
     with pytest.raises(HTTPException) as exc_info:
-        get_current_principal(
-            _make_request({"x-missionout-user-email": user.email}),
-            db_session,
-        )
+        get_current_principal(_make_request(_bearer(user)), db_session)
     assert exc_info.value.status_code == 403
 
 
 def test_returns_principal_for_valid_user(db_session, seeded_user):
     principal = get_current_principal(
-        _make_request({"x-missionout-user-email": seeded_user.email}),
+        _make_request(_bearer(seeded_user)),
         db_session,
     )
     assert isinstance(principal, Principal)
     assert principal.user.id == seeded_user.id
     assert principal.role == "team_admin"
-
-
-def test_email_match_is_case_insensitive(db_session, seeded_user):
-    principal = get_current_principal(
-        _make_request({"x-missionout-user-email": seeded_user.email.upper()}),
-        db_session,
-    )
-    assert principal.user.id == seeded_user.id
 
 
 def test_set_local_is_noop_on_sqlite(db_session, seeded_user):
@@ -72,10 +134,7 @@ def test_set_local_is_noop_on_sqlite(db_session, seeded_user):
     # TODO(rls): once local dev/CI moves to Postgres, replace this with a
     # test that verifies SET LOCAL does fire and policies apply.
     with patch.object(db_session, "execute", wraps=db_session.execute) as spy:
-        get_current_principal(
-            _make_request({"x-missionout-user-email": seeded_user.email}),
-            db_session,
-        )
+        get_current_principal(_make_request(_bearer(seeded_user)), db_session)
         rendered_calls = [
             str(call.args[0]) for call in spy.call_args_list if call.args
         ]

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
@@ -53,10 +54,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     backupNotifications.initialize();
     nativeAlerts.initialize();
     webPush.initialize();
-    final userEmail = widget.auth.currentUser?.email.trim() ?? '';
-    if (userEmail.isNotEmpty) {
-      openTabEvents.connect(userEmail: userEmail);
-    }
+    _connectOpenTabEvents();
     _loadIncidents();
     alertSubscription = backupNotifications.alerts.listen((alert) {
       if (!mounted) {
@@ -211,6 +209,14 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     setState(() => availability = value);
   }
 
+  Future<void> _connectOpenTabEvents() async {
+    final accessToken = await widget.auth.ensureFreshAccessToken();
+    if (!mounted || accessToken == null || accessToken.isEmpty) {
+      return;
+    }
+    openTabEvents.connect(accessToken: accessToken);
+  }
+
   Future<void> _loadIncidents() async {
     setState(() {
       loading = true;
@@ -218,8 +224,9 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     });
 
     try {
+      final accessToken = await widget.auth.ensureFreshAccessToken();
       final loadedIncidents = await api.fetchIncidents(
-        userEmail: widget.auth.currentUser?.email,
+        accessToken: accessToken,
         userPublicId: widget.auth.currentUser?.publicId,
       );
 
@@ -254,8 +261,9 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     }
 
     try {
+      final accessToken = await widget.auth.ensureFreshAccessToken();
       final loadedIncidents = await api.fetchIncidents(
-        userEmail: widget.auth.currentUser?.email,
+        accessToken: accessToken,
         userPublicId: widget.auth.currentUser?.publicId,
       );
 
@@ -314,8 +322,13 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
       return;
     }
 
-    final incident = incidents[selected];
-    final resolvedIncidentPublicId = incidentPublicId ?? incident.publicId;
+    final incidentIndex = incidentPublicId == null
+        ? selected
+        : incidents.indexWhere(
+            (incident) => incident.publicId == incidentPublicId,
+          );
+    final resolvedIncidentPublicId = incidentPublicId ??
+        (incidentIndex >= 0 ? incidents[incidentIndex].publicId : '');
     if (resolvedIncidentPublicId.isEmpty) {
       setState(() {
         loadError =
@@ -330,13 +343,33 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     });
 
     try {
-      await api.submitResponse(
+      final accessToken = await widget.auth.ensureFreshAccessToken();
+      final updatedResponse = await api.submitResponse(
         incidentPublicId: resolvedIncidentPublicId,
         status: status,
         source: source,
-        userEmail: widget.auth.currentUser?.email,
+        accessToken: accessToken,
       );
-      await _loadIncidents();
+
+      if (!mounted) {
+        return;
+      }
+
+      if (incidentIndex >= 0 && incidentIndex < incidents.length) {
+        final responderPublicId = widget.auth.currentUser?.publicId;
+        setState(() {
+          incidents = [
+            for (var i = 0; i < incidents.length; i++)
+              if (i == incidentIndex)
+                incidents[i].withResponderResponse(
+                  updatedResponse,
+                  responderPublicId: responderPublicId,
+                )
+              else
+                incidents[i],
+          ];
+        });
+      }
     } catch (_) {
       if (!mounted) {
         return;
@@ -1314,29 +1347,125 @@ class _IncidentCard extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          _ResponseSegmentedControl(
+            currentStatus: incident.status,
+            submitting: submittingResponse,
+            onResponding: onResponding,
+            onNotAvailable: onNotAvailable,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _ResponseChoice { responding, notAvailable }
+
+class _ResponseSegmentedControl extends StatelessWidget {
+  const _ResponseSegmentedControl({
+    required this.currentStatus,
+    required this.submitting,
+    required this.onResponding,
+    required this.onNotAvailable,
+  });
+
+  final String currentStatus;
+  final bool submitting;
+  final Future<void> Function() onResponding;
+  final Future<void> Function() onNotAvailable;
+
+  @override
+  Widget build(BuildContext context) {
+    final groupValue = switch (currentStatus) {
+      'Responding' => _ResponseChoice.responding,
+      'Not Available' => _ResponseChoice.notAvailable,
+      _ => null,
+    };
+
+    final children = <_ResponseChoice, Widget>{
+      _ResponseChoice.responding: _segmentLabel(
+        'Responding',
+        selected: groupValue == _ResponseChoice.responding,
+      ),
+      _ResponseChoice.notAvailable: _segmentLabel(
+        'Not Available',
+        selected: groupValue == _ResponseChoice.notAvailable,
+      ),
+    };
+
+    final control = CupertinoSlidingSegmentedControl<_ResponseChoice>(
+      groupValue: groupValue,
+      backgroundColor: Colors.white.withValues(alpha: 0.06),
+      thumbColor: ResponderPalette.cardAlt,
+      padding: const EdgeInsets.all(4),
+      onValueChanged: (_) {},
+      children: children,
+    );
+
+    final stack = Stack(
+      children: [
+        control,
+        Positioned.fill(
+          child: Row(
             children: [
-              FilledButton.icon(
-                onPressed: submittingResponse ? null : onResponding,
-                style: FilledButton.styleFrom(
-                  backgroundColor: ResponderPalette.success,
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: submitting ? null : onResponding,
                 ),
-                icon: const Icon(Icons.directions_run_rounded),
-                label: Text(submittingResponse ? 'Saving...' : 'Responding'),
               ),
-              OutlinedButton.icon(
-                onPressed: submittingResponse ? null : onNotAvailable,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: ResponderPalette.danger,
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: submitting ? null : onNotAvailable,
                 ),
-                icon: const Icon(Icons.close_rounded),
-                label: const Text('Not Available'),
               ),
             ],
           ),
+        ),
+      ],
+    );
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 150),
+      opacity: submitting ? 0.55 : 1.0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          stack,
+          if (submitting) ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Saving...',
+                  style: TextStyle(color: ResponderPalette.textSoft),
+                ),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _segmentLabel(String text, {required bool selected}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: selected ? ResponderPalette.text : ResponderPalette.textSoft,
+          fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          fontSize: 14,
+        ),
       ),
     );
   }

@@ -54,6 +54,44 @@ class ResponderIncident {
       priority: json['priority'] as String?,
     );
   }
+
+  ResponderIncident withResponderResponse(
+    ResponderIncidentResponse newResponse, {
+    String? responderPublicId,
+  }) {
+    final updated = <ResponderIncidentResponse>[];
+    var replaced = false;
+    for (final existing in responses) {
+      if (existing.userPublicId == newResponse.userPublicId) {
+        updated.add(newResponse);
+        replaced = true;
+      } else {
+        updated.add(existing);
+      }
+    }
+    if (!replaced) {
+      updated.add(newResponse);
+    }
+
+    final responderResponse = responderPublicId == null
+        ? null
+        : updated.firstWhere(
+            (r) => r.userPublicId == responderPublicId,
+            orElse: () => newResponse,
+          );
+
+    return ResponderIncident(
+      publicId: publicId,
+      title: title,
+      location: location,
+      teamPublicId: teamPublicId,
+      timeLabel: timeLabel,
+      notes: notes,
+      status: responderResponse?.status ?? 'Pending',
+      responses: updated,
+      priority: priority,
+    );
+  }
 }
 
 class ResponderIncidentResponse {

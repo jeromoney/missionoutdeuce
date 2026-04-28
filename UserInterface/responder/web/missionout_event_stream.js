@@ -30,7 +30,7 @@
   }
 
   window.missionOutEventStream = {
-    connect(url, userEmail, onEvent, onError) {
+    connect(url, accessToken, onEvent, onError) {
       const controller = new AbortController();
       const decoder = new TextDecoder();
       let closed = false;
@@ -41,7 +41,7 @@
             method: 'GET',
             headers: {
               Accept: 'text/event-stream',
-              'x-missionout-user-email': userEmail,
+              Authorization: 'Bearer ' + accessToken,
             },
             cache: 'no-store',
             signal: controller.signal,

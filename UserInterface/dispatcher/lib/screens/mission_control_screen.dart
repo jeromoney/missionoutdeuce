@@ -43,7 +43,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
     api = MissionOutApi(
       client: AuthHeaderClient(
         http.Client(),
-        () => widget.auth.currentUser?.email,
+        () => widget.auth.ensureFreshAccessToken(),
       ),
     );
     _loadDashboard();

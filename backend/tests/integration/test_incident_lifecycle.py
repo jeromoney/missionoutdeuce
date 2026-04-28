@@ -3,10 +3,10 @@ from app.models.incident_event import IncidentEvent
 from app.models.push_delivery import PushDelivery
 
 
-def test_create_incident_then_see_it_then_respond(client, seeded_user, seeded_team):
+def test_create_incident_then_see_it_then_respond(client, seeded_user, seeded_team, auth_headers):
     create = client.post(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "Overdue Skier",
             "team_public_id": seeded_team.public_id,
@@ -20,7 +20,7 @@ def test_create_incident_then_see_it_then_respond(client, seeded_user, seeded_te
 
     listing = client.get(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
     assert listing.status_code == 200
     titles = [item["title"] for item in listing.json()]
@@ -28,14 +28,14 @@ def test_create_incident_then_see_it_then_respond(client, seeded_user, seeded_te
 
     respond = client.post(
         f"/incidents/{incident_public_id}/responses",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={"status": "Responding", "source": "mobile", "rank": 2},
     )
     assert respond.status_code == 201
 
     follow_up = client.get(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
     )
     incidents = {item["public_id"]: item for item in follow_up.json()}
     new_incident = incidents[incident_public_id]
@@ -62,11 +62,11 @@ def test_incident_delete_cascades_response_records(db_session, seeded_incident, 
 
 
 def test_create_incident_writes_created_and_paged_events(
-    client, db_session, seeded_user, seeded_team, seeded_device, seeded_web_push_subscription
+    client, db_session, seeded_user, seeded_team, seeded_device, seeded_web_push_subscription, auth_headers
 ):
     create = client.post(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "Flash Flood Watch",
             "team_public_id": seeded_team.public_id,
@@ -114,13 +114,13 @@ def test_create_incident_writes_created_and_paged_events(
 
 def test_update_incident_default_pages_responders(
     client, db_session, seeded_user, seeded_incident, seeded_device,
-    seeded_web_push_subscription,
+    seeded_web_push_subscription, auth_headers,
 ):
     incident_public_id = seeded_incident.public_id
 
     response = client.patch(
         f"/incidents/{incident_public_id}",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "Updated Title",
             "location": "Updated Location",
@@ -157,11 +157,11 @@ def test_update_incident_default_pages_responders(
 
 def test_update_incident_with_dispatchers_page_group(
     client, db_session, seeded_user, seeded_incident, seeded_device,
-    seeded_web_push_subscription,
+    seeded_web_push_subscription, auth_headers,
 ):
     response = client.patch(
         f"/incidents/{seeded_incident.public_id}",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": seeded_incident.title,
             "location": seeded_incident.location,
@@ -191,11 +191,11 @@ def test_update_incident_with_dispatchers_page_group(
 
 def test_update_incident_with_null_page_group_skips_paging(
     client, db_session, seeded_user, seeded_incident, seeded_device,
-    seeded_web_push_subscription,
+    seeded_web_push_subscription, auth_headers,
 ):
     response = client.patch(
         f"/incidents/{seeded_incident.public_id}",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": seeded_incident.title,
             "location": seeded_incident.location,
@@ -221,11 +221,11 @@ def test_update_incident_with_null_page_group_skips_paging(
 
 
 def test_create_then_update_yields_four_event_versions(
-    client, db_session, seeded_user, seeded_team
+    client, db_session, seeded_user, seeded_team, auth_headers
 ):
     create = client.post(
         "/incidents",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "Two Hops",
             "team_public_id": seeded_team.public_id,
@@ -239,7 +239,7 @@ def test_create_then_update_yields_four_event_versions(
 
     update = client.patch(
         f"/incidents/{incident_public_id}",
-        headers={"x-missionout-user-email": seeded_user.email},
+        headers=auth_headers(seeded_user),
         json={
             "title": "Two Hops",
             "location": "Ridge",

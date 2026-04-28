@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_EXTERNAL_ENV_FILE = BACKEND_ROOT.parent / "Secrets" / "missionout-backend.env"
+DEFAULT_EXTERNAL_ENV_FILE = BACKEND_ROOT.parent.parent / "Secrets" / "missionout-backend.env"
 ENV_FILE_CANDIDATES: list[str] = []
 
 env_file_override = os.getenv("MISSIONOUT_ENV_FILE")
@@ -30,11 +30,16 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "MissionOut API"
+    #TODO Remove this hardcoded default and require it to be set via environment variable or .env file
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/missionout"
     api_host: str = "0.0.0.0"
     api_port: int = Field(default=8000, validation_alias=AliasChoices("API_PORT", "PORT"))
-    debug: bool = False
+    debug: bool = Field(default=False, validation_alias=AliasChoices("MISSIONOUT_DEBUG"))
     google_client_id: str | None = None
+    jwt_signing_key: str | None = None
+    jwt_issuer: str = "missionout-backend"
+    access_token_minutes: int = 60
+    refresh_token_days: int = 180
     email_code_length: int = 6
     email_code_rate_limit_attempts: int = 5
     email_code_rate_limit_window_minutes: int = 15

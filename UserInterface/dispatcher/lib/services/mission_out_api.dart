@@ -10,22 +10,24 @@ import '../models/incident_draft.dart';
 import '../models/incident_update.dart';
 import '../models/records.dart';
 
-typedef UserEmailProvider = String? Function();
+typedef AccessTokenProvider = Future<String?> Function();
 
-// Wraps an http.Client and stamps the X-MissionOut-User-Email header onto
-// every outbound request. Centralizing this prevents call sites from forgetting
-// to forward the email and silently issuing unauthenticated requests.
+// Wraps an http.Client and stamps Authorization: Bearer onto every outbound
+// request. Centralizing this prevents call sites from forgetting to forward
+// the token and silently issuing unauthenticated requests. The provider is
+// async so it can await `AuthController.ensureFreshAccessToken()` and
+// transparently refresh tokens that are about to expire.
 class AuthHeaderClient extends http.BaseClient {
-  AuthHeaderClient(this._inner, this._emailProvider);
+  AuthHeaderClient(this._inner, this._tokenProvider);
 
   final http.Client _inner;
-  final UserEmailProvider _emailProvider;
+  final AccessTokenProvider _tokenProvider;
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
-    final email = _emailProvider()?.trim();
-    if (email != null && email.isNotEmpty) {
-      request.headers['X-MissionOut-User-Email'] = email;
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final token = (await _tokenProvider())?.trim();
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
     }
     return _inner.send(request);
   }
