@@ -16,7 +16,10 @@
       "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" stash)",
       "Bash(git -C \"C:/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface\" stash pop)",
       "Bash(flutter *)",
-      "mcp__dart__analyze_files"
+      "mcp__dart__analyze_files",
+      "WebFetch(domain:www.freecodecamp.org)",
+      "mcp__dart__run_tests",
+      "Bash(git -C /c/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface diff -- dispatcher/lib/screens/logged_out_screen.dart)"
     ]
   },
   "enabledMcpjsonServers": [

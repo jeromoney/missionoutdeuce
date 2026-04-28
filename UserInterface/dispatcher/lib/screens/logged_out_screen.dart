@@ -49,23 +49,25 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     return Scaffold(
       body: MissionOutBackdrop(
         child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 540),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: _LoginPanel(
-                  emailController: emailController,
-                  codeController: codeController,
-                  errorText: errorText,
-                  successText: successText,
-                  isSubmitting: isSubmitting,
-                  awaitingCode: awaitingCode,
-                  googleLoginEnabled: widget.googleLoginEnabled,
-                  googleSignInButton: widget.googleSignInButton,
-                  onSubmitEmailCode: _submitEmailCode,
-                  onGoogleLogin: _submitGoogle,
-                  roleLabel: widget.roleLabel,
+          child: SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 540),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: _LoginPanel(
+                    emailController: emailController,
+                    codeController: codeController,
+                    errorText: errorText,
+                    successText: successText,
+                    isSubmitting: isSubmitting,
+                    awaitingCode: awaitingCode,
+                    googleLoginEnabled: widget.googleLoginEnabled,
+                    googleSignInButton: widget.googleSignInButton,
+                    onSubmitEmailCode: _submitEmailCode,
+                    onGoogleLogin: _submitGoogle,
+                    roleLabel: widget.roleLabel,
+                  ),
                 ),
               ),
             ),
@@ -138,6 +140,9 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     try {
       await widget.onGoogleLogin();
     } catch (error) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         errorText = error.toString().replaceFirst('Exception: ', '');
         isSubmitting = false;
@@ -236,6 +241,25 @@ class _LoginPanel extends StatelessWidget {
             'We will send a sign-in link for this dispatcher account.',
             style: TextStyle(color: AppPalette.textSoft),
           ),
+          if (awaitingCode) ...[
+            const SizedBox(height: 18),
+            const Text(
+              'Code',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppPalette.text,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: codeController,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Enter the code from your email',
+              ),
+            ),
+          ],
           if (successText != null) ...[
             const SizedBox(height: 14),
             Container(

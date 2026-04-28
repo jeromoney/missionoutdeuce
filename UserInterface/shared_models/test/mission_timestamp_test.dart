@@ -11,7 +11,7 @@ void main() {
           '2026-03-29T22:56:00Z',
           now: DateTime.utc(2026, 3, 29, 23),
         ),
-        '4 minutes',
+        '4 minutes ago',
       );
     });
 
