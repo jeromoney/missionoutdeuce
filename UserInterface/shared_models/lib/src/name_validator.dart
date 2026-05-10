@@ -1,3 +1,7 @@
+/// Validation outcome for a name. `null` from [NameValidator.validate]
+/// means the input is valid.
+enum NameValidationError { empty, invalid }
+
 /// Name validation per MissionOut data-validation spec.
 /// See docs/data-validation.md. Intent is to catch garbage, not define
 /// what a name is.
@@ -11,14 +15,14 @@ class NameValidator {
 
   static bool isValid(String name) => _regex.hasMatch(name);
 
-  /// Returns an error message when invalid, or null when the name is valid.
-  static String? validate(String? name) {
+  /// Returns a [NameValidationError] when invalid, or null when valid.
+  static NameValidationError? validate(String? name) {
     final value = name?.trim() ?? '';
     if (value.isEmpty) {
-      return 'Enter a name.';
+      return NameValidationError.empty;
     }
     if (!isValid(value)) {
-      return 'Enter a valid name.';
+      return NameValidationError.invalid;
     }
     return null;
   }

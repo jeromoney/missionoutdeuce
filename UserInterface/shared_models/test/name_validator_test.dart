@@ -51,16 +51,16 @@ void main() {
   });
 
   group('NameValidator.validate', () {
-    test('returns prompt for null', () {
-      expect(NameValidator.validate(null), 'Enter a name.');
+    test('returns empty error for null', () {
+      expect(NameValidator.validate(null), NameValidationError.empty);
     });
 
-    test('returns prompt for empty string', () {
-      expect(NameValidator.validate(''), 'Enter a name.');
+    test('returns empty error for empty string', () {
+      expect(NameValidator.validate(''), NameValidationError.empty);
     });
 
-    test('returns prompt for whitespace-only string', () {
-      expect(NameValidator.validate('   '), 'Enter a name.');
+    test('returns empty error for whitespace-only string', () {
+      expect(NameValidator.validate('   '), NameValidationError.empty);
     });
 
     test('trims surrounding whitespace before validating', () {
@@ -71,8 +71,8 @@ void main() {
       expect(NameValidator.validate('John Doe'), isNull);
     });
 
-    test('returns invalid message for digits', () {
-      expect(NameValidator.validate('John123'), 'Enter a valid name.');
+    test('returns invalid error for digits', () {
+      expect(NameValidator.validate('John123'), NameValidationError.invalid);
     });
   });
 }

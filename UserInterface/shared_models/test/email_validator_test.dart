@@ -46,16 +46,16 @@ void main() {
   });
 
   group('EmailValidator.validate', () {
-    test('returns prompt for null', () {
-      expect(EmailValidator.validate(null), 'Enter an email address.');
+    test('returns empty error for null', () {
+      expect(EmailValidator.validate(null), EmailValidationError.empty);
     });
 
-    test('returns prompt for empty string', () {
-      expect(EmailValidator.validate(''), 'Enter an email address.');
+    test('returns empty error for empty string', () {
+      expect(EmailValidator.validate(''), EmailValidationError.empty);
     });
 
-    test('returns prompt for whitespace-only string', () {
-      expect(EmailValidator.validate('   '), 'Enter an email address.');
+    test('returns empty error for whitespace-only string', () {
+      expect(EmailValidator.validate('   '), EmailValidationError.empty);
     });
 
     test('trims surrounding whitespace before validating', () {
@@ -66,8 +66,11 @@ void main() {
       expect(EmailValidator.validate('user@example.com'), isNull);
     });
 
-    test('returns invalid message for malformed input', () {
-      expect(EmailValidator.validate('not an email'), 'Enter a valid email address.');
+    test('returns invalid error for malformed input', () {
+      expect(
+        EmailValidator.validate('not an email'),
+        EmailValidationError.invalid,
+      );
     });
   });
 }

@@ -2,22 +2,12 @@ import 'package:shared_models/shared_models.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('formatMissionTimestamp', () {
+  group('formatMissionAbsoluteDate', () {
     final now = DateTime(2026, 3, 29, 23, 23);
 
-    test('formats recent timestamps within the week as relative time', () {
+    test('formats same-year dates as month and day', () {
       expect(
-        formatMissionTimestamp(
-          DateTime.utc(2026, 3, 29, 22, 56),
-          now: DateTime.utc(2026, 3, 29, 23),
-        ),
-        '4 minutes ago',
-      );
-    });
-
-    test('formats same-year dates beyond a week as month and day', () {
-      expect(
-        formatMissionTimestamp(
+        formatMissionAbsoluteDate(
           DateTime.utc(2026, 3, 10, 9, 30),
           now: now.toUtc(),
         ),
@@ -27,7 +17,7 @@ void main() {
 
     test('formats prior-year dates with month day and year', () {
       expect(
-        formatMissionTimestamp(
+        formatMissionAbsoluteDate(
           DateTime.utc(2025, 11, 3, 18, 20),
           now: now.toUtc(),
         ),
@@ -37,14 +27,14 @@ void main() {
 
     test('returns fallback for null', () {
       expect(
-        formatMissionTimestamp(null, now: now, fallback: 'Unknown'),
+        formatMissionAbsoluteDate(null, now: now, fallback: 'Unknown'),
         'Unknown',
       );
     });
 
     test('returns fallback when the timestamp is in the future', () {
       expect(
-        formatMissionTimestamp(
+        formatMissionAbsoluteDate(
           DateTime.utc(2026, 3, 30),
           now: DateTime.utc(2026, 3, 29, 23, 23),
           fallback: 'Unknown',

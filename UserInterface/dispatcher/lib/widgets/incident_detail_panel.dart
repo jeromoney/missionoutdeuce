@@ -3,6 +3,7 @@ import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../mission_time_text.dart';
 import 'common_widgets.dart';
 import 'panel.dart';
 
@@ -76,7 +77,7 @@ class IncidentDetailPanel extends StatelessWidget {
                     DarkChip(icon: Icons.groups_rounded, text: teamName),
                     DarkChip(
                       icon: Icons.schedule_rounded,
-                      text: formatMissionTimestamp(incident.created),
+                      text: formatMissionTime(incident.created, context),
                     ),
                   ],
                 ),
@@ -127,7 +128,7 @@ class IncidentDetailPanel extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Updated ${formatMissionTimestamp(response.updated)}',
+                              'Updated ${formatMissionTime(response.updated, context)}',
                               style: const TextStyle(
                                 color: AppPalette.textSoft,
                                 height: 1.4,

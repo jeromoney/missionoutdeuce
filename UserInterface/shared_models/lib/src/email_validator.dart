@@ -1,3 +1,7 @@
+/// Validation outcome for an email address. `null` from
+/// [EmailValidator.validate] means the input is valid.
+enum EmailValidationError { empty, invalid }
+
 /// Email validation per MissionOut data-validation spec (RFC 5322).
 /// See docs/data-validation.md.
 class EmailValidator {
@@ -10,14 +14,14 @@ class EmailValidator {
 
   static bool isValid(String email) => _regex.hasMatch(email);
 
-  /// Returns an error message when invalid, or null when the email is valid.
-  static String? validate(String? email) {
+  /// Returns an [EmailValidationError] when invalid, or null when valid.
+  static EmailValidationError? validate(String? email) {
     final value = email?.trim() ?? '';
     if (value.isEmpty) {
-      return 'Enter an email address.';
+      return EmailValidationError.empty;
     }
     if (!isValid(value)) {
-      return 'Enter a valid email address.';
+      return EmailValidationError.invalid;
     }
     return null;
   }

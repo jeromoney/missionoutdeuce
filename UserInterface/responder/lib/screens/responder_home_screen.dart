@@ -8,6 +8,7 @@ import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
 import '../app_config.dart';
+import '../mission_time_text.dart';
 import '../models/backup_alert.dart';
 import '../models/incident.dart';
 import '../models/open_tab_event.dart';
@@ -254,7 +255,8 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
         await nativeAlertBridge.showNativeAlert(
           incidentPublicId: incident.publicId,
           title: event.title,
-          body: '${incident.location} - ${formatMissionTimestamp(incident.created)}',
+          body:
+              '${incident.location} - ${formatMissionTime(incident.created, context)}',
         );
         await browserAlerts.presentInTab(incident);
       }
@@ -385,7 +387,8 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
       await nativeAlertBridge.showNativeAlert(
         incidentPublicId: incident.publicId,
         title: incident.title,
-        body: '${incident.location} - ${formatMissionTimestamp(incident.created)}',
+        body:
+            '${incident.location} - ${formatMissionTime(incident.created, context)}',
       );
       return;
     }
@@ -1255,7 +1258,7 @@ class _MissionList extends StatelessWidget {
                             ),
                             const Spacer(),
                             Text(
-                              formatMissionTimestamp(incident.created),
+                              formatMissionTime(incident.created, context),
                               style: const TextStyle(
                                 color: ResponderPalette.textSoft,
                                 fontWeight: FontWeight.w700,
@@ -1336,7 +1339,7 @@ class _IncidentCard extends StatelessWidget {
                     ),
                     _MetaChip(
                       icon: Icons.schedule_rounded,
-                      text: formatMissionTimestamp(incident.created),
+                      text: formatMissionTime(incident.created, context),
                     ),
                   ],
                 ),

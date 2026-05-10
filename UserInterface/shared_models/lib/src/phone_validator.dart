@@ -2,6 +2,10 @@ import 'package:phone_numbers_parser/phone_numbers_parser.dart';
 
 export 'package:phone_numbers_parser/phone_numbers_parser.dart' show IsoCode;
 
+/// Validation outcome for a phone number. `null` from
+/// [PhoneValidator.validate] means the input is valid.
+enum PhoneValidationError { empty, invalid }
+
 /// Phone validation per MissionOut data-validation spec (E.164).
 /// See docs/data-validation.md. Defaults unprefixed input to US (+1) but
 /// accepts international numbers when [isoCode] is supplied or the input
@@ -33,14 +37,14 @@ class PhoneValidator {
     return parsed.isValid() && _e164.hasMatch(parsed.international);
   }
 
-  /// Returns an error message when invalid, or null when the phone is valid.
-  static String? validate(String? phone, {IsoCode? isoCode}) {
+  /// Returns a [PhoneValidationError] when invalid, or null when valid.
+  static PhoneValidationError? validate(String? phone, {IsoCode? isoCode}) {
     final value = phone?.trim() ?? '';
     if (value.isEmpty) {
-      return 'Enter a phone number.';
+      return PhoneValidationError.empty;
     }
     if (!isValid(value, isoCode: isoCode)) {
-      return 'Enter a valid phone number.';
+      return PhoneValidationError.invalid;
     }
     return null;
   }

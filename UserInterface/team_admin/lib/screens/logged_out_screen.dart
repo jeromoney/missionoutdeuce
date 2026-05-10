@@ -87,7 +87,10 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     final emailError = EmailValidator.validate(email);
     if (emailError != null) {
       setState(() {
-        errorText = emailError;
+        errorText = switch (emailError) {
+          EmailValidationError.empty => 'Enter an email address.',
+          EmailValidationError.invalid => 'Enter a valid email address.',
+        };
         isSubmitting = false;
       });
       return;

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_models/shared_models.dart';
 
+import '../mission_time_text.dart';
 import '../models/backup_alert.dart';
 import '../models/incident.dart';
 import 'browser_alert_channel_stub.dart'
@@ -181,7 +182,7 @@ class BrowserAlertChannel extends ChangeNotifier {
   Future<void> presentInTab(ResponderIncident incident) async {
     final title = incident.title;
     final body =
-        '${incident.location} - ${formatMissionTimestamp(incident.created)}';
+        '${incident.location} - ${formatMissionTimeNoContext(incident.created)}';
 
     if (kIsWeb && permission == BrowserAlertPermission.granted) {
       await platform.showBrowserNotification(title: title, body: body);

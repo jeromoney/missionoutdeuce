@@ -50,16 +50,16 @@ void main() {
   });
 
   group('PhoneValidator.validate', () {
-    test('returns prompt for null', () {
-      expect(PhoneValidator.validate(null), 'Enter a phone number.');
+    test('returns empty error for null', () {
+      expect(PhoneValidator.validate(null), PhoneValidationError.empty);
     });
 
-    test('returns prompt for empty string', () {
-      expect(PhoneValidator.validate(''), 'Enter a phone number.');
+    test('returns empty error for empty string', () {
+      expect(PhoneValidator.validate(''), PhoneValidationError.empty);
     });
 
-    test('returns prompt for whitespace-only string', () {
-      expect(PhoneValidator.validate('   '), 'Enter a phone number.');
+    test('returns empty error for whitespace-only string', () {
+      expect(PhoneValidator.validate('   '), PhoneValidationError.empty);
     });
 
     test('trims surrounding whitespace before validating', () {
@@ -70,8 +70,11 @@ void main() {
       expect(PhoneValidator.validate('+12024561414'), isNull);
     });
 
-    test('returns invalid message for unassigned NANP area code', () {
-      expect(PhoneValidator.validate('4554554544'), 'Enter a valid phone number.');
+    test('returns invalid error for unassigned NANP area code', () {
+      expect(
+        PhoneValidator.validate('4554554544'),
+        PhoneValidationError.invalid,
+      );
     });
   });
 

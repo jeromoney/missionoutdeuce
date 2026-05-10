@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.9
   http: ^1.5.0
+  timeago: ^3.7.0
   shared_auth:
     path: ../shared_auth
   shared_models:

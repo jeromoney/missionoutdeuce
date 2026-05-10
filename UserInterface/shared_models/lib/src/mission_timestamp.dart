@@ -13,7 +13,13 @@ const _monthNames = <String>[
   'December',
 ];
 
-String formatMissionTimestamp(
+/// Renders [value] as an absolute calendar date in English, e.g. "March 10"
+/// for same-year and "November 3, 2025" otherwise. Returns [fallback] when
+/// [value] is null or in the future.
+///
+/// Recent / relative-time rendering ("3 minutes ago") lives at call sites,
+/// which use the `timeago` package directly so they can pass a locale.
+String formatMissionAbsoluteDate(
   DateTime? value, {
   DateTime? now,
   String fallback = 'Unknown',
@@ -24,14 +30,9 @@ String formatMissionTimestamp(
 
   final effectiveNow = (now ?? DateTime.now()).toLocal();
   final localValue = value.toLocal();
-  final difference = effectiveNow.difference(localValue);
 
-  if (difference.isNegative) {
+  if (effectiveNow.difference(localValue).isNegative) {
     return fallback;
-  }
-
-  if (difference < const Duration(days: 7)) {
-    return _formatRecentDuration(difference);
   }
 
   if (localValue.year == effectiveNow.year) {
@@ -39,20 +40,4 @@ String formatMissionTimestamp(
   }
 
   return '${_monthNames[localValue.month - 1]} ${localValue.day}, ${localValue.year}';
-}
-
-String _formatRecentDuration(Duration duration) {
-  if (duration.inMinutes < 1) {
-    return 'Just now';
-  }
-  if (duration.inHours < 1) {
-    final minutes = duration.inMinutes;
-    return '$minutes ${minutes == 1 ? 'minute ago' : 'minutes ago'}';
-  }
-  if (duration.inDays < 1) {
-    final hours = duration.inHours;
-    return '$hours ${hours == 1 ? 'hour ago' : 'hours ago'}';
-  }
-  final days = duration.inDays;
-  return '$days ${days == 1 ? 'day ago' : 'days ago'}';
 }

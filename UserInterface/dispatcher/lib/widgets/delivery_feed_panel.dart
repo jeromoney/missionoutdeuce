@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_models/shared_models.dart';
 
 import '../app_palette.dart';
+import '../mission_time_text.dart';
 import '../models/records.dart';
 import 'panel.dart';
 
@@ -65,7 +66,7 @@ class DeliveryFeedPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  formatMissionTimestamp(event.time),
+                  formatMissionTime(event.time, context),
                   style: const TextStyle(
                     color: AppPalette.textMuted,
                     fontWeight: FontWeight.w700,

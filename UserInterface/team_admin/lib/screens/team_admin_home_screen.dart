@@ -1121,7 +1121,11 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
     if (required != null) {
       return required;
     }
-    return EmailValidator.validate(value);
+    return switch (EmailValidator.validate(value)) {
+      null => null,
+      EmailValidationError.empty => 'Enter an email address.',
+      EmailValidationError.invalid => 'Enter a valid email address.',
+    };
   }
 
   String? _validateName(String? value) {
@@ -1129,7 +1133,11 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
     if (required != null) {
       return required;
     }
-    return NameValidator.validate(value);
+    return switch (NameValidator.validate(value)) {
+      null => null,
+      NameValidationError.empty => 'Enter a name.',
+      NameValidationError.invalid => 'Enter a valid name.',
+    };
   }
 
   String? _validatePhone(String? value) {
@@ -1137,10 +1145,14 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
     if (required != null) {
       return required;
     }
-    return PhoneValidator.validate(
+    return switch (PhoneValidator.validate(
       _composePhone(value),
       isoCode: _selectedIsoCode(),
-    );
+    )) {
+      null => null,
+      PhoneValidationError.empty => 'Enter a phone number.',
+      PhoneValidationError.invalid => 'Enter a valid phone number.',
+    };
   }
 
   String _composePhone(String? localInput) {

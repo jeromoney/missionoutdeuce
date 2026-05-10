@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_models/shared_models.dart';
 
 import '../app_palette.dart';
+import '../mission_time_text.dart';
 import 'common_widgets.dart';
 import 'panel.dart';
 
@@ -116,7 +117,7 @@ class IncidentBoard extends StatelessWidget {
                       ),
                       MetricBadge(
                         label: 'Created',
-                        value: formatMissionTimestamp(incident.created),
+                        value: formatMissionTime(incident.created, context),
                       ),
                     ],
                   ),
