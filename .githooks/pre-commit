@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Tracked pre-commit hook. Enable with:
+#   git config core.hooksPath .githooks
+#
+# Currently runs: UserInterface i18n hardcoded-string check.
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+ui_lint="$repo_root/UserInterface/tools/check_no_hardcoded_strings.sh"
+
+if [[ -x "$ui_lint" ]]; then
+  bash "$ui_lint"
+fi

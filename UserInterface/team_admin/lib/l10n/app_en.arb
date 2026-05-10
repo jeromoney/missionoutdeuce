@@ -97,5 +97,260 @@
   "googleNotConfigured": "Google login not configured",
   "@googleNotConfigured": {
     "description": "Disabled Google button label when the client id is missing."
+  },
+
+  "logOut": "Log out",
+  "@logOut": {
+    "description": "Logout button in the home-screen header."
+  },
+  "cancelButton": "Cancel",
+  "@cancelButton": {
+    "description": "Generic Cancel button in dialogs."
+  },
+  "deleteAction": "Delete",
+  "@deleteAction": {
+    "description": "Confirmation button text for permanently deleting a team member."
+  },
+  "activateAction": "Activate",
+  "@activateAction": {
+    "description": "Confirmation button text for reactivating a team member."
+  },
+  "deactivateAction": "Deactivate",
+  "@deactivateAction": {
+    "description": "Confirmation button text for deactivating a team member."
+  },
+  "statusUnknown": "Unknown",
+  "@statusUnknown": {
+    "description": "Fallback shown when a relative-time value is missing or in the future."
+  },
+
+  "homeBrandSubtitle": "Team Admin workspace for {teamName}. Manage one team only: memberships, team-scoped roles, device readiness, and team-level visibility.",
+  "@homeBrandSubtitle": {
+    "description": "Subtitle next to the brand lockup on the home screen header.",
+    "placeholders": {
+      "teamName": { "type": "String" }
+    }
+  },
+
+  "summaryActiveMembersTitle": "Active members",
+  "@summaryActiveMembersTitle": {
+    "description": "Title on the Active members summary card."
+  },
+  "summaryActiveMembersSubtitle": "Users currently active in this one managed team.",
+  "@summaryActiveMembersSubtitle": {
+    "description": "Subtitle on the Active members summary card."
+  },
+  "summaryTeamAdminsTitle": "Team admins",
+  "@summaryTeamAdminsTitle": {
+    "description": "Title on the Team admins summary card."
+  },
+  "summaryTeamAdminsSubtitle": "Members who can manage roles and activation.",
+  "@summaryTeamAdminsSubtitle": {
+    "description": "Subtitle on the Team admins summary card."
+  },
+  "summaryDeviceIssuesTitle": "Device issues",
+  "@summaryDeviceIssuesTitle": {
+    "description": "Title on the Device issues summary card."
+  },
+  "summaryDeviceIssuesSubtitle": "Members with device state needing follow-up.",
+  "@summaryDeviceIssuesSubtitle": {
+    "description": "Subtitle on the Device issues summary card."
+  },
+
+  "membersPanelTitle": "Team memberships",
+  "@membersPanelTitle": {
+    "description": "Title of the team memberships panel."
+  },
+  "membersPanelSubtitle": "Invite, activate, deactivate, and role-manage users for this one existing team.",
+  "@membersPanelSubtitle": {
+    "description": "Subtitle of the team memberships panel."
+  },
+  "addMemberButton": "Add member",
+  "@addMemberButton": {
+    "description": "Button to open the add-member dialog."
+  },
+  "crudUnavailableButton": "CRUD unavailable",
+  "@crudUnavailableButton": {
+    "description": "Disabled-state label on the add-member button when backend CRUD routes are missing."
+  },
+  "noMembersReturned": "No team members returned yet.",
+  "@noMembersReturned": {
+    "description": "Empty-state when backend CRUD is supported but the team has no members yet."
+  },
+  "noMembershipsExposed": "This backend is connected, but it does not expose team membership data yet.",
+  "@noMembershipsExposed": {
+    "description": "Empty-state when backend does not expose membership routes."
+  },
+  "pillInactive": "Inactive",
+  "@pillInactive": {
+    "description": "Pill label for an inactive team member."
+  },
+  "lastSeenLabel": "Last seen {time}",
+  "@lastSeenLabel": {
+    "description": "Pill label showing when a member was last seen.",
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "moreActionsTooltip": "More actions",
+  "@moreActionsTooltip": {
+    "description": "Tooltip on the per-member overflow menu."
+  },
+  "deleteMemberMenuItem": "Delete member...",
+  "@deleteMemberMenuItem": {
+    "description": "Overflow menu item to permanently delete a team member."
+  },
+
+  "teamContextTitle": "Team context",
+  "@teamContextTitle": {
+    "description": "Title of the team context panel."
+  },
+  "teamContextSubtitle": "This app manages one existing team only. Team creation and global administration live elsewhere.",
+  "@teamContextSubtitle": {
+    "description": "Subtitle of the team context panel."
+  },
+
+  "addMemberDialogTitle": "Add team member",
+  "@addMemberDialogTitle": {
+    "description": "Title of the add-member dialog."
+  },
+  "editMemberDialogTitle": "Edit member",
+  "@editMemberDialogTitle": {
+    "description": "Title of the edit-member dialog."
+  },
+  "nameFieldLabel": "Name",
+  "@nameFieldLabel": {
+    "description": "Label on the name input field."
+  },
+  "phoneFieldLabel": "Phone",
+  "@phoneFieldLabel": {
+    "description": "Label on the phone input field."
+  },
+  "phoneFieldHint": "555 123 4567",
+  "@phoneFieldHint": {
+    "description": "Placeholder for the phone input field."
+  },
+  "roleTeamAdmin": "Team Admin",
+  "@roleTeamAdmin": {
+    "description": "Checkbox label for the team_admin role."
+  },
+  "roleDispatcher": "Dispatcher",
+  "@roleDispatcher": {
+    "description": "Checkbox label for the dispatcher role."
+  },
+  "roleResponder": "Responder",
+  "@roleResponder": {
+    "description": "Checkbox label for the responder role."
+  },
+  "saveChangesButton": "Save changes",
+  "@saveChangesButton": {
+    "description": "Submit button on the edit-member dialog."
+  },
+  "requiredFieldError": "Required",
+  "@requiredFieldError": {
+    "description": "Validation error shown for an empty required field."
+  },
+
+  "activateMemberTitle": "Activate member?",
+  "@activateMemberTitle": {
+    "description": "Title of the activate-member confirmation dialog."
+  },
+  "deactivateMemberTitle": "Deactivate member?",
+  "@deactivateMemberTitle": {
+    "description": "Title of the deactivate-member confirmation dialog."
+  },
+  "activateMemberBody": "Reactivate {name} for {teamName}?",
+  "@activateMemberBody": {
+    "description": "Body of the activate-member confirmation dialog.",
+    "placeholders": {
+      "name": { "type": "String" },
+      "teamName": { "type": "String" }
+    }
+  },
+  "deactivateMemberBody": "Deactivate {name}? Team Admin should prefer deactivation over hard deletion so operational history remains auditable.",
+  "@deactivateMemberBody": {
+    "description": "Body of the deactivate-member confirmation dialog.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "deleteMemberTitle": "Delete member?",
+  "@deleteMemberTitle": {
+    "description": "Title of the delete-member confirmation dialog."
+  },
+  "deleteMemberBody": "Permanently remove {name} from {teamName}? This cannot be undone — re-add them via \"Add member\" if you change your mind. Deactivate instead if they may return.",
+  "@deleteMemberBody": {
+    "description": "Body of the delete-member confirmation dialog.",
+    "placeholders": {
+      "name": { "type": "String" },
+      "teamName": { "type": "String" }
+    }
+  },
+
+  "memberAdded": "Added {name} to {teamName}.",
+  "@memberAdded": {
+    "description": "Status banner after a team member is added.",
+    "placeholders": {
+      "name": { "type": "String" },
+      "teamName": { "type": "String" }
+    }
+  },
+  "memberUpdated": "Updated {name}.",
+  "@memberUpdated": {
+    "description": "Status banner after a team member's roles are updated.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "memberActivated": "Activated {name}.",
+  "@memberActivated": {
+    "description": "Status banner after activating a member.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "memberDeactivated": "Deactivated {name}.",
+  "@memberDeactivated": {
+    "description": "Status banner after deactivating a member.",
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "memberRemoved": "Removed {name} from {teamName}.",
+  "@memberRemoved": {
+    "description": "Status banner after a member is removed.",
+    "placeholders": {
+      "name": { "type": "String" },
+      "teamName": { "type": "String" }
+    }
+  },
+
+  "crudUnavailableInvites": "This backend does not expose team membership CRUD yet. Member invites and device management still need backend routes.",
+  "@crudUnavailableInvites": {
+    "description": "Status banner shown when invite/create paths are not supported by the backend."
+  },
+  "crudUnavailableEdits": "This backend does not expose team membership CRUD yet. Member role edits still need backend routes.",
+  "@crudUnavailableEdits": {
+    "description": "Status banner shown when role-edit path is not supported by the backend."
+  },
+  "crudUnavailableActivate": "This backend does not expose activate/deactivate membership routes yet. Member state changes still need backend support.",
+  "@crudUnavailableActivate": {
+    "description": "Status banner shown when activate/deactivate is not supported by the backend."
+  },
+  "crudUnavailableDelete": "This backend does not expose membership deletion yet. Permanent removals still need backend support.",
+  "@crudUnavailableDelete": {
+    "description": "Status banner shown when delete path is not supported by the backend."
+  },
+
+  "deviceHealth": "{value, select, healthy{Healthy} unverified{Unverified} inactive{Inactive} needsReview{Needs review} noDevice{No device} other{{value}}}",
+  "@deviceHealth": {
+    "description": "ICU select that maps a device-health token to its localized label.",
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "memberStatusAvailable": "Available",
+  "@memberStatusAvailable": {
+    "description": "Pill label for an active member whose device is reachable."
   }
 }

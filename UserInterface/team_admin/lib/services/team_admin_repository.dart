@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
 
 import '../app_config.dart';
-import '../mission_time_text.dart';
 import '../models/team_admin_models.dart';
 
 class TeamAdminRepository {
@@ -246,10 +245,7 @@ class TeamAdminRepository {
       phone: json['phone'] as String? ?? '',
       roles: roles,
       status: isActive ? 'Available' : 'Inactive',
-      lastSeen: formatMissionTimeNoContext(
-        DateTime.tryParse(lastSeenRaw ?? ''),
-        fallback: 'Unknown',
-      ),
+      lastSeenAt: DateTime.tryParse(lastSeenRaw ?? ''),
       devicePlatform: device?['platform'] as String? ?? 'Unknown',
       deviceHealth: _deviceHealthLabel(
         isVerified: isVerified,

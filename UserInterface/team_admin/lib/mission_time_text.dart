@@ -20,11 +20,3 @@ String formatMissionTime(
   return formatMissionAbsoluteDate(local);
 }
 
-String formatMissionTimeNoContext(DateTime? dt, {String fallback = 'Unknown'}) {
-  if (dt == null) return fallback;
-  final local = dt.toLocal();
-  final age = DateTime.now().difference(local);
-  if (age.isNegative) return fallback;
-  if (age < const Duration(days: 7)) return timeago.format(local);
-  return formatMissionAbsoluteDate(local);
-}

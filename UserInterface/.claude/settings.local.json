@@ -22,7 +22,13 @@
       "Bash(git -C /c/Users/justi/OneDrive/Documents/Projects/missionout/UserInterface diff -- dispatcher/lib/screens/logged_out_screen.dart)",
       "Bash(gh pr *)",
       "Bash(gh repo *)",
-      "Bash(gh search *)"
+      "Bash(gh search *)",
+      "Bash(chmod +x *)",
+      "Bash(bash ../tools/check_no_hardcoded_strings.sh)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(command -v rg)",
+      "PowerShell(& \"$PWD\\\\..\\\\tools\\\\check_no_hardcoded_strings.ps1\"; \"exit=$LASTEXITCODE\")",
+      "Bash(bash ../../.githooks/pre-commit)"
     ]
   },
   "enabledMcpjsonServers": [

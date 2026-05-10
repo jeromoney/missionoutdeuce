@@ -62,7 +62,7 @@ class TeamAdminMember {
     required this.phone,
     required this.roles,
     required this.status,
-    required this.lastSeen,
+    required this.lastSeenAt,
     required this.devicePlatform,
     required this.deviceHealth,
     required this.isActive,
@@ -77,7 +77,7 @@ class TeamAdminMember {
   final String phone;
   final List<String> roles;
   final String status;
-  final String lastSeen;
+  final DateTime? lastSeenAt;
   final String devicePlatform;
   final String deviceHealth;
   final bool isActive;
@@ -92,7 +92,7 @@ class TeamAdminMember {
     String? phone,
     List<String>? roles,
     String? status,
-    String? lastSeen,
+    DateTime? lastSeenAt,
     String? devicePlatform,
     String? deviceHealth,
     bool? isActive,
@@ -107,7 +107,7 @@ class TeamAdminMember {
       phone: phone ?? this.phone,
       roles: roles ?? this.roles,
       status: status ?? this.status,
-      lastSeen: lastSeen ?? this.lastSeen,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
       devicePlatform: devicePlatform ?? this.devicePlatform,
       deviceHealth: deviceHealth ?? this.deviceHealth,
       isActive: isActive ?? this.isActive,

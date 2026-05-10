@@ -87,6 +87,27 @@ python -m app.seed
 python run.py
 ```
 
+## Pre-commit hook
+
+The repo tracks a pre-commit hook in `.githooks/` that runs the UI i18n lint
+(`UserInterface/tools/check_no_hardcoded_strings.sh`). It flags hardcoded
+capitalized string literals inside `Text(...)` — those should live in
+`<app>/lib/l10n/app_en.arb` instead. Add `// i18n-ignore` to a line to
+suppress the check for that line.
+
+Install once per clone (from the repo root):
+
+```powershell
+git config core.hooksPath .githooks
+```
+
+On Windows the hook runs under Git Bash; contributors who prefer PowerShell
+can run the mirror script manually with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\UserInterface\tools\check_no_hardcoded_strings.ps1
+```
+
 ## Notes
 
 - `agents.md` at the repo root describes the system roles and architecture.

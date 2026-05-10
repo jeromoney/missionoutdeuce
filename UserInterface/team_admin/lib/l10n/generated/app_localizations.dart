@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +93,10 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('es'),
+  ];
 
   /// App display name shown in the OS task switcher and app launcher.
   ///
@@ -237,6 +241,318 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Google login not configured'**
   String get googleNotConfigured;
+
+  /// Logout button in the home-screen header.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out'**
+  String get logOut;
+
+  /// Generic Cancel button in dialogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelButton;
+
+  /// Confirmation button text for permanently deleting a team member.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteAction;
+
+  /// Confirmation button text for reactivating a team member.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get activateAction;
+
+  /// Confirmation button text for deactivating a team member.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get deactivateAction;
+
+  /// Fallback shown when a relative-time value is missing or in the future.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get statusUnknown;
+
+  /// Subtitle next to the brand lockup on the home screen header.
+  ///
+  /// In en, this message translates to:
+  /// **'Team Admin workspace for {teamName}. Manage one team only: memberships, team-scoped roles, device readiness, and team-level visibility.'**
+  String homeBrandSubtitle(String teamName);
+
+  /// Title on the Active members summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Active members'**
+  String get summaryActiveMembersTitle;
+
+  /// Subtitle on the Active members summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Users currently active in this one managed team.'**
+  String get summaryActiveMembersSubtitle;
+
+  /// Title on the Team admins summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Team admins'**
+  String get summaryTeamAdminsTitle;
+
+  /// Subtitle on the Team admins summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Members who can manage roles and activation.'**
+  String get summaryTeamAdminsSubtitle;
+
+  /// Title on the Device issues summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Device issues'**
+  String get summaryDeviceIssuesTitle;
+
+  /// Subtitle on the Device issues summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Members with device state needing follow-up.'**
+  String get summaryDeviceIssuesSubtitle;
+
+  /// Title of the team memberships panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Team memberships'**
+  String get membersPanelTitle;
+
+  /// Subtitle of the team memberships panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite, activate, deactivate, and role-manage users for this one existing team.'**
+  String get membersPanelSubtitle;
+
+  /// Button to open the add-member dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add member'**
+  String get addMemberButton;
+
+  /// Disabled-state label on the add-member button when backend CRUD routes are missing.
+  ///
+  /// In en, this message translates to:
+  /// **'CRUD unavailable'**
+  String get crudUnavailableButton;
+
+  /// Empty-state when backend CRUD is supported but the team has no members yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No team members returned yet.'**
+  String get noMembersReturned;
+
+  /// Empty-state when backend does not expose membership routes.
+  ///
+  /// In en, this message translates to:
+  /// **'This backend is connected, but it does not expose team membership data yet.'**
+  String get noMembershipsExposed;
+
+  /// Pill label for an inactive team member.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get pillInactive;
+
+  /// Pill label showing when a member was last seen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {time}'**
+  String lastSeenLabel(String time);
+
+  /// Tooltip on the per-member overflow menu.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreActionsTooltip;
+
+  /// Overflow menu item to permanently delete a team member.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete member...'**
+  String get deleteMemberMenuItem;
+
+  /// Title of the team context panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Team context'**
+  String get teamContextTitle;
+
+  /// Subtitle of the team context panel.
+  ///
+  /// In en, this message translates to:
+  /// **'This app manages one existing team only. Team creation and global administration live elsewhere.'**
+  String get teamContextSubtitle;
+
+  /// Title of the add-member dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add team member'**
+  String get addMemberDialogTitle;
+
+  /// Title of the edit-member dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit member'**
+  String get editMemberDialogTitle;
+
+  /// Label on the name input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get nameFieldLabel;
+
+  /// Label on the phone input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phoneFieldLabel;
+
+  /// Placeholder for the phone input field.
+  ///
+  /// In en, this message translates to:
+  /// **'555 123 4567'**
+  String get phoneFieldHint;
+
+  /// Checkbox label for the team_admin role.
+  ///
+  /// In en, this message translates to:
+  /// **'Team Admin'**
+  String get roleTeamAdmin;
+
+  /// Checkbox label for the dispatcher role.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispatcher'**
+  String get roleDispatcher;
+
+  /// Checkbox label for the responder role.
+  ///
+  /// In en, this message translates to:
+  /// **'Responder'**
+  String get roleResponder;
+
+  /// Submit button on the edit-member dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get saveChangesButton;
+
+  /// Validation error shown for an empty required field.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get requiredFieldError;
+
+  /// Title of the activate-member confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate member?'**
+  String get activateMemberTitle;
+
+  /// Title of the deactivate-member confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate member?'**
+  String get deactivateMemberTitle;
+
+  /// Body of the activate-member confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Reactivate {name} for {teamName}?'**
+  String activateMemberBody(String name, String teamName);
+
+  /// Body of the deactivate-member confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate {name}? Team Admin should prefer deactivation over hard deletion so operational history remains auditable.'**
+  String deactivateMemberBody(String name);
+
+  /// Title of the delete-member confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete member?'**
+  String get deleteMemberTitle;
+
+  /// Body of the delete-member confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently remove {name} from {teamName}? This cannot be undone — re-add them via \"Add member\" if you change your mind. Deactivate instead if they may return.'**
+  String deleteMemberBody(String name, String teamName);
+
+  /// Status banner after a team member is added.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {name} to {teamName}.'**
+  String memberAdded(String name, String teamName);
+
+  /// Status banner after a team member's roles are updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {name}.'**
+  String memberUpdated(String name);
+
+  /// Status banner after activating a member.
+  ///
+  /// In en, this message translates to:
+  /// **'Activated {name}.'**
+  String memberActivated(String name);
+
+  /// Status banner after deactivating a member.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivated {name}.'**
+  String memberDeactivated(String name);
+
+  /// Status banner after a member is removed.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {name} from {teamName}.'**
+  String memberRemoved(String name, String teamName);
+
+  /// Status banner shown when invite/create paths are not supported by the backend.
+  ///
+  /// In en, this message translates to:
+  /// **'This backend does not expose team membership CRUD yet. Member invites and device management still need backend routes.'**
+  String get crudUnavailableInvites;
+
+  /// Status banner shown when role-edit path is not supported by the backend.
+  ///
+  /// In en, this message translates to:
+  /// **'This backend does not expose team membership CRUD yet. Member role edits still need backend routes.'**
+  String get crudUnavailableEdits;
+
+  /// Status banner shown when activate/deactivate is not supported by the backend.
+  ///
+  /// In en, this message translates to:
+  /// **'This backend does not expose activate/deactivate membership routes yet. Member state changes still need backend support.'**
+  String get crudUnavailableActivate;
+
+  /// Status banner shown when delete path is not supported by the backend.
+  ///
+  /// In en, this message translates to:
+  /// **'This backend does not expose membership deletion yet. Permanent removals still need backend support.'**
+  String get crudUnavailableDelete;
+
+  /// ICU select that maps a device-health token to its localized label.
+  ///
+  /// In en, this message translates to:
+  /// **'{value, select, healthy{Healthy} unverified{Unverified} inactive{Inactive} needsReview{Needs review} noDevice{No device} other{{value}}}'**
+  String deviceHealth(String value);
+
+  /// Pill label for an active member whose device is reachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get memberStatusAvailable;
 }
 
 class _AppLocalizationsDelegate
@@ -250,7 +566,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en'].contains(locale.languageCode);
+      <String>['en', 'es'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -261,6 +577,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
   }
 
   throw FlutterError(

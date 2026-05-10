@@ -10,7 +10,7 @@ TeamAdminMember _member({
   String phone = '+15555550000',
   List<String> roles = const ['responder'],
   String status = 'Available',
-  String lastSeen = '2 minutes ago',
+  DateTime? lastSeenAt,
   String devicePlatform = 'iOS',
   String deviceHealth = 'Healthy',
   bool isActive = true,
@@ -25,7 +25,7 @@ TeamAdminMember _member({
     phone: phone,
     roles: roles,
     status: status,
-    lastSeen: lastSeen,
+    lastSeenAt: lastSeenAt,
     devicePlatform: devicePlatform,
     deviceHealth: deviceHealth,
     isActive: isActive,
@@ -106,7 +106,7 @@ void main() {
       expect(copy.phone, original.phone);
       expect(copy.roles, same(original.roles));
       expect(copy.status, original.status);
-      expect(copy.lastSeen, original.lastSeen);
+      expect(copy.lastSeenAt, original.lastSeenAt);
       expect(copy.devicePlatform, original.devicePlatform);
       expect(copy.deviceHealth, original.deviceHealth);
       expect(copy.isActive, original.isActive);
@@ -136,7 +136,8 @@ void main() {
         const ['team_admin'],
       );
       expect(original.copyWith(status: 'Inactive').status, 'Inactive');
-      expect(original.copyWith(lastSeen: 'just now').lastSeen, 'just now');
+      final seenAt = DateTime.utc(2026, 5, 1, 12);
+      expect(original.copyWith(lastSeenAt: seenAt).lastSeenAt, seenAt);
       expect(
         original.copyWith(devicePlatform: 'Android').devicePlatform,
         'Android',

@@ -10,7 +10,8 @@ import '../screens/team_admin_home_screen.dart';
 const _accent = TeamAdminPalette.accent;
 
 TeamAdminTeam _sampleTeam() {
-  return const TeamAdminTeam(
+  final now = DateTime.now();
+  return TeamAdminTeam(
     publicId: 'team_alpha',
     name: 'Alpha Team',
     organization: 'MissionOut',
@@ -26,9 +27,9 @@ TeamAdminTeam _sampleTeam() {
         name: 'Avery Dispatcher',
         email: 'avery@missionout.example',
         phone: '+15551234567',
-        roles: ['team_admin', 'dispatcher'],
+        roles: const ['team_admin', 'dispatcher'],
         status: 'Available',
-        lastSeen: '2 min ago',
+        lastSeenAt: now.subtract(const Duration(minutes: 2)),
         devicePlatform: 'Web',
         deviceHealth: 'Healthy',
         isActive: true,
@@ -40,9 +41,9 @@ TeamAdminTeam _sampleTeam() {
         name: 'Riley Responder',
         email: 'riley@missionout.example',
         phone: '+15557654321',
-        roles: ['responder'],
+        roles: const ['responder'],
         status: 'Responding',
-        lastSeen: '12 min ago',
+        lastSeenAt: now.subtract(const Duration(minutes: 12)),
         devicePlatform: 'Android',
         deviceHealth: 'Healthy',
         isActive: true,
@@ -54,9 +55,9 @@ TeamAdminTeam _sampleTeam() {
         name: 'Sam Standby',
         email: 'sam@missionout.example',
         phone: '+15550003333',
-        roles: ['responder'],
+        roles: const ['responder'],
         status: 'Pending',
-        lastSeen: '1 day ago',
+        lastSeenAt: now.subtract(const Duration(days: 1)),
         devicePlatform: 'iOS',
         deviceHealth: 'Stale',
         isActive: false,

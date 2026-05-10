@@ -5,6 +5,8 @@ import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
+import '../mission_time_text.dart';
 import '../models/team_admin_models.dart';
 import '../services/team_admin_repository.dart';
 
@@ -87,10 +89,10 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
   }
 
   Future<void> _openCreateMember() async {
+    final l10n = AppLocalizations.of(context);
     if (!memberCrudSupported) {
       setState(() {
-        statusMessage =
-            'This backend does not expose team membership CRUD yet. Member invites and device management still need backend routes.';
+        statusMessage = l10n.crudUnavailableInvites;
       });
       return;
     }
@@ -111,7 +113,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       }
       setState(() {
         team = updatedTeam;
-        statusMessage = 'Added ${draft.name} to ${team.name}.';
+        statusMessage = l10n.memberAdded(draft.name, team.name);
       });
     } catch (error) {
       if (!mounted) {
@@ -127,10 +129,10 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
   }
 
   Future<void> _openEditMember(TeamAdminMember member) async {
+    final l10n = AppLocalizations.of(context);
     if (!memberCrudSupported) {
       setState(() {
-        statusMessage =
-            'This backend does not expose team membership CRUD yet. Member role edits still need backend routes.';
+        statusMessage = l10n.crudUnavailableEdits;
       });
       return;
     }
@@ -151,7 +153,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       }
       setState(() {
         team = updatedTeam;
-        statusMessage = 'Updated ${member.name}.';
+        statusMessage = l10n.memberUpdated(member.name);
       });
     } catch (error) {
       if (!mounted) {
@@ -167,10 +169,10 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
   }
 
   Future<void> _toggleMemberActive(TeamAdminMember member) async {
+    final l10n = AppLocalizations.of(context);
     if (!memberCrudSupported) {
       setState(() {
-        statusMessage =
-            'This backend does not expose activate/deactivate membership routes yet. Member state changes still need backend support.';
+        statusMessage = l10n.crudUnavailableActivate;
       });
       return;
     }
@@ -178,24 +180,35 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
     final nextState = !member.isActive;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(nextState ? 'Activate member?' : 'Deactivate member?'),
-        content: Text(
-          nextState
-              ? 'Reactivate ${member.name} for ${team.name}?'
-              : 'Deactivate ${member.name}? Team Admin should prefer deactivation over hard deletion so operational history remains auditable.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder: (dialogContext) {
+        final dialogL10n = AppLocalizations.of(dialogContext);
+        return AlertDialog(
+          title: Text(
+            nextState
+                ? dialogL10n.activateMemberTitle
+                : dialogL10n.deactivateMemberTitle,
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(nextState ? 'Activate' : 'Deactivate'),
+          content: Text(
+            nextState
+                ? dialogL10n.activateMemberBody(member.name, team.name)
+                : dialogL10n.deactivateMemberBody(member.name),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(dialogL10n.cancelButton),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                nextState
+                    ? dialogL10n.activateAction
+                    : dialogL10n.deactivateAction,
+              ),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true || !mounted) {
@@ -213,8 +226,8 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       setState(() {
         team = updatedTeam;
         statusMessage = nextState
-            ? 'Activated ${member.name}.'
-            : 'Deactivated ${member.name}.';
+            ? l10n.memberActivated(member.name)
+            : l10n.memberDeactivated(member.name);
       });
     } catch (error) {
       if (!mounted) {
@@ -230,35 +243,36 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
   }
 
   Future<void> _deleteMember(TeamAdminMember member) async {
+    final l10n = AppLocalizations.of(context);
     if (!memberCrudSupported) {
       setState(() {
-        statusMessage =
-            'This backend does not expose membership deletion yet. Permanent removals still need backend support.';
+        statusMessage = l10n.crudUnavailableDelete;
       });
       return;
     }
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete member?'),
-        content: Text(
-          'Permanently remove ${member.name} from ${team.name}? This cannot be undone — re-add them via "Add member" if you change your mind. Deactivate instead if they may return.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: TeamAdminPalette.warning,
+      builder: (dialogContext) {
+        final dialogL10n = AppLocalizations.of(dialogContext);
+        return AlertDialog(
+          title: Text(dialogL10n.deleteMemberTitle),
+          content: Text(dialogL10n.deleteMemberBody(member.name, team.name)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(dialogL10n.cancelButton),
             ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: TeamAdminPalette.warning,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(dialogL10n.deleteAction),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true || !mounted) {
@@ -272,7 +286,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       }
       setState(() {
         team = updatedTeam;
-        statusMessage = 'Removed ${member.name} from ${team.name}.';
+        statusMessage = l10n.memberRemoved(member.name, team.name);
       });
     } catch (error) {
       if (!mounted) {
@@ -322,6 +336,7 @@ class TeamAdminHomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final width = MediaQuery.of(context).size.width;
     final compact = width < 1200;
     final activeMembers = team.members
@@ -359,24 +374,23 @@ class TeamAdminHomeBody extends StatelessWidget {
                   runSpacing: 16,
                   children: [
                     _SummaryCard(
-                      title: 'Active members',
+                      title: l10n.summaryActiveMembersTitle,
                       value: '$activeMembers',
-                      subtitle:
-                          'Users currently active in this one managed team.',
+                      subtitle: l10n.summaryActiveMembersSubtitle,
                       icon: Icons.badge_outlined,
                       color: TeamAdminPalette.accent,
                     ),
                     _SummaryCard(
-                      title: 'Team admins',
+                      title: l10n.summaryTeamAdminsTitle,
                       value: '$admins',
-                      subtitle: 'Members who can manage roles and activation.',
+                      subtitle: l10n.summaryTeamAdminsSubtitle,
                       icon: Icons.admin_panel_settings_outlined,
                       color: TeamAdminPalette.success,
                     ),
                     _SummaryCard(
-                      title: 'Device issues',
+                      title: l10n.summaryDeviceIssuesTitle,
                       value: '$unhealthyDevices',
-                      subtitle: 'Members with device state needing follow-up.',
+                      subtitle: l10n.summaryDeviceIssuesSubtitle,
                       icon: Icons.phonelink_erase_rounded,
                       color: TeamAdminPalette.secondaryAccent,
                     ),
@@ -457,6 +471,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -476,8 +491,7 @@ class _Header extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 MissionOutBrandLockup(
-                  subtitle:
-                      'Team Admin workspace for ${team.name}. Manage one team only: memberships, team-scoped roles, device readiness, and team-level visibility.',
+                  subtitle: l10n.homeBrandSubtitle(team.name),
                   logoSize: 60,
                 ),
                 const SizedBox(height: 18),
@@ -535,7 +549,10 @@ class _Header extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              OutlinedButton(onPressed: onLogout, child: const Text('Log out')),
+              OutlinedButton(
+                onPressed: onLogout,
+                child: Text(l10n.logOut),
+              ),
             ],
           ),
         ],
@@ -563,21 +580,25 @@ class _MembersPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _Panel(
-      title: 'Team memberships',
-      subtitle:
-          'Invite, activate, deactivate, and role-manage users for this one existing team.',
+      title: l10n.membersPanelTitle,
+      subtitle: l10n.membersPanelSubtitle,
       action: OutlinedButton.icon(
         onPressed: memberCrudSupported ? onCreateMember : null,
         icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: Text(memberCrudSupported ? 'Add member' : 'CRUD unavailable'),
+        label: Text(
+          memberCrudSupported
+              ? l10n.addMemberButton
+              : l10n.crudUnavailableButton,
+        ),
       ),
       child: team.members.isEmpty
           ? Center(
               child: Text(
                 memberCrudSupported
-                    ? 'No team members returned yet.'
-                    : 'This backend is connected, but it does not expose team membership data yet.',
+                    ? l10n.noMembersReturned
+                    : l10n.noMembershipsExposed,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: TeamAdminPalette.textSoft,
@@ -590,140 +611,194 @@ class _MembersPanel extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final member = team.members[index];
-                return Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: TeamAdminPalette.border),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: member.isActive
-                            ? TeamAdminPalette.accent
-                            : TeamAdminPalette.warning,
-                        foregroundColor: TeamAdminPalette.primary,
-                        child: Text(member.name.substring(0, 1)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    member.name,
-                                    style: const TextStyle(
-                                      color: TeamAdminPalette.text,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                _Pill(
-                                  label: member.isActive
-                                      ? member.status
-                                      : 'Inactive',
-                                  color: member.isActive
-                                      ? _statusColor(member.status)
-                                      : TeamAdminPalette.warning,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${member.email} | ${member.phone}',
-                              style: const TextStyle(
-                                color: TeamAdminPalette.textSoft,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                for (final role in member.roles)
-                                  _Pill(
-                                    label: role,
-                                    color: role == 'team_admin'
-                                        ? TeamAdminPalette.accent
-                                        : role == 'dispatcher'
-                                        ? TeamAdminPalette.success
-                                        : TeamAdminPalette.secondaryAccent,
-                                  ),
-                                _Pill(
-                                  label:
-                                      '${member.devicePlatform} | ${member.deviceHealth}',
-                                  color: member.deviceHealth == 'Healthy'
-                                      ? TeamAdminPalette.success
-                                      : TeamAdminPalette.secondaryAccent,
-                                ),
-                                _Pill(
-                                  label: 'Last seen ${member.lastSeen}',
-                                  color: TeamAdminPalette.warning,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        children: [
-                          IconButton(
-                            onPressed: memberCrudSupported
-                                ? () => onEditMember(member)
-                                : null,
-                            icon: const Icon(Icons.edit_outlined),
-                            color: TeamAdminPalette.text,
-                          ),
-                          IconButton(
-                            onPressed: memberCrudSupported
-                                ? () => onToggleMember(member)
-                                : null,
-                            icon: Icon(
-                              member.isActive
-                                  ? Icons.person_off_outlined
-                                  : Icons.person_add_alt_1_rounded,
-                            ),
-                            color: member.isActive
-                                ? TeamAdminPalette.warning
-                                : TeamAdminPalette.success,
-                          ),
-                          PopupMenuButton<String>(
-                            enabled: memberCrudSupported,
-                            icon: const Icon(
-                              Icons.more_vert,
-                              color: TeamAdminPalette.text,
-                            ),
-                            tooltip: 'More actions',
-                            onSelected: (value) {
-                              if (value == 'delete') onDeleteMember(member);
-                            },
-                            itemBuilder: (_) => const [
-                              PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.delete_outline),
-                                    SizedBox(width: 8),
-                                    Text('Delete member...'),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                return _MemberRow(
+                  member: member,
+                  memberCrudSupported: memberCrudSupported,
+                  onEditMember: onEditMember,
+                  onToggleMember: onToggleMember,
+                  onDeleteMember: onDeleteMember,
                 );
               },
             ),
     );
+  }
+}
+
+class _MemberRow extends StatelessWidget {
+  const _MemberRow({
+    required this.member,
+    required this.memberCrudSupported,
+    required this.onEditMember,
+    required this.onToggleMember,
+    required this.onDeleteMember,
+  });
+
+  final TeamAdminMember member;
+  final bool memberCrudSupported;
+  final ValueChanged<TeamAdminMember> onEditMember;
+  final ValueChanged<TeamAdminMember> onToggleMember;
+  final ValueChanged<TeamAdminMember> onDeleteMember;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final statusLabel = member.isActive
+        ? l10n.memberStatusAvailable
+        : l10n.pillInactive;
+    final lastSeenText = formatMissionTime(
+      member.lastSeenAt,
+      context,
+      fallback: l10n.statusUnknown,
+    );
+    final deviceHealthLabel = l10n.deviceHealth(
+      _deviceHealthToken(member.deviceHealth),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: TeamAdminPalette.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: member.isActive
+                ? TeamAdminPalette.accent
+                : TeamAdminPalette.warning,
+            foregroundColor: TeamAdminPalette.primary,
+            child: Text(member.name.substring(0, 1)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        member.name,
+                        style: const TextStyle(
+                          color: TeamAdminPalette.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    _Pill(
+                      label: statusLabel,
+                      color: member.isActive
+                          ? TeamAdminPalette.success
+                          : TeamAdminPalette.warning,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${member.email} | ${member.phone}',
+                  style: const TextStyle(
+                    color: TeamAdminPalette.textSoft,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final role in member.roles)
+                      _Pill(
+                        label: role,
+                        color: role == 'team_admin'
+                            ? TeamAdminPalette.accent
+                            : role == 'dispatcher'
+                            ? TeamAdminPalette.success
+                            : TeamAdminPalette.secondaryAccent,
+                      ),
+                    _Pill(
+                      label: '${member.devicePlatform} | $deviceHealthLabel',
+                      color: member.deviceHealth == 'Healthy'
+                          ? TeamAdminPalette.success
+                          : TeamAdminPalette.secondaryAccent,
+                    ),
+                    _Pill(
+                      label: l10n.lastSeenLabel(lastSeenText),
+                      color: TeamAdminPalette.warning,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            children: [
+              IconButton(
+                onPressed: memberCrudSupported
+                    ? () => onEditMember(member)
+                    : null,
+                icon: const Icon(Icons.edit_outlined),
+                color: TeamAdminPalette.text,
+              ),
+              IconButton(
+                onPressed: memberCrudSupported
+                    ? () => onToggleMember(member)
+                    : null,
+                icon: Icon(
+                  member.isActive
+                      ? Icons.person_off_outlined
+                      : Icons.person_add_alt_1_rounded,
+                ),
+                color: member.isActive
+                    ? TeamAdminPalette.warning
+                    : TeamAdminPalette.success,
+              ),
+              PopupMenuButton<String>(
+                enabled: memberCrudSupported,
+                icon: const Icon(
+                  Icons.more_vert,
+                  color: TeamAdminPalette.text,
+                ),
+                tooltip: l10n.moreActionsTooltip,
+                onSelected: (value) {
+                  if (value == 'delete') onDeleteMember(member);
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.delete_outline),
+                        const SizedBox(width: 8),
+                        Text(l10n.deleteMemberMenuItem),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _deviceHealthToken(String deviceHealth) {
+  switch (deviceHealth) {
+    case 'Healthy':
+      return 'healthy';
+    case 'Unverified':
+      return 'unverified';
+    case 'Inactive':
+      return 'inactive';
+    case 'Needs review':
+      return 'needsReview';
+    case 'No device':
+      return 'noDevice';
+    default:
+      return deviceHealth;
   }
 }
 
@@ -734,10 +809,10 @@ class _TeamContextPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return _Panel(
-      title: 'Team context',
-      subtitle:
-          'This app manages one existing team only. Team creation and global administration live elsewhere.',
+      title: l10n.teamContextTitle,
+      subtitle: l10n.teamContextSubtitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1014,8 +1089,13 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text(widget.member == null ? 'Add team member' : 'Edit member'),
+      title: Text(
+        widget.member == null
+            ? l10n.addMemberDialogTitle
+            : l10n.editMemberDialogTitle,
+      ),
       content: SizedBox(
         width: 540,
         child: Form(
@@ -1025,15 +1105,15 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
             children: [
               TextFormField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: _validateName,
+                decoration: InputDecoration(labelText: l10n.nameFieldLabel),
+                validator: (value) => _validateName(value, l10n),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(labelText: l10n.emailFieldLabel),
                 keyboardType: TextInputType.emailAddress,
-                validator: _validateEmail,
+                validator: (value) => _validateEmail(value, l10n),
               ),
               const SizedBox(height: 12),
               Row(
@@ -1057,12 +1137,12 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                   Expanded(
                     child: TextFormField(
                       controller: phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone',
-                        hintText: '555 123 4567',
+                      decoration: InputDecoration(
+                        labelText: l10n.phoneFieldLabel,
+                        hintText: l10n.phoneFieldHint,
                       ),
                       keyboardType: TextInputType.phone,
-                      validator: _validatePhone,
+                      validator: (value) => _validatePhone(value, l10n),
                     ),
                   ),
                 ],
@@ -1073,7 +1153,7 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                 onChanged: (value) {
                   setState(() => isTeamAdmin = value ?? false);
                 },
-                title: const Text('Team Admin'),
+                title: Text(l10n.roleTeamAdmin),
                 contentPadding: EdgeInsets.zero,
               ),
               CheckboxListTile(
@@ -1081,7 +1161,7 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                 onChanged: (value) {
                   setState(() => isDispatcher = value ?? false);
                 },
-                title: const Text('Dispatcher'),
+                title: Text(l10n.roleDispatcher),
                 contentPadding: EdgeInsets.zero,
               ),
               CheckboxListTile(
@@ -1089,7 +1169,7 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
                 onChanged: (value) {
                   setState(() => isResponder = value ?? false);
                 },
-                title: const Text('Responder'),
+                title: Text(l10n.roleResponder),
                 contentPadding: EdgeInsets.zero,
               ),
             ],
@@ -1099,49 +1179,53 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancelButton),
         ),
         FilledButton(
           onPressed: _submit,
-          child: Text(widget.member == null ? 'Add member' : 'Save changes'),
+          child: Text(
+            widget.member == null
+                ? l10n.addMemberButton
+                : l10n.saveChangesButton,
+          ),
         ),
       ],
     );
   }
 
-  String? _required(String? value) {
+  String? _required(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return 'Required';
+      return l10n.requiredFieldError;
     }
     return null;
   }
 
-  String? _validateEmail(String? value) {
-    final required = _required(value);
+  String? _validateEmail(String? value, AppLocalizations l10n) {
+    final required = _required(value, l10n);
     if (required != null) {
       return required;
     }
     return switch (EmailValidator.validate(value)) {
       null => null,
-      EmailValidationError.empty => 'Enter an email address.',
-      EmailValidationError.invalid => 'Enter a valid email address.',
+      EmailValidationError.empty => l10n.emailRequired,
+      EmailValidationError.invalid => l10n.emailInvalid,
     };
   }
 
-  String? _validateName(String? value) {
-    final required = _required(value);
+  String? _validateName(String? value, AppLocalizations l10n) {
+    final required = _required(value, l10n);
     if (required != null) {
       return required;
     }
     return switch (NameValidator.validate(value)) {
       null => null,
-      NameValidationError.empty => 'Enter a name.',
-      NameValidationError.invalid => 'Enter a valid name.',
+      NameValidationError.empty => l10n.nameRequired,
+      NameValidationError.invalid => l10n.nameInvalid,
     };
   }
 
-  String? _validatePhone(String? value) {
-    final required = _required(value);
+  String? _validatePhone(String? value, AppLocalizations l10n) {
+    final required = _required(value, l10n);
     if (required != null) {
       return required;
     }
@@ -1150,8 +1234,8 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
       isoCode: _selectedIsoCode(),
     )) {
       null => null,
-      PhoneValidationError.empty => 'Enter a phone number.',
-      PhoneValidationError.invalid => 'Enter a valid phone number.',
+      PhoneValidationError.empty => l10n.phoneRequired,
+      PhoneValidationError.invalid => l10n.phoneInvalid,
     };
   }
 
@@ -1201,14 +1285,5 @@ class _MemberEditorDialogState extends State<_MemberEditorDialog> {
         roles: roles,
       ),
     );
-  }
-}
-
-Color _statusColor(String status) {
-  switch (status) {
-    case 'Available':
-      return TeamAdminPalette.success;
-    default:
-      return TeamAdminPalette.warning;
   }
 }

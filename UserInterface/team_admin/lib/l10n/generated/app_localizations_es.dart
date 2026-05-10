@@ -4,9 +4,9 @@ import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
 
-/// The translations for English (`en`).
-class AppLocalizationsEn extends AppLocalizations {
-  AppLocalizationsEn([String locale = 'en']) : super(locale);
+/// The translations for Spanish Castilian (`es`).
+class AppLocalizationsEs extends AppLocalizations {
+  AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
   String get appName => 'MissionOut Team Admin';
@@ -76,7 +76,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verifyCodeButton => 'Verify code';
 
   @override
-  String get emailMeCodeButton => 'Email me a sign-in code';
+  String get emailMeCodeButton => 'Envíame un código por correo';
 
   @override
   String get continueWithGoogle => 'Continue with Google';
