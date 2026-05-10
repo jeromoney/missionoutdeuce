@@ -21,14 +21,14 @@ def _create_payload(team_public_id: str) -> IncidentCreate:
     )
 
 
-def test_inactive_user_devices_are_excluded(db_session, seeded_team, seeded_user):
-    # Make the inactive user a dispatcher so they would be a page target if
-    # active; the assertion proves inactivity is what excludes them, not role.
+def test_inactive_membership_devices_are_excluded(db_session, seeded_team, seeded_user):
+    # Make the user's team membership inactive (dispatcher role) so they
+    # would be a page target if active; the assertion proves the per-team
+    # is_active flag is what excludes them, not role.
     inactive_user = User(
         name="Inactive Inez",
         email="inactive@example.com",
         phone="",
-        is_active=False,
     )
     db_session.add(inactive_user)
     db_session.flush()
@@ -38,6 +38,7 @@ def test_inactive_user_devices_are_excluded(db_session, seeded_team, seeded_user
             team_id=seeded_team.id,
             roles=["dispatcher"],
             role="dispatcher",
+            is_active=False,
             granted_at=utc_now(),
         )
     )
@@ -131,7 +132,6 @@ def test_dispatchers_page_group_filters_out_responder_only_members(
         name="Roxanne Responder",
         email="roxanne@example.com",
         phone="",
-        is_active=True,
     )
     db_session.add(responder_user)
     db_session.flush()

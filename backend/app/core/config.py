@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     email_code_length: int = 6
     email_code_rate_limit_attempts: int = 5
     email_code_rate_limit_window_minutes: int = 15
+    email_code_max_verify_attempts: int = 5
+    email_code_verify_rate_limit_attempts: int = 10
+    email_code_verify_rate_limit_window_minutes: int = 15
     email_code_expires_in_minutes: int = Field(
         default=15,
         validation_alias=AliasChoices(

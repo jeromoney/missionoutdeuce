@@ -88,7 +88,6 @@ def seeded_user(db_session: Session, seeded_team: Team) -> User:
         name="Nora Ellison",
         email="one@gmail.com",
         phone="555-1001",
-        is_active=True,
     )
     db_session.add(user)
     db_session.flush()
@@ -145,7 +144,6 @@ def seeded_second_user(db_session: Session, seeded_second_team: Team) -> User:
         name="Mateo Alvarez",
         email="two@gmail.com",
         phone="555-2002",
-        is_active=True,
     )
     db_session.add(user)
     db_session.flush()
@@ -169,7 +167,6 @@ def seeded_second_admin(db_session: Session, seeded_second_team: Team) -> User:
         name="Quentin Vega",
         email="admin2@gmail.com",
         phone="555-3003",
-        is_active=True,
     )
     db_session.add(user)
     db_session.flush()

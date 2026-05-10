@@ -36,8 +36,8 @@ def test_ensure_team_membership_role_backfills_blank_rows(db_session):
 
     db_session.execute(
         text(
-            "INSERT INTO users (name, email, phone, is_active, public_id) "
-            "VALUES (:name, :email, '', 1, :pid)"
+            "INSERT INTO users (name, email, phone, public_id) "
+            "VALUES (:name, :email, '', :pid)"
         ),
         {"name": "Backfill User", "email": "backfill@example.com", "pid": "backfill-user"},
     )
@@ -49,8 +49,8 @@ def test_ensure_team_membership_role_backfills_blank_rows(db_session):
     db_session.execute(
         text(
             "INSERT INTO team_memberships "
-            "(user_id, team_id, roles, role, public_id, granted_at) "
-            "VALUES (:uid, :tid, :roles, NULL, :pid, :granted)"
+            "(user_id, team_id, roles, role, is_active, public_id, granted_at) "
+            "VALUES (:uid, :tid, :roles, NULL, 1, :pid, :granted)"
         ),
         {
             "uid": user_id,

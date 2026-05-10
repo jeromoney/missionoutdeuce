@@ -154,7 +154,9 @@ def rotate_refresh_token(
         raise HTTPException(status_code=401, detail="Refresh token has expired.")
 
     user = record.user
-    if user is None or not user.is_active:
+    if user is None or not any(
+        m.is_active and m.team.is_active for m in user.memberships
+    ):
         raise HTTPException(status_code=401, detail="Refresh token user is not active.")
 
     new_plaintext, new_expires_at = create_refresh_token(db, user, user_agent=user_agent)

@@ -74,6 +74,81 @@ def test_create_team_member_reuses_existing_user_for_new_team(
     assert db_session.query(User).filter_by(email=seeded_user.email).count() == 1
 
 
+def test_create_team_member_does_not_overwrite_existing_user_columns(
+    client, seeded_user, seeded_second_team, seeded_second_admin, db_session, auth_headers
+):
+    original_name = seeded_user.name
+    original_phone = seeded_user.phone
+
+    response = client.post(
+        f"/teams/{seeded_second_team.public_id}/members",
+        headers=auth_headers(seeded_second_admin),
+        json={
+            "name": "Pwned",
+            "email": seeded_user.email,
+            "phone": "555-EVIL",
+            "roles": ["responder"],
+            "is_active": False,
+        },
+    )
+
+    assert response.status_code == 201
+    db_session.expire(seeded_user)
+    refreshed = db_session.query(User).filter_by(email=seeded_user.email).one()
+    assert refreshed.name == original_name
+    assert refreshed.phone == original_phone
+
+
+def test_update_team_member_cannot_deactivate_user_in_other_team(
+    client, seeded_team, seeded_user, seeded_second_team, seeded_second_admin,
+    db_session, auth_headers,
+):
+    # Add seeded_user to seeded_second_team as a responder so an admin of that
+    # second team has a membership row to PATCH. The original-team membership
+    # on seeded_team must remain active after the second-team admin
+    # deactivates the second-team membership — that's the regression test for
+    # Finding 2 (global User.is_active cascading across tenants).
+    add_response = client.post(
+        f"/teams/{seeded_second_team.public_id}/members",
+        headers=auth_headers(seeded_second_admin),
+        json={
+            "name": seeded_user.name,
+            "email": seeded_user.email,
+            "phone": seeded_user.phone,
+            "roles": ["responder"],
+            "is_active": True,
+        },
+    )
+    assert add_response.status_code == 201
+    second_membership_public_id = add_response.json()["public_id"]
+
+    # Original team membership: seeded_user can hit /incidents on seeded_team.
+    pre_check = client.get("/incidents", headers=auth_headers(seeded_user))
+    assert pre_check.status_code == 200
+
+    # Admin of the second team deactivates the second-team membership only.
+    deactivate = client.patch(
+        f"/teams/{seeded_second_team.public_id}/members/{second_membership_public_id}",
+        headers=auth_headers(seeded_second_admin),
+        json={"is_active": False},
+    )
+    assert deactivate.status_code == 200
+    assert deactivate.json()["is_active"] is False
+
+    # The original-team membership must still be active — the user can still
+    # authenticate and the original team_admin still sees them as active.
+    post_check = client.get("/incidents", headers=auth_headers(seeded_user))
+    assert post_check.status_code == 200
+
+    member_list = client.get(
+        f"/teams/{seeded_team.public_id}/members",
+        headers=auth_headers(seeded_user),
+    )
+    assert member_list.status_code == 200
+    seeded_row = next(m for m in member_list.json() if m["email"] == seeded_user.email)
+    assert seeded_row["is_active"] is True
+
+
 def test_create_team_member_rejects_duplicate_membership(client, seeded_team, seeded_user, auth_headers):
     response = client.post(
         f"/teams/{seeded_team.public_id}/members",
@@ -121,8 +196,8 @@ def test_update_team_member_updates_roles_only(client, seeded_team, seeded_user,
 
     assert response.status_code == 200
     assert response.json()["roles"] == ["responder"]
-    db_session.refresh(seeded_user)
-    assert seeded_user.is_active is True
+    db_session.refresh(membership)
+    assert membership.is_active is True
 
 
 def test_update_team_member_updates_is_active_only(client, seeded_team, seeded_user, db_session, auth_headers):
@@ -140,8 +215,8 @@ def test_update_team_member_updates_is_active_only(client, seeded_team, seeded_u
 
     assert response.status_code == 200
     assert response.json()["is_active"] is False
-    db_session.refresh(seeded_user)
-    assert seeded_user.is_active is False
+    db_session.refresh(membership)
+    assert membership.is_active is False
 
 
 def test_update_team_member_returns_404_for_unknown_membership(client, seeded_team, seeded_user, auth_headers):

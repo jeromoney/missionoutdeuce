@@ -686,37 +686,6 @@
         "title": "TeamMemberUpdate",
         "type": "object"
       },
-      "UserActiveRead": {
-        "properties": {
-          "is_active": {
-            "title": "Is Active",
-            "type": "boolean"
-          },
-          "public_id": {
-            "title": "Public Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "public_id",
-          "is_active"
-        ],
-        "title": "UserActiveRead",
-        "type": "object"
-      },
-      "UserActiveUpdate": {
-        "properties": {
-          "is_active": {
-            "title": "Is Active",
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "is_active"
-        ],
-        "title": "UserActiveUpdate",
-        "type": "object"
-      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -1714,47 +1683,6 @@
         "summary": "Update Team Member",
         "tags": [
           "teams"
-        ]
-      }
-    },
-    "/user/active": {
-      "patch": {
-        "operationId": "set_user_active_user_active_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserActiveUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserActiveRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Set User Active",
-        "tags": [
-          "user"
         ]
       }
     }

@@ -43,8 +43,13 @@ def test_add_then_deactivate_member_blocks_incidents_access(
     )
     assert deactivate.status_code == 200
 
+    # Deactivating the only membership now produces 403 (no active team
+    # access) rather than 401 (account suspended) because is_active lives on
+    # TeamMembership, not User. From the user's perspective the result is
+    # the same — they're locked out of /incidents — but the failure mode is
+    # "no team grants you access" instead of "your account is disabled".
     blocked = client.get("/incidents", headers=ada_headers)
-    assert blocked.status_code == 401
+    assert blocked.status_code == 403
 
 
 def test_user_device_surfaces_in_team_device_listing(

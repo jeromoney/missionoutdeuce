@@ -270,6 +270,111 @@ def test_post_email_code_verify_rejects_reused_code(client, seeded_user, db_sess
     assert "already been used" in response.json()["detail"].lower()
 
 
+def test_post_email_code_verify_locks_token_after_max_failed_attempts(
+    client, seeded_user, db_session, monkeypatch
+):
+    import app.api.routes.auth as auth_routes
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "email_code_max_verify_attempts", 5)
+    monkeypatch.setattr(settings, "email_code_verify_rate_limit_attempts", 999)
+
+    captured: dict[str, str] = {}
+
+    def fake_send(*, recipient_email: str, code: str, requested_client: str):
+        captured["code"] = code
+
+    monkeypatch.setattr(auth_routes, "_send_email_code_via_resend", fake_send)
+
+    issued = client.post(
+        "/auth/email-code",
+        json={"email": seeded_user.email, "requested_client": "dispatcher"},
+    )
+    assert issued.status_code == 202
+    real_code = captured["code"]
+    wrong_code = "000000" if real_code != "000000" else "000001"
+
+    for _ in range(5):
+        bad = client.post(
+            "/auth/email-code/verify",
+            json={"email": seeded_user.email, "code": wrong_code},
+        )
+        assert bad.status_code == 401
+        assert bad.json()["detail"] == "Invalid email sign-in code."
+
+    token = (
+        db_session.query(EmailCodeToken).filter_by(email=seeded_user.email).one()
+    )
+    db_session.refresh(token)
+    assert token.failed_attempts == 5
+    assert token.consumed_at is not None
+
+    correct_after_lock = client.post(
+        "/auth/email-code/verify",
+        json={"email": seeded_user.email, "code": real_code},
+    )
+    assert correct_after_lock.status_code == 401
+    assert correct_after_lock.json()["detail"] == "Email sign-in code has already been used."
+
+
+def test_post_email_code_verify_rate_limits_across_multiple_codes(
+    client, seeded_user, db_session, monkeypatch
+):
+    import app.api.routes.auth as auth_routes
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "email_code_max_verify_attempts", 5)
+    monkeypatch.setattr(settings, "email_code_verify_rate_limit_attempts", 10)
+    monkeypatch.setattr(settings, "email_code_verify_rate_limit_window_minutes", 15)
+    monkeypatch.setattr(settings, "email_code_rate_limit_attempts", 999)
+
+    captured_codes: list[str] = []
+
+    def fake_send(*, recipient_email: str, code: str, requested_client: str):
+        captured_codes.append(code)
+
+    monkeypatch.setattr(auth_routes, "_send_email_code_via_resend", fake_send)
+
+    for _ in range(2):
+        issued = client.post(
+            "/auth/email-code",
+            json={"email": seeded_user.email, "requested_client": "dispatcher"},
+        )
+        assert issued.status_code == 202
+
+    real_codes = set(captured_codes)
+    wrong_code = "000000"
+    while wrong_code in real_codes:
+        wrong_code = f"{(int(wrong_code) + 1) % 10**6:06d}"
+
+    # 5 wrong guesses lock the most recent token; the next 5 lock the older
+    # one. After 10 failed attempts in the window the per-email limiter fires.
+    for _ in range(10):
+        bad = client.post(
+            "/auth/email-code/verify",
+            json={"email": seeded_user.email, "code": wrong_code},
+        )
+        assert bad.status_code == 401
+
+    blocked = client.post(
+        "/auth/email-code/verify",
+        json={"email": seeded_user.email, "code": wrong_code},
+    )
+    assert blocked.status_code == 429
+    assert blocked.json()["detail"] == (
+        "Too many sign-in code verification attempts. "
+        "Please request a new code and try again later."
+    )
+
+    total_failed = sum(
+        token.failed_attempts
+        for token in db_session.query(EmailCodeToken)
+        .filter_by(email=seeded_user.email)
+        .all()
+    )
+    assert total_failed >= 10
+
+
 def test_post_google_rejects_aud_not_in_allowed_ids(client, monkeypatch):
     import app.api.routes.auth as auth_routes
     from app.core.config import settings

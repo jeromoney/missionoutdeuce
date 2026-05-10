@@ -30,7 +30,6 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(255))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     phone: Mapped[str] = mapped_column(String(32), default="")
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     memberships: Mapped[list["TeamMembership"]] = relationship(
         back_populates="user",
@@ -61,6 +60,7 @@ class TeamMembership(Base):
     # layer so the bootstrap backfill path can insert and fill in afterwards;
     # `ensure_team_membership_role` adds a NOT NULL constraint on Postgres.
     role: Mapped[str | None] = mapped_column(String(32), nullable=True, default="responder")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     granted_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     user: Mapped[User] = relationship(back_populates="memberships")
@@ -111,6 +111,7 @@ class EmailCodeToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    failed_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
 
 class RefreshToken(Base):

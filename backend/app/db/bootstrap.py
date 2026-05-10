@@ -138,6 +138,83 @@ def ensure_incident_version(engine: Engine) -> None:
             )
 
 
+def ensure_email_code_failed_attempts(engine: Engine) -> None:
+    inspector = inspect(engine)
+    if "email_code_tokens" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("email_code_tokens")}
+    if "failed_attempts" in columns:
+        return
+
+    is_postgres = engine.dialect.name == "postgresql"
+    with engine.begin() as connection:
+        connection.execute(
+            text("ALTER TABLE email_code_tokens ADD COLUMN failed_attempts INTEGER DEFAULT 0")
+        )
+        connection.execute(
+            text("UPDATE email_code_tokens SET failed_attempts = 0 WHERE failed_attempts IS NULL")
+        )
+        if is_postgres:
+            connection.execute(
+                text("ALTER TABLE email_code_tokens ALTER COLUMN failed_attempts SET NOT NULL")
+            )
+
+
+def ensure_team_membership_is_active(engine: Engine) -> None:
+    """Move `is_active` from `users` to `team_memberships`.
+
+    Before: a single global `users.is_active` column gated authentication and
+    was writable by any team_admin via PATCH /teams/{team}/members/{id}, so a
+    team_admin of one team could lock a user out of unrelated teams. This
+    migration adds a per-membership `is_active` column, backfills it from the
+    user's old global flag (so deactivated users stay deactivated on every
+    team they were on), then drops `users.is_active`.
+    """
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    if "team_memberships" not in table_names:
+        return
+
+    is_postgres = engine.dialect.name == "postgresql"
+    membership_columns = {column["name"] for column in inspector.get_columns("team_memberships")}
+    user_columns = (
+        {column["name"] for column in inspector.get_columns("users")}
+        if "users" in table_names
+        else set()
+    )
+
+    with engine.begin() as connection:
+        if "is_active" not in membership_columns:
+            connection.execute(
+                text("ALTER TABLE team_memberships ADD COLUMN is_active BOOLEAN DEFAULT TRUE")
+            )
+
+        if "is_active" in user_columns:
+            # Inherit each membership's is_active from the user's old global
+            # flag. After this runs, dropping users.is_active is safe.
+            connection.execute(
+                text(
+                    "UPDATE team_memberships "
+                    "SET is_active = COALESCE("
+                    "  (SELECT is_active FROM users WHERE users.id = team_memberships.user_id),"
+                    "  TRUE"
+                    ")"
+                )
+            )
+        else:
+            connection.execute(
+                text("UPDATE team_memberships SET is_active = TRUE WHERE is_active IS NULL")
+            )
+
+        if is_postgres:
+            connection.execute(
+                text("ALTER TABLE team_memberships ALTER COLUMN is_active SET NOT NULL")
+            )
+            if "is_active" in user_columns:
+                connection.execute(text("ALTER TABLE users DROP COLUMN is_active"))
+
+
 def ensure_team_membership_role(engine: Engine) -> None:
     inspector = inspect(engine)
     if "team_memberships" not in inspector.get_table_names():

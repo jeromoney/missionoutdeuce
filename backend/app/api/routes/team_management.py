@@ -54,7 +54,7 @@ def _serialize_membership(membership: TeamMembership) -> TeamMemberRead:
         email=membership.user.email,
         phone=membership.user.phone,
         roles=list(membership.roles),
-        is_active=membership.user.is_active,
+        is_active=membership.is_active,
         granted_at=membership.granted_at,
     )
 
@@ -99,14 +99,13 @@ def create_team_member(
             name=payload.name,
             email=payload.email,
             phone=payload.phone,
-            is_active=payload.is_active,
         )
         db.add(user)
         db.flush()
-    else:
-        user.name = payload.name
-        user.phone = payload.phone
-        user.is_active = payload.is_active
+    # If the user already exists, do NOT mutate their global User columns
+    # (name/phone) from this per-team handler — that would let any team_admin
+    # overwrite profile fields for any user whose email they know. Per-team
+    # active state lives on the new TeamMembership row below.
 
     existing_membership = db.scalar(
         select(TeamMembership).where(
@@ -122,6 +121,7 @@ def create_team_member(
         team_id=team.id,
         roles=payload.roles,
         role=_pick_primary_role(payload.roles),
+        is_active=payload.is_active,
     )
     db.add(membership)
     db.commit()
@@ -160,7 +160,7 @@ def update_team_member(
         membership.role = _pick_primary_role(payload.roles)
 
     if payload.is_active is not None:
-        membership.user.is_active = payload.is_active
+        membership.is_active = payload.is_active
 
     db.commit()
     db.refresh(membership)

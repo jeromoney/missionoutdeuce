@@ -34,10 +34,10 @@ class _FakeRequest:
 
 
 def _principal_with_one_team(db_session) -> Principal:
-    user = User(name="Stream Tester", email="stream@example.com", phone="", is_active=True)
+    user = User(name="Stream Tester", email="stream@example.com", phone="")
     db_session.add(user)
     db_session.flush()
-    team = Team(name="Stream Team", is_active=True)
+    team = Team(name="Stream Team")
     db_session.add(team)
     db_session.flush()
     membership = TeamMembership(
@@ -94,7 +94,7 @@ async def test_stream_events_sets_up_subscription_and_unwinds(db_session):
 
 
 async def test_stream_events_403s_for_user_without_active_teams(db_session):
-    user = User(name="No Team", email="noteam@example.com", phone="", is_active=True)
+    user = User(name="No Team", email="noteam@example.com", phone="")
     db_session.add(user)
     db_session.commit()
 

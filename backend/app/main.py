@@ -3,14 +3,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, devices, events, health, incidents, team_management, users
+from app.api.routes import auth, devices, events, health, incidents, team_management
 from app.core.config import settings
 from app.db.base import Base
 from app.db.bootstrap import (
+    ensure_email_code_failed_attempts,
     ensure_incident_team_fk,
     ensure_incident_version,
     ensure_public_ids,
     ensure_response_record_fields,
+    ensure_team_membership_is_active,
     ensure_team_membership_role,
 )
 from app.db.rls import apply_rls_policies
@@ -39,6 +41,8 @@ async def lifespan(_: FastAPI):
     ensure_response_record_fields(engine)
     ensure_incident_version(engine)
     ensure_team_membership_role(engine)
+    ensure_team_membership_is_active(engine)
+    ensure_email_code_failed_attempts(engine)
     apply_rls_policies(engine)
     yield
 
@@ -69,7 +73,6 @@ app.include_router(incidents.router)
 app.include_router(events.router)
 app.include_router(devices.router)
 app.include_router(team_management.router)
-app.include_router(users.router)
 
 
 @app.get("/", tags=["meta"], response_model=RootRead)

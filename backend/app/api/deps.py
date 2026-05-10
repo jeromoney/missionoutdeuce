@@ -37,8 +37,18 @@ class Principal:
     membership: TeamMembership
 
 
+def user_has_active_membership(user: User) -> bool:
+    """True if the user has at least one active membership on an active team.
+
+    Replaces the old global `User.is_active` flag: with `is_active` now living
+    on `TeamMembership`, "is this account allowed to act?" is equivalent to
+    "do they have any non-deactivated membership on a live team?".
+    """
+    return any(m.is_active and m.team.is_active for m in user.memberships)
+
+
 def _select_effective_membership(user: User) -> TeamMembership | None:
-    active = [m for m in user.memberships if m.team.is_active]
+    active = [m for m in user.memberships if m.is_active and m.team.is_active]
     if not active:
         return None
     # Pick the highest-privilege role across the user's active memberships.
@@ -81,7 +91,7 @@ def get_current_principal(
         .options(selectinload(User.memberships).selectinload(TeamMembership.team))
         .where(User.public_id == claims["sub"])
     )
-    if user is None or not user.is_active:
+    if user is None:
         raise HTTPException(
             status_code=401,
             detail="Authenticated user is not recognized.",

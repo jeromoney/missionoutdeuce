@@ -67,7 +67,7 @@ def _targets_for_page_group(
         .join(User.memberships)
         .where(
             TeamMembership.team_id == team_id,
-            User.is_active.is_(True),
+            TeamMembership.is_active.is_(True),
             Device.is_active.is_(True),
         )
     )
@@ -77,7 +77,7 @@ def _targets_for_page_group(
         .join(User.memberships)
         .where(
             TeamMembership.team_id == team_id,
-            User.is_active.is_(True),
+            TeamMembership.is_active.is_(True),
             WebPushSubscription.is_active.is_(True),
         )
     )

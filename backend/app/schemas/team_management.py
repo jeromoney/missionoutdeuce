@@ -40,15 +40,6 @@ class DeviceRead(BaseModel):
     is_verified: bool
 
 
-class UserActiveUpdate(BaseModel):
-    is_active: bool
-
-
-class UserActiveRead(BaseModel):
-    public_id: str
-    is_active: bool
-
-
 class WebPushKeys(BaseModel):
     p256dh: str
     auth: str

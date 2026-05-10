@@ -9,6 +9,7 @@ import requests
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.api.deps import user_has_active_membership
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
@@ -53,7 +54,7 @@ def _build_auth_user_read(*, email: str, name: str, user: User | None) -> AuthUs
         active_memberships = [
             membership
             for membership in user.memberships
-            if membership.team.is_active
+            if membership.is_active and membership.team.is_active
         ]
         team_memberships = [
             AuthTeamMembershipRead(
@@ -169,6 +170,32 @@ def _enforce_email_code_rate_limit(*, db: Session, normalized_email: str) -> Non
         )
 
 
+def _enforce_email_code_verify_rate_limit(*, db: Session, normalized_email: str) -> None:
+    """Cap the number of verify attempts per email within the sliding window.
+
+    Counts failed_attempts across all tokens issued for this email in the
+    window, plus consumed/expired tokens. Together with the per-token
+    failed_attempts cap, this prevents 6-digit-code brute force.
+    """
+    window_start = utc_now() - timedelta(
+        minutes=settings.email_code_verify_rate_limit_window_minutes
+    )
+    recent_failed = db.scalar(
+        select(func.coalesce(func.sum(EmailCodeToken.failed_attempts), 0)).where(
+            EmailCodeToken.email == normalized_email,
+            EmailCodeToken.created_at >= window_start,
+        )
+    )
+    if recent_failed is not None and recent_failed >= settings.email_code_verify_rate_limit_attempts:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "Too many sign-in code verification attempts. "
+                "Please request a new code and try again later."
+            ),
+        )
+
+
 def _verify_google_identity(payload: GoogleAuthRequest) -> dict:
     if payload.id_token:
         try:
@@ -261,7 +288,7 @@ def _verify_google_identity(payload: GoogleAuthRequest) -> dict:
 def request_email_code(payload: EmailCodeRequest, db: Session = Depends(get_db)):
     normalized_email = _normalize_email(payload.email)
     user = _load_existing_user(db=db, email=normalized_email)
-    if user is not None and user.is_active:
+    if user is not None and user_has_active_membership(user):
         _enforce_email_code_rate_limit(db=db, normalized_email=normalized_email)
 
         expires_at = utc_now() + timedelta(minutes=settings.email_code_expires_in_minutes)
@@ -326,26 +353,53 @@ def verify_email_code(
     db: Session = Depends(get_db),
 ):
     normalized_email = _normalize_email(payload.email)
+    _enforce_email_code_verify_rate_limit(db=db, normalized_email=normalized_email)
+
+    now = utc_now()
+    code_hash = _hash_email_code(email=normalized_email, code=payload.code)
     token_record = db.scalar(
         select(EmailCodeToken)
         .where(
             EmailCodeToken.email == normalized_email,
-            EmailCodeToken.code_hash == _hash_email_code(email=normalized_email, code=payload.code),
+            EmailCodeToken.code_hash == code_hash,
         )
         .order_by(EmailCodeToken.created_at.desc())
     )
+
     if token_record is None:
+        # Record a failed attempt against the most recent live token for this
+        # email so per-token and per-email caps both advance on wrong guesses.
+        live_token = db.scalar(
+            select(EmailCodeToken)
+            .where(
+                EmailCodeToken.email == normalized_email,
+                EmailCodeToken.consumed_at.is_(None),
+                EmailCodeToken.expires_at >= now,
+            )
+            .order_by(EmailCodeToken.created_at.desc())
+        )
+        if live_token is not None:
+            live_token.failed_attempts = (live_token.failed_attempts or 0) + 1
+            if live_token.failed_attempts >= settings.email_code_max_verify_attempts:
+                live_token.consumed_at = now
+            db.commit()
         raise HTTPException(status_code=401, detail="Invalid email sign-in code.")
 
-    now = utc_now()
     if token_record.consumed_at is not None:
         raise HTTPException(status_code=401, detail="Email sign-in code has already been used.")
     if ensure_utc(token_record.expires_at) < now:
         raise HTTPException(status_code=401, detail="Email sign-in code has expired.")
+    if (token_record.failed_attempts or 0) >= settings.email_code_max_verify_attempts:
+        token_record.consumed_at = now
+        db.commit()
+        raise HTTPException(
+            status_code=401,
+            detail="Email sign-in code is no longer valid. Please request a new code.",
+        )
 
     email = token_record.email
     user = _load_existing_user(db=db, email=email)
-    if user is None or not user.is_active:
+    if user is None or not user_has_active_membership(user):
         raise HTTPException(status_code=401, detail="Invalid email sign-in code.")
     token_record.consumed_at = now
 
@@ -383,7 +437,7 @@ def google_auth(
         )
 
     user = _load_existing_user(db=db, email=_normalize_email(email))
-    if user is None or not user.is_active:
+    if user is None or not user_has_active_membership(user):
         raise HTTPException(
             status_code=403,
             detail=f"Contact your administrator for support referencing {email}.",

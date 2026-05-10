@@ -109,7 +109,7 @@ def test_token_signed_with_wrong_key_returns_401(db_session, seeded_user):
 
 
 def test_user_without_membership_returns_403(db_session):
-    user = User(name="Solo Sam", email="solo@example.com", phone="", is_active=True)
+    user = User(name="Solo Sam", email="solo@example.com", phone="")
     db_session.add(user)
     db_session.commit()
 
@@ -143,12 +143,12 @@ def test_set_local_is_noop_on_sqlite(db_session, seeded_user):
 
 
 def test_effective_membership_prefers_highest_privilege_role(db_session):
-    user = User(name="Multi", email="multi@example.com", phone="", is_active=True)
+    user = User(name="Multi", email="multi@example.com", phone="")
     db_session.add(user)
     db_session.flush()
 
-    team_a = Team(name="Alpha", is_active=True)
-    team_b = Team(name="Beta", is_active=True)
+    team_a = Team(name="Alpha")
+    team_b = Team(name="Beta")
     db_session.add_all([team_a, team_b])
     db_session.flush()
 
@@ -177,11 +177,11 @@ def test_effective_membership_prefers_highest_privilege_role(db_session):
 
 
 def test_effective_membership_falls_back_for_unknown_role(db_session):
-    user = User(name="Off-Roster", email="off@example.com", phone="", is_active=True)
+    user = User(name="Off-Roster", email="off@example.com", phone="")
     db_session.add(user)
     db_session.flush()
 
-    team = Team(name="Roster Team", is_active=True)
+    team = Team(name="Roster Team")
     db_session.add(team)
     db_session.flush()
 
@@ -205,7 +205,7 @@ def test_effective_membership_falls_back_for_unknown_role(db_session):
 
 
 def test_effective_membership_skips_inactive_teams(db_session):
-    user = User(name="Hidden", email="hidden@example.com", phone="", is_active=True)
+    user = User(name="Hidden", email="hidden@example.com", phone="")
     db_session.add(user)
     db_session.flush()
 

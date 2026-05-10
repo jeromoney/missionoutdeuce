@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from app.core.time import utc_now
 from app.models.event import DeliveryEvent
-from app.models.team_management import User
+from app.models.team_management import TeamMembership, User
 
 
 def test_get_delivery_feed_empty(client, seeded_user, auth_headers):
@@ -53,14 +53,21 @@ def test_get_events_stream_requires_user_header(client):
     assert response.status_code == 401
 
 
-def test_get_events_stream_rejects_inactive_user(client, db_session, seeded_user, auth_headers):
+def test_get_events_stream_rejects_user_with_only_inactive_memberships(
+    client, db_session, seeded_user, auth_headers
+):
+    # With is_active moved to TeamMembership, "deactivated user" now means
+    # every membership the user has is_active=False. get_current_principal's
+    # 403 path fires because no active membership is selectable.
     headers = auth_headers(seeded_user)
-    seeded_user.is_active = False
+    db_session.query(TeamMembership).filter_by(user_id=seeded_user.id).update(
+        {TeamMembership.is_active: False}
+    )
     db_session.commit()
 
     response = client.get("/events/stream", headers=headers)
 
-    assert response.status_code == 401
+    assert response.status_code == 403
 
 
 def test_get_events_stream_rejects_user_without_active_teams(client, db_session, auth_headers):
@@ -68,7 +75,6 @@ def test_get_events_stream_rejects_user_without_active_teams(client, db_session,
         name="Solo Sam",
         email="solo@gmail.com",
         phone="",
-        is_active=True,
     )
     db_session.add(user)
     db_session.commit()

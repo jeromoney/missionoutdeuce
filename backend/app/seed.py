@@ -29,6 +29,7 @@ from app.db.bootstrap import (
     ensure_incident_version,
     ensure_public_ids,
     ensure_response_record_fields,
+    ensure_team_membership_is_active,
     ensure_team_membership_role,
 )
 from app.db.session import SessionLocal, engine
@@ -163,7 +164,6 @@ def seed_into(db: Session, *, rng_seed: int = 42) -> None:
                 name=spec.admin_name or "Team Admin",
                 email=spec.admin_email,
                 phone=spec.admin_phone or "",
-                is_active=True,
             )
         else:
             global_index += 1
@@ -244,7 +244,6 @@ def _make_user(rng: random.Random, global_index: int) -> User:
         name=f"{first} {last}",
         email=f"{first.lower()}.{last.lower()}.{global_index}@example.test",
         phone=f"+1555{global_index:07d}",
-        is_active=True,
     )
 
 
@@ -255,6 +254,7 @@ def seed() -> None:
     ensure_response_record_fields(engine)
     ensure_incident_version(engine)
     ensure_team_membership_role(engine)
+    ensure_team_membership_is_active(engine)
 
     with SessionLocal() as db:
         seed_into(db)
