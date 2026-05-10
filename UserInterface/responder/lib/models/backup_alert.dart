@@ -1,11 +1,11 @@
 class BackupAlert {
   const BackupAlert({
-    required this.incidentIndex,
+    required this.incidentPublicId,
     required this.title,
     required this.body,
   });
 
-  final int incidentIndex;
+  final String incidentPublicId;
   final String title;
   final String body;
 }

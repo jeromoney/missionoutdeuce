@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_models/shared_models.dart';
 
 import '../app_palette.dart';
-import '../models/records.dart';
 import 'common_widgets.dart';
 import 'panel.dart';
 
@@ -36,10 +36,10 @@ class IncidentBoard extends StatelessWidget {
         itemBuilder: (context, index) {
           final incident = incidents[index];
           final responding = incident.responses
-              .where((response) => response.status == 'Responding')
+              .where((response) => response.status == ResponseStatus.responding)
               .length;
           final pending = incident.responses
-              .where((response) => response.status == 'Pending')
+              .where((response) => response.status == ResponseStatus.pending)
               .length;
           final teamName =
               teamNamesByPublicId[incident.teamPublicId] ?? 'Assigned team';
@@ -106,9 +106,18 @@ class IncidentBoard extends StatelessWidget {
                     spacing: 10,
                     runSpacing: 10,
                     children: [
-                      MetricBadge(label: 'Responding', value: '$responding'),
-                      MetricBadge(label: 'Pending', value: '$pending'),
-                      MetricBadge(label: 'Created', value: incident.created),
+                      MetricBadge(
+                        label: ResponseStatus.responding.label,
+                        value: '$responding',
+                      ),
+                      MetricBadge(
+                        label: ResponseStatus.pending.label,
+                        value: '$pending',
+                      ),
+                      MetricBadge(
+                        label: 'Created',
+                        value: formatMissionTimestamp(incident.created),
+                      ),
                     ],
                   ),
                 ],

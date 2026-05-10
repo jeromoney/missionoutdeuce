@@ -1,0 +1,20 @@
+name: shared_previews
+description: Sample data and preview helpers for MissionOut Flutter widget previews.
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_auth:
+    path: ../shared_auth
+  shared_models:
+    path: ../shared_models
+  shared_theme:
+    path: ../shared_theme
+
+dev_dependencies:
+  flutter_lints: ^6.0.0

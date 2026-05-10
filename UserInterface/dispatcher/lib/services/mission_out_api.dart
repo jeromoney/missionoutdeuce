@@ -3,11 +3,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_models/shared_models.dart';
 
 import '../app_config.dart';
 import '../models/dashboard_snapshot.dart';
-import '../models/incident_draft.dart';
-import '../models/incident_update.dart';
 import '../models/records.dart';
 
 typedef AccessTokenProvider = Future<String?> Function();

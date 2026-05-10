@@ -7,8 +7,6 @@ class TeamAdminTeam {
     required this.dispatchChannel,
     required this.notes,
     required this.members,
-    required this.incidents,
-    required this.responses,
   });
 
   final String publicId;
@@ -18,8 +16,6 @@ class TeamAdminTeam {
   final String dispatchChannel;
   final String notes;
   final List<TeamAdminMember> members;
-  final List<TeamIncidentSummary> incidents;
-  final List<TeamResponseSummary> responses;
 
   TeamAdminTeam copyWith({
     String? publicId,
@@ -29,8 +25,6 @@ class TeamAdminTeam {
     String? dispatchChannel,
     String? notes,
     List<TeamAdminMember>? members,
-    List<TeamIncidentSummary>? incidents,
-    List<TeamResponseSummary>? responses,
   }) {
     return TeamAdminTeam(
       publicId: publicId ?? this.publicId,
@@ -40,8 +34,6 @@ class TeamAdminTeam {
       dispatchChannel: dispatchChannel ?? this.dispatchChannel,
       notes: notes ?? this.notes,
       members: members ?? this.members,
-      incidents: incidents ?? this.incidents,
-      responses: responses ?? this.responses,
     );
   }
 }
@@ -122,40 +114,6 @@ class TeamAdminMember {
       revokedAt: revokedAt ?? this.revokedAt,
     );
   }
-}
-
-class TeamIncidentSummary {
-  const TeamIncidentSummary({
-    required this.publicId,
-    required this.teamPublicId,
-    required this.title,
-    required this.location,
-    required this.state,
-    required this.time,
-  });
-
-  final String publicId;
-  final String? teamPublicId;
-  final String title;
-  final String location;
-  final String state;
-  final String time;
-}
-
-class TeamResponseSummary {
-  const TeamResponseSummary({
-    required this.userPublicId,
-    required this.memberName,
-    required this.incidentTitle,
-    required this.status,
-    required this.time,
-  });
-
-  final String userPublicId;
-  final String memberName;
-  final String incidentTitle;
-  final String status;
-  final String time;
 }
 
 class TeamAdminMemberDraft {

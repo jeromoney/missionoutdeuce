@@ -27,7 +27,9 @@
       "Bash(rm \"C:/Users/justi/OneDrive/Documents/Projects/missionout/backend/.vscode/launch.json\")",
       "Bash(rmdir \"C:/Users/justi/OneDrive/Documents/Projects/missionout/backend/.vscode\")",
       "Bash(.venv/Scripts/python -m pytest)",
-      "Bash(.venv/Scripts/python -m pytest --collect-only -q)"
+      "Bash(.venv/Scripts/python -m pytest --collect-only -q)",
+      "Skill(fullstack-dev-skills:security-reviewer)",
+      "Bash(uv run *)"
     ]
   },
   "enabledMcpjsonServers": [

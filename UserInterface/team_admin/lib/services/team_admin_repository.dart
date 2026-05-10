@@ -40,7 +40,6 @@ class TeamAdminRepository {
 
     try {
       final healthFuture = _getMap('/health');
-      final incidentsFuture = _getList('/incidents', accessToken: accessToken);
       final membersFuture = teamPublicId.isEmpty
           ? Future.value(null)
           : _getOptionalList('/teams/$teamPublicId/members');
@@ -50,28 +49,15 @@ class TeamAdminRepository {
 
       final results = await Future.wait([
         healthFuture,
-        incidentsFuture,
         membersFuture,
         devicesFuture,
       ]);
 
-      final incidentJson = results[1] as List<Map<String, dynamic>>;
-      final memberJson = results[2] as List<Map<String, dynamic>>?;
-      final deviceJson = results[3] as List<Map<String, dynamic>>?;
+      final memberJson = results[1] as List<Map<String, dynamic>>?;
+      final deviceJson = results[2] as List<Map<String, dynamic>>?;
 
-      final teamIncidents = incidentJson;
-      final resolvedTeamPublicId = teamIncidents.isNotEmpty
-          ? teamIncidents.first['team_public_id'] as String? ??
-                (memberships.isNotEmpty ? memberships.first.teamPublicId : '')
-          : (memberships.isNotEmpty ? memberships.first.teamPublicId : '');
-      var resolvedTeamName = preferredTeamName;
-      for (final membership in memberships) {
-        if (membership.teamPublicId == resolvedTeamPublicId &&
-            membership.teamName.isNotEmpty) {
-          resolvedTeamName = membership.teamName;
-          break;
-        }
-      }
+      final resolvedTeamPublicId = teamPublicId;
+      final resolvedTeamName = preferredTeamName;
 
       final deviceByUserPublicId = {
         for (final device in deviceJson ?? const <Map<String, dynamic>>[])
@@ -88,57 +74,11 @@ class TeamAdminRepository {
                 )
                 .where((member) => member.revokedAt == null)
                 .toList();
-      final memberNamesByUserPublicId = {
-        for (final member in members)
-          if (member.userPublicId.isNotEmpty) member.userPublicId: member.name,
-      };
-
-      final incidents = teamIncidents
-          .map(
-            (incident) => TeamIncidentSummary(
-              publicId: incident['public_id'] as String? ?? '',
-              teamPublicId: incident['team_public_id'] as String?,
-              title: incident['title'] as String? ?? 'Untitled incident',
-              location: incident['location'] as String? ?? 'Unknown location',
-              state: (incident['active'] as bool? ?? false)
-                  ? 'Active'
-                  : 'Resolved',
-              time: formatMissionTimestamp(
-                incident['created'] as String? ?? '',
-                fallback: 'Unknown',
-              ),
-            ),
-          )
-          .toList();
-
-      final responsesList = <TeamResponseSummary>[
-        for (final incident in teamIncidents)
-          for (final response
-              in (incident['responses'] as List<dynamic>? ?? const [])
-                  .whereType<Map<String, dynamic>>())
-            TeamResponseSummary(
-              userPublicId: response['user_public_id'] as String? ?? '',
-              memberName:
-                  memberNamesByUserPublicId[response['user_public_id']] ??
-                  _fallbackMemberName(
-                    response['user_public_id'] as String? ?? '',
-                  ),
-              incidentTitle:
-                  incident['title'] as String? ?? 'Untitled incident',
-              status: response['status'] as String? ?? 'Pending',
-              time: formatMissionTimestamp(
-                response['updated'] as String? ?? '',
-                fallback: 'Unknown',
-              ),
-            ),
-      ];
 
       final liveTeam = _buildTeam(
         teamPublicId: resolvedTeamPublicId,
         teamName: resolvedTeamName,
         members: members,
-        incidents: incidents,
-        responses: responsesList,
       );
       _currentTeamPublicId = resolvedTeamPublicId;
       _currentTeamName = resolvedTeamName;
@@ -158,8 +98,6 @@ class TeamAdminRepository {
               : '',
           teamName: preferredTeamName,
           members: const [],
-          incidents: const [],
-          responses: const [],
         ),
         memberCrudSupported: false,
         usingLiveData: false,
@@ -256,27 +194,6 @@ class TeamAdminRepository {
     return _reloadTeam(teamPublicId);
   }
 
-  Future<List<Map<String, dynamic>>> _getList(
-    String path, {
-    String? accessToken,
-  }) async {
-    final uri = Uri.parse('$_baseUrl$path');
-    final response = await _client.get(
-      uri,
-      headers: _headers(accessToken: accessToken),
-    );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Request failed for $path (${response.statusCode})');
-    }
-
-    final decoded = jsonDecode(response.body);
-    if (decoded is List) {
-      return decoded.whereType<Map<String, dynamic>>().toList();
-    }
-
-    throw Exception('Expected a JSON list from $path');
-  }
-
   Future<Map<String, dynamic>> _getMap(String path) async {
     final response = await _client.get(Uri.parse('$_baseUrl$path'));
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -329,7 +246,10 @@ class TeamAdminRepository {
       phone: json['phone'] as String? ?? '',
       roles: roles,
       status: isActive ? 'Available' : 'Inactive',
-      lastSeen: formatMissionTimestamp(lastSeenRaw ?? '', fallback: 'Unknown'),
+      lastSeen: formatMissionTimestamp(
+        DateTime.tryParse(lastSeenRaw ?? ''),
+        fallback: 'Unknown',
+      ),
       devicePlatform: device?['platform'] as String? ?? 'Unknown',
       deviceHealth: _deviceHealthLabel(
         isVerified: isVerified,
@@ -361,14 +281,6 @@ class TeamAdminRepository {
       throw Exception('Team context is not loaded yet.');
     }
     return teamPublicId;
-  }
-
-  String _fallbackMemberName(String userPublicId) {
-    if (userPublicId.isEmpty) {
-      return 'Unknown responder';
-    }
-    final end = userPublicId.length < 8 ? userPublicId.length : 8;
-    return 'Responder ${userPublicId.substring(0, end)}';
   }
 
   String _deviceHealthLabel({
@@ -404,8 +316,6 @@ class TeamAdminRepository {
     required String teamPublicId,
     required String teamName,
     required List<TeamAdminMember> members,
-    required List<TeamIncidentSummary> incidents,
-    required List<TeamResponseSummary> responses,
   }) {
     return TeamAdminTeam(
       publicId: teamPublicId,
@@ -416,8 +326,6 @@ class TeamAdminRepository {
       notes:
           'Team Admin manages memberships, roles, device readiness, and team visibility for one existing operational team.',
       members: members,
-      incidents: incidents,
-      responses: responses,
     );
   }
 }

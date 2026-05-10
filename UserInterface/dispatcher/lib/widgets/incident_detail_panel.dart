@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
-import '../models/records.dart';
 import 'common_widgets.dart';
 import 'panel.dart';
 
@@ -76,7 +76,7 @@ class IncidentDetailPanel extends StatelessWidget {
                     DarkChip(icon: Icons.groups_rounded, text: teamName),
                     DarkChip(
                       icon: Icons.schedule_rounded,
-                      text: incident.created,
+                      text: formatMissionTimestamp(incident.created),
                     ),
                   ],
                 ),
@@ -91,6 +91,7 @@ class IncidentDetailPanel extends StatelessWidget {
               itemBuilder: (context, index) {
                 final response = ordered[index];
                 final responseColor = _responseColor(response.status);
+                final statusLabel = response.status?.label ?? 'Unknown';
                 final responderName = _responderNameFor(response.userPublicId);
                 final responderInitial = responderName.isEmpty
                     ? '?'
@@ -126,7 +127,7 @@ class IncidentDetailPanel extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Updated ${response.updated}',
+                              'Updated ${formatMissionTimestamp(response.updated)}',
                               style: const TextStyle(
                                 color: AppPalette.textSoft,
                                 height: 1.4,
@@ -136,7 +137,7 @@ class IncidentDetailPanel extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      StatusPill(label: response.status, color: responseColor),
+                      StatusPill(label: statusLabel, color: responseColor),
                     ],
                   ),
                 );
@@ -148,14 +149,16 @@ class IncidentDetailPanel extends StatelessWidget {
     );
   }
 
-  Color _responseColor(String status) {
+  Color _responseColor(ResponseStatus? status) {
     switch (status) {
-      case 'Responding':
+      case ResponseStatus.responding:
         return AppPalette.success;
-      case 'Not Available':
+      case ResponseStatus.notAvailable:
         return AppPalette.muted;
-      default:
+      case ResponseStatus.pending:
         return AppPalette.info;
+      case null:
+        return AppPalette.muted;
     }
   }
 

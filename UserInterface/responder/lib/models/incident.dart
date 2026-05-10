@@ -1,67 +1,61 @@
 import 'package:shared_models/shared_models.dart';
 
 class ResponderIncident {
-  const ResponderIncident({
-    required this.publicId,
-    required this.title,
-    required this.location,
-    required this.teamPublicId,
-    required this.timeLabel,
-    required this.notes,
-    required this.status,
-    required this.responses,
-    this.priority,
-  });
+  const ResponderIncident._({
+    required this.incident,
+    required this.responderStatus,
+    required String? responderPublicId,
+  }) : _responderPublicId = responderPublicId;
 
-  final String publicId;
-  final String title;
-  final String location;
-  final String teamPublicId;
-  final String timeLabel;
-  final String notes;
-  final String status;
-  final List<ResponderIncidentResponse> responses;
-  final String? priority;
+  final Incident incident;
+  final ResponseStatus? responderStatus;
+  final String? _responderPublicId;
+
+  String get publicId => incident.publicId;
+  String get title => incident.title;
+  String get location => incident.location;
+  String get teamPublicId => incident.teamPublicId;
+  DateTime? get created => incident.created;
+  String get notes => incident.notes;
+  String? get priority => incident.priority;
+  bool get active => incident.active;
+  List<ResponseRecord> get responses => incident.responses;
+
+  ResponseStatus? get status => responderStatus;
+
+  factory ResponderIncident.fromIncident(
+    Incident incident, {
+    String? responderPublicId,
+  }) {
+    ResponseStatus? mine;
+    if (responderPublicId != null) {
+      for (final response in incident.responses) {
+        if (response.userPublicId == responderPublicId) {
+          mine = response.status;
+          break;
+        }
+      }
+    }
+    return ResponderIncident._(
+      incident: incident,
+      responderStatus: mine,
+      responderPublicId: responderPublicId,
+    );
+  }
 
   factory ResponderIncident.fromJson(
     Map<String, dynamic> json, {
     String? responderPublicId,
-  }) {
-    final responses = (json['responses'] as List<dynamic>? ?? const [])
-        .whereType<Map<String, dynamic>>()
-        .map(ResponderIncidentResponse.fromJson)
-        .toList();
-    ResponderIncidentResponse? responderResponse;
-    for (final response in responses) {
-      if (response.userPublicId == responderPublicId) {
-        responderResponse = response;
-        break;
-      }
-    }
+  }) =>
+      ResponderIncident.fromIncident(
+        Incident.fromJson(json),
+        responderPublicId: responderPublicId,
+      );
 
-    return ResponderIncident(
-      publicId: json['public_id'] as String? ?? '',
-      title: json['title'] as String? ?? 'Untitled incident',
-      location: json['location'] as String? ?? 'Unknown location',
-      teamPublicId: json['team_public_id'] as String? ?? '',
-      timeLabel: formatMissionTimestamp(
-        json['created'] as String? ?? '',
-        fallback: 'Unknown',
-      ),
-      notes: json['notes'] as String? ?? '',
-      status: responderResponse?.status ?? 'Pending',
-      responses: responses,
-      priority: json['priority'] as String?,
-    );
-  }
-
-  ResponderIncident withResponderResponse(
-    ResponderIncidentResponse newResponse, {
-    String? responderPublicId,
-  }) {
-    final updated = <ResponderIncidentResponse>[];
+  ResponderIncident withResponderResponse(ResponseRecord newResponse) {
+    final updated = <ResponseRecord>[];
     var replaced = false;
-    for (final existing in responses) {
+    for (final existing in incident.responses) {
       if (existing.userPublicId == newResponse.userPublicId) {
         updated.add(newResponse);
         replaced = true;
@@ -73,49 +67,9 @@ class ResponderIncident {
       updated.add(newResponse);
     }
 
-    final responderResponse = responderPublicId == null
-        ? null
-        : updated.firstWhere(
-            (r) => r.userPublicId == responderPublicId,
-            orElse: () => newResponse,
-          );
-
-    return ResponderIncident(
-      publicId: publicId,
-      title: title,
-      location: location,
-      teamPublicId: teamPublicId,
-      timeLabel: timeLabel,
-      notes: notes,
-      status: responderResponse?.status ?? 'Pending',
-      responses: updated,
-      priority: priority,
-    );
-  }
-}
-
-class ResponderIncidentResponse {
-  const ResponderIncidentResponse({
-    required this.userPublicId,
-    required this.status,
-    required this.rank,
-    required this.updated,
-  });
-
-  final String userPublicId;
-  final String status;
-  final int rank;
-  final String updated;
-
-  factory ResponderIncidentResponse.fromJson(Map<String, dynamic> json) {
-    return ResponderIncidentResponse(
-      userPublicId: json['user_public_id'] as String? ?? '',
-      status: json['status'] as String? ?? 'Pending',
-      rank: json['rank'] as int? ?? 0,
-      updated: formatMissionTimestamp(
-        json['updated'] as String? ?? '',
-        fallback: 'Unknown',
-      ),
+    return ResponderIncident.fromIncident(
+      incident.copyWith(responses: updated),
+      responderPublicId: _responderPublicId,
     );
   }
 }

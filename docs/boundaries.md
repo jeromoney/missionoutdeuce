@@ -14,6 +14,7 @@ MissionOut is organized around a hard boundary:
 - Cross-stack field meanings, ownership rules, and workflow expectations belong in `docs/`.
 - Internal code structure on either side is private unless it is explicitly documented as part of a contract.
 - When a contract changes, regenerate `contracts/openapi.json` before or alongside implementation changes.
+- Team Management does not consume incident data. Incidents and response records are dispatcher and responder concerns; team admin manages readiness only. See `adr/0001-team-admin-does-not-consume-incident-data.md`.
 
 ## What Belongs In Docs
 

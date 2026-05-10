@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
-import '../models/incident_update.dart';
-import '../models/records.dart';
 import '../widgets/common_widgets.dart';
 
 class EditIncidentScreen extends StatefulWidget {
-  const EditIncidentScreen({super.key, required this.incident});
+  const EditIncidentScreen({
+    super.key,
+    required this.incident,
+    this.onSubmit,
+    this.onCancel,
+  });
 
   final Incident incident;
+  final ValueChanged<IncidentUpdate>? onSubmit;
+  final VoidCallback? onCancel;
 
   @override
   State<EditIncidentScreen> createState() => _EditIncidentScreenState();
@@ -145,7 +151,13 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                           alignment: WrapAlignment.end,
                           children: [
                             OutlinedButton(
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () {
+                                if (widget.onCancel != null) {
+                                  widget.onCancel!();
+                                  return;
+                                }
+                                Navigator.of(context).pop();
+                              },
                               child: const Text('Cancel'),
                             ),
                             FilledButton.icon(
@@ -179,14 +191,19 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
       return;
     }
 
-    Navigator.of(context).pop(
-      IncidentUpdate(
-        title: _titleController.text.trim(),
-        location: _locationController.text.trim(),
-        notes: _notesController.text.trim(),
-        active: _active,
-      ),
+    final update = IncidentUpdate(
+      title: _titleController.text.trim(),
+      location: _locationController.text.trim(),
+      notes: _notesController.text.trim(),
+      active: _active,
     );
+
+    if (widget.onSubmit != null) {
+      widget.onSubmit!(update);
+      return;
+    }
+
+    Navigator.of(context).pop(update);
   }
 }
 

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
+import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
 import '../models/dashboard_snapshot.dart';
-import '../models/incident_draft.dart';
-import '../models/incident_update.dart';
 import '../models/records.dart';
 import '../services/mission_out_api.dart';
 import '../widgets/common_widgets.dart';
@@ -51,105 +50,20 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final compact = width < 1150;
-
-    return Scaffold(
-      body: MissionOutBackdrop(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _Header(
-                  role: widget.auth.roleLabel,
-                  userInitials: widget.auth.currentUser?.initials ?? '--',
-                  incidents: incidents,
-                  onLogout: widget.auth.logout,
-                ),
-                if (loadError != null) ...[
-                  const SizedBox(height: 16),
-                  _LoadErrorBanner(message: loadError!),
-                ],
-                const SizedBox(height: 18),
-                _SummaryStrip(incidents: incidents),
-                const SizedBox(height: 18),
-                Expanded(
-                  child: loading
-                      ? const Center(child: CircularProgressIndicator())
-                      : incidents.isEmpty
-                      ? _EmptyIncidentState(
-                          message: loadError,
-                          onCreateIncident: _openCreateIncident,
-                        )
-                      : _buildDashboardLayout(compact),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashboardLayout(bool compact) {
-    final incident = incidents[selected];
-
-    if (compact) {
-      return ListView(
-        children: [
-          SizedBox(
-            height: 440,
-            child: IncidentBoard(
-              incidents: incidents,
-              teamNamesByPublicId: teamNamesByPublicId,
-              selectedIndex: selected,
-              onSelect: _selectIncident,
-              onCreateIncident: _openCreateIncident,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 580,
-            child: IncidentDetailPanel(
-              incident: incident,
-              teamName: _teamNameFor(incident.teamPublicId),
-              responderNamesByPublicId: responderNamesByPublicId,
-              onEditIncident: _openEditIncident,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(height: 380, child: DeliveryFeedPanel(events: events)),
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          flex: 7,
-          child: IncidentBoard(
-            incidents: incidents,
-            teamNamesByPublicId: teamNamesByPublicId,
-            selectedIndex: selected,
-            onSelect: _selectIncident,
-            onCreateIncident: _openCreateIncident,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 5,
-          child: IncidentDetailPanel(
-            incident: incident,
-            teamName: _teamNameFor(incident.teamPublicId),
-            responderNamesByPublicId: responderNamesByPublicId,
-            onEditIncident: _openEditIncident,
-          ),
-        ),
-        const SizedBox(width: 16),
-        SizedBox(width: 340, child: DeliveryFeedPanel(events: events)),
-      ],
+    return MissionControlBody(
+      role: widget.auth.roleLabel,
+      userInitials: widget.auth.currentUser?.initials ?? '--',
+      incidents: incidents,
+      events: events,
+      teamNamesByPublicId: teamNamesByPublicId,
+      responderNamesByPublicId: responderNamesByPublicId,
+      selected: selected,
+      loading: loading,
+      loadError: loadError,
+      onLogout: widget.auth.logout,
+      onSelectIncident: _selectIncident,
+      onCreateIncident: _openCreateIncident,
+      onEditIncident: _openEditIncident,
     );
   }
 
@@ -195,10 +109,6 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
         loadError = 'Could not load incident data.';
       });
     }
-  }
-
-  String _teamNameFor(String teamPublicId) {
-    return teamNamesByPublicId[teamPublicId] ?? 'Assigned team';
   }
 
   void _selectIncident(int index) {
@@ -289,6 +199,147 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
   }
 }
 
+class MissionControlBody extends StatelessWidget {
+  const MissionControlBody({
+    super.key,
+    required this.role,
+    required this.userInitials,
+    required this.incidents,
+    required this.events,
+    required this.teamNamesByPublicId,
+    required this.responderNamesByPublicId,
+    required this.selected,
+    required this.loading,
+    required this.loadError,
+    required this.onLogout,
+    required this.onSelectIncident,
+    required this.onCreateIncident,
+    required this.onEditIncident,
+  });
+
+  final String role;
+  final String userInitials;
+  final List<Incident> incidents;
+  final List<EventRecord> events;
+  final Map<String, String> teamNamesByPublicId;
+  final Map<String, String> responderNamesByPublicId;
+  final int selected;
+  final bool loading;
+  final String? loadError;
+  final VoidCallback onLogout;
+  final ValueChanged<int> onSelectIncident;
+  final VoidCallback onCreateIncident;
+  final VoidCallback onEditIncident;
+
+  String _teamNameFor(String teamPublicId) {
+    return teamNamesByPublicId[teamPublicId] ?? 'Assigned team';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final compact = width < 1150;
+
+    return Scaffold(
+      body: MissionOutBackdrop(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                _Header(
+                  role: role,
+                  userInitials: userInitials,
+                  incidents: incidents,
+                  onLogout: onLogout,
+                ),
+                if (loadError != null) ...[
+                  const SizedBox(height: 16),
+                  _LoadErrorBanner(message: loadError!),
+                ],
+                const SizedBox(height: 18),
+                _SummaryStrip(incidents: incidents),
+                const SizedBox(height: 18),
+                Expanded(
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : incidents.isEmpty
+                      ? _EmptyIncidentState(
+                          message: loadError,
+                          onCreateIncident: onCreateIncident,
+                        )
+                      : _buildDashboardLayout(compact),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardLayout(bool compact) {
+    final incident = incidents[selected];
+
+    if (compact) {
+      return ListView(
+        children: [
+          SizedBox(
+            height: 440,
+            child: IncidentBoard(
+              incidents: incidents,
+              teamNamesByPublicId: teamNamesByPublicId,
+              selectedIndex: selected,
+              onSelect: onSelectIncident,
+              onCreateIncident: onCreateIncident,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 580,
+            child: IncidentDetailPanel(
+              incident: incident,
+              teamName: _teamNameFor(incident.teamPublicId),
+              responderNamesByPublicId: responderNamesByPublicId,
+              onEditIncident: onEditIncident,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(height: 380, child: DeliveryFeedPanel(events: events)),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          flex: 7,
+          child: IncidentBoard(
+            incidents: incidents,
+            teamNamesByPublicId: teamNamesByPublicId,
+            selectedIndex: selected,
+            onSelect: onSelectIncident,
+            onCreateIncident: onCreateIncident,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 5,
+          child: IncidentDetailPanel(
+            incident: incident,
+            teamName: _teamNameFor(incident.teamPublicId),
+            responderNamesByPublicId: responderNamesByPublicId,
+            onEditIncident: onEditIncident,
+          ),
+        ),
+        const SizedBox(width: 16),
+        SizedBox(width: 340, child: DeliveryFeedPanel(events: events)),
+      ],
+    );
+  }
+}
+
 class _Header extends StatelessWidget {
   const _Header({
     required this.role,
@@ -310,7 +361,7 @@ class _Header extends StatelessWidget {
       (sum, incident) =>
           sum +
           incident.responses
-              .where((response) => response.status == 'Responding')
+              .where((response) => response.status == ResponseStatus.responding)
               .length,
     );
 
@@ -349,7 +400,10 @@ class _Header extends StatelessWidget {
                 children: [
                   MetricBadge(label: 'Active', value: '$active'),
                   const SizedBox(width: 12),
-                  MetricBadge(label: 'Responding', value: '$responders'),
+                  MetricBadge(
+                    label: ResponseStatus.responding.label,
+                    value: '$responders',
+                  ),
                   const SizedBox(width: 12),
                   PopupMenuButton<String>(
                     tooltip: 'Account',
@@ -406,7 +460,7 @@ class _SummaryStrip extends StatelessWidget {
       (sum, incident) =>
           sum +
           incident.responses
-              .where((response) => response.status == 'Responding')
+              .where((response) => response.status == ResponseStatus.responding)
               .length,
     );
     final pending = incidents.fold<int>(
@@ -414,7 +468,7 @@ class _SummaryStrip extends StatelessWidget {
       (sum, incident) =>
           sum +
           incident.responses
-              .where((response) => response.status == 'Pending')
+              .where((response) => response.status == ResponseStatus.pending)
               .length,
     );
 
@@ -430,7 +484,7 @@ class _SummaryStrip extends StatelessWidget {
           color: AppPalette.info,
         ),
         SummaryCard(
-          title: 'Responding',
+          title: ResponseStatus.responding.label,
           value: '$responding',
           subtitle:
               'Confirmed field responders across the recent incident feed.',
@@ -438,7 +492,7 @@ class _SummaryStrip extends StatelessWidget {
           color: AppPalette.success,
         ),
         SummaryCard(
-          title: 'Pending',
+          title: ResponseStatus.pending.label,
           value: '$pending',
           subtitle:
               'Awaiting acknowledgement in the last-7-days incident feed.',

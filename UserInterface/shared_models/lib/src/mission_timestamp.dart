@@ -14,41 +14,31 @@ const _monthNames = <String>[
 ];
 
 String formatMissionTimestamp(
-  String inputDate, {
+  DateTime? value, {
   DateTime? now,
   String fallback = 'Unknown',
 }) {
-  try {
-    final value = inputDate.trim();
-    if (value.isEmpty) {
-      return fallback;
-    }
-
-    final parsed = DateTime.tryParse(value);
-    if (parsed == null) {
-      return value;
-    }
-
-    final effectiveNow = (now ?? DateTime.now()).toLocal();
-    final localParsed = parsed.toLocal();
-    final difference = effectiveNow.difference(localParsed);
-
-    if (difference.isNegative) {
-      throw FormatException('Mission timestamp cannot be in the future.', value);
-    }
-
-    if (difference < const Duration(days: 7)) {
-      return _formatRecentDuration(difference);
-    }
-
-    if (localParsed.year == effectiveNow.year) {
-      return '${_monthNames[localParsed.month - 1]} ${localParsed.day}';
-    }
-
-    return '${_monthNames[localParsed.month - 1]} ${localParsed.day}, ${localParsed.year}';
-  } on FormatException {
-    return 'error';
+  if (value == null) {
+    return fallback;
   }
+
+  final effectiveNow = (now ?? DateTime.now()).toLocal();
+  final localValue = value.toLocal();
+  final difference = effectiveNow.difference(localValue);
+
+  if (difference.isNegative) {
+    return fallback;
+  }
+
+  if (difference < const Duration(days: 7)) {
+    return _formatRecentDuration(difference);
+  }
+
+  if (localValue.year == effectiveNow.year) {
+    return '${_monthNames[localValue.month - 1]} ${localValue.day}';
+  }
+
+  return '${_monthNames[localValue.month - 1]} ${localValue.day}, ${localValue.year}';
 }
 
 String _formatRecentDuration(Duration duration) {

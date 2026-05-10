@@ -28,8 +28,6 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
     notes:
         'Team Admin manages memberships, roles, device readiness, and team visibility for one existing operational team.',
     members: [],
-    incidents: [],
-    responses: [],
   );
   bool loading = true;
   bool memberCrudSupported = false;
@@ -46,157 +44,20 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final compact = width < 1200;
-    final activeMembers = team.members
-        .where((member) => member.isActive)
-        .length;
-    final admins = team.members
-        .where((member) => member.roles.contains('team_admin'))
-        .length;
-    final unhealthyDevices = team.members
-        .where((member) => member.deviceHealth != 'Healthy')
-        .length;
-    final responding = team.responses
-        .where((response) => response.status == 'Responding')
-        .length;
-
-    return Scaffold(
-      body: MissionOutBackdrop(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _Header(
-                  team: team,
-                  userInitials: widget.auth.currentUser?.initials ?? '--',
-                  connectionLabel: connectionLabel,
-                  connectionDetail: connectionDetail,
-                  usingLiveData: usingLiveData,
-                  onLogout: widget.auth.logout,
-                ),
-                if (statusMessage != null) ...[
-                  const SizedBox(height: 16),
-                  _StatusBanner(message: statusMessage!),
-                ],
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
-                    _SummaryCard(
-                      title: 'Active members',
-                      value: '$activeMembers',
-                      subtitle:
-                          'Users currently active in this one managed team.',
-                      icon: Icons.badge_outlined,
-                      color: TeamAdminPalette.accent,
-                    ),
-                    _SummaryCard(
-                      title: 'Team admins',
-                      value: '$admins',
-                      subtitle: 'Members who can manage roles and activation.',
-                      icon: Icons.admin_panel_settings_outlined,
-                      color: TeamAdminPalette.success,
-                    ),
-                    _SummaryCard(
-                      title: 'Device issues',
-                      value: '$unhealthyDevices',
-                      subtitle: 'Members with device state needing follow-up.',
-                      icon: Icons.phonelink_erase_rounded,
-                      color: TeamAdminPalette.secondaryAccent,
-                    ),
-                    _SummaryCard(
-                      title: 'Active responses',
-                      value: '$responding',
-                      subtitle:
-                          'Acknowledgement activity across this team\'s last-7-days incident feed.',
-                      icon: Icons.assignment_turned_in_outlined,
-                      color: TeamAdminPalette.warning,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                Expanded(
-                  child: loading
-                      ? const Center(child: CircularProgressIndicator())
-                      : compact
-                      ? ListView(
-                          children: [
-                            SizedBox(
-                              height: 580,
-                              child: _MembersPanel(
-                                team: team,
-                                memberCrudSupported: memberCrudSupported,
-                                onCreateMember: _openCreateMember,
-                                onEditMember: _openEditMember,
-                                onToggleMember: _toggleMemberActive,
-                                onDeleteMember: _deleteMember,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 260,
-                              child: _TeamContextPanel(team: team),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 260,
-                              child: _ResponsesPanel(responses: team.responses),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 260,
-                              child: _IncidentsPanel(incidents: team.incidents),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              flex: 7,
-                              child: _MembersPanel(
-                                team: team,
-                                memberCrudSupported: memberCrudSupported,
-                                onCreateMember: _openCreateMember,
-                                onEditMember: _openEditMember,
-                                onToggleMember: _toggleMemberActive,
-                                onDeleteMember: _deleteMember,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 5,
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: _TeamContextPanel(team: team),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Expanded(
-                                    child: _ResponsesPanel(
-                                      responses: team.responses,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Expanded(
-                                    child: _IncidentsPanel(
-                                      incidents: team.incidents,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return TeamAdminHomeBody(
+      team: team,
+      userInitials: widget.auth.currentUser?.initials ?? '--',
+      loading: loading,
+      memberCrudSupported: memberCrudSupported,
+      usingLiveData: usingLiveData,
+      statusMessage: statusMessage,
+      connectionLabel: connectionLabel,
+      connectionDetail: connectionDetail,
+      onLogout: widget.auth.logout,
+      onCreateMember: _openCreateMember,
+      onEditMember: _openEditMember,
+      onToggleMember: _toggleMemberActive,
+      onDeleteMember: _deleteMember,
     );
   }
 
@@ -229,7 +90,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
     if (!memberCrudSupported) {
       setState(() {
         statusMessage =
-            'This backend does not expose team membership CRUD yet. Live incident and response data are connected, but member invites and device management still need backend routes.';
+            'This backend does not expose team membership CRUD yet. Member invites and device management still need backend routes.';
       });
       return;
     }
@@ -269,7 +130,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
     if (!memberCrudSupported) {
       setState(() {
         statusMessage =
-            'This backend does not expose team membership CRUD yet. Live incident and response data are connected, but member role edits still need backend routes.';
+            'This backend does not expose team membership CRUD yet. Member role edits still need backend routes.';
       });
       return;
     }
@@ -309,7 +170,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
     if (!memberCrudSupported) {
       setState(() {
         statusMessage =
-            'This backend does not expose activate/deactivate membership routes yet. Operational history is live, but member state changes still need backend support.';
+            'This backend does not expose activate/deactivate membership routes yet. Member state changes still need backend support.';
       });
       return;
     }
@@ -372,7 +233,7 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
     if (!memberCrudSupported) {
       setState(() {
         statusMessage =
-            'This backend does not expose membership deletion yet. Operational history is live, but permanent removals still need backend support.';
+            'This backend does not expose membership deletion yet. Permanent removals still need backend support.';
       });
       return;
     }
@@ -424,6 +285,156 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
         ),
       );
     }
+  }
+}
+
+class TeamAdminHomeBody extends StatelessWidget {
+  const TeamAdminHomeBody({
+    super.key,
+    required this.team,
+    required this.userInitials,
+    required this.loading,
+    required this.memberCrudSupported,
+    required this.usingLiveData,
+    required this.statusMessage,
+    required this.connectionLabel,
+    required this.connectionDetail,
+    required this.onLogout,
+    required this.onCreateMember,
+    required this.onEditMember,
+    required this.onToggleMember,
+    required this.onDeleteMember,
+  });
+
+  final TeamAdminTeam team;
+  final String userInitials;
+  final bool loading;
+  final bool memberCrudSupported;
+  final bool usingLiveData;
+  final String? statusMessage;
+  final String connectionLabel;
+  final String connectionDetail;
+  final VoidCallback onLogout;
+  final VoidCallback onCreateMember;
+  final ValueChanged<TeamAdminMember> onEditMember;
+  final ValueChanged<TeamAdminMember> onToggleMember;
+  final ValueChanged<TeamAdminMember> onDeleteMember;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final compact = width < 1200;
+    final activeMembers = team.members
+        .where((member) => member.isActive)
+        .length;
+    final admins = team.members
+        .where((member) => member.roles.contains('team_admin'))
+        .length;
+    final unhealthyDevices = team.members
+        .where((member) => member.deviceHealth != 'Healthy')
+        .length;
+
+    return Scaffold(
+      body: MissionOutBackdrop(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                _Header(
+                  team: team,
+                  userInitials: userInitials,
+                  connectionLabel: connectionLabel,
+                  connectionDetail: connectionDetail,
+                  usingLiveData: usingLiveData,
+                  onLogout: onLogout,
+                ),
+                if (statusMessage != null) ...[
+                  const SizedBox(height: 16),
+                  _StatusBanner(message: statusMessage!),
+                ],
+                const SizedBox(height: 18),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    _SummaryCard(
+                      title: 'Active members',
+                      value: '$activeMembers',
+                      subtitle:
+                          'Users currently active in this one managed team.',
+                      icon: Icons.badge_outlined,
+                      color: TeamAdminPalette.accent,
+                    ),
+                    _SummaryCard(
+                      title: 'Team admins',
+                      value: '$admins',
+                      subtitle: 'Members who can manage roles and activation.',
+                      icon: Icons.admin_panel_settings_outlined,
+                      color: TeamAdminPalette.success,
+                    ),
+                    _SummaryCard(
+                      title: 'Device issues',
+                      value: '$unhealthyDevices',
+                      subtitle: 'Members with device state needing follow-up.',
+                      icon: Icons.phonelink_erase_rounded,
+                      color: TeamAdminPalette.secondaryAccent,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Expanded(
+                  child: loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : compact
+                      ? ListView(
+                          children: [
+                            SizedBox(
+                              height: 580,
+                              child: _MembersPanel(
+                                team: team,
+                                memberCrudSupported: memberCrudSupported,
+                                onCreateMember: onCreateMember,
+                                onEditMember: onEditMember,
+                                onToggleMember: onToggleMember,
+                                onDeleteMember: onDeleteMember,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              height: 260,
+                              child: _TeamContextPanel(team: team),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              flex: 7,
+                              child: _MembersPanel(
+                                team: team,
+                                memberCrudSupported: memberCrudSupported,
+                                onCreateMember: onCreateMember,
+                                onEditMember: onEditMember,
+                                onToggleMember: onToggleMember,
+                                onDeleteMember: onDeleteMember,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 5,
+                              child: _TeamContextPanel(team: team),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -754,135 +765,6 @@ class _TeamContextPanel extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _IncidentsPanel extends StatelessWidget {
-  const _IncidentsPanel({required this.incidents});
-
-  final List<TeamIncidentSummary> incidents;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Panel(
-      title: 'Team incidents',
-      subtitle:
-          'Read-only visibility into this team\'s recent incident feed and response history.',
-      child: ListView.separated(
-        itemCount: incidents.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final incident = incidents[index];
-          return Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: TeamAdminPalette.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        incident.title,
-                        style: const TextStyle(
-                          color: TeamAdminPalette.text,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    _Pill(
-                      label: incident.state,
-                      color: incident.state == 'Active'
-                          ? TeamAdminPalette.accent
-                          : TeamAdminPalette.warning,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${incident.location} | ${incident.time}',
-                  style: const TextStyle(color: TeamAdminPalette.textSoft),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ResponsesPanel extends StatelessWidget {
-  const _ResponsesPanel({required this.responses});
-
-  final List<TeamResponseSummary> responses;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Panel(
-      title: 'Recent responses',
-      subtitle:
-          'Read-only acknowledgement history for incidents in this team\'s recent feed.',
-      child: ListView.separated(
-        itemCount: responses.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final response = responses[index];
-          return Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: TeamAdminPalette.border),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        response.memberName,
-                        style: const TextStyle(
-                          color: TeamAdminPalette.text,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        response.incidentTitle,
-                        style: const TextStyle(
-                          color: TeamAdminPalette.textSoft,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _Pill(
-                      label: response.status,
-                      color: _statusColor(response.status),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      response.time,
-                      style: const TextStyle(color: TeamAdminPalette.textSoft),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }
@@ -1314,10 +1196,6 @@ Color _statusColor(String status) {
   switch (status) {
     case 'Available':
       return TeamAdminPalette.success;
-    case 'Responding':
-      return TeamAdminPalette.accent;
-    case 'Pending':
-      return TeamAdminPalette.secondaryAccent;
     default:
       return TeamAdminPalette.warning;
   }

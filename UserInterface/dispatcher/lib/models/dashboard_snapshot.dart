@@ -1,3 +1,5 @@
+import 'package:shared_models/shared_models.dart';
+
 import 'records.dart';
 
 class DashboardSnapshot {

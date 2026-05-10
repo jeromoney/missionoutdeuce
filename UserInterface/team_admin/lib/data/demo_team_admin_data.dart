@@ -52,45 +52,4 @@ const demoManagedTeam = TeamAdminTeam(
       isActive: false,
     ),
   ],
-  incidents: [
-    TeamIncidentSummary(
-      publicId: 'incident_injured_climber_demo',
-      teamPublicId: 'team_chaffee_sar_demo',
-      title: 'Injured Climber Extraction',
-      location: 'Mt. Princeton Southwest Gully',
-      state: 'Active',
-      time: '8 min ago',
-    ),
-    TeamIncidentSummary(
-      publicId: 'incident_overdue_hiker_demo',
-      teamPublicId: 'team_chaffee_sar_demo',
-      title: 'Overdue Hiker Assist',
-      location: 'Browns Canyon Trailhead',
-      state: 'Resolved',
-      time: 'Yesterday',
-    ),
-  ],
-  responses: [
-    TeamResponseSummary(
-      userPublicId: 'user_sarah_kent_demo',
-      memberName: 'Sarah Kent',
-      incidentTitle: 'Injured Climber Extraction',
-      status: 'Responding',
-      time: '2 min ago',
-    ),
-    TeamResponseSummary(
-      userPublicId: 'user_mike_dawson_demo',
-      memberName: 'Mike Dawson',
-      incidentTitle: 'Overdue Hiker Assist',
-      status: 'Not Available',
-      time: 'Yesterday',
-    ),
-    TeamResponseSummary(
-      userPublicId: 'user_justin_mercer_demo',
-      memberName: 'Justin Mercer',
-      incidentTitle: 'Injured Climber Extraction',
-      status: 'Assigned Dispatcher',
-      time: '8 min ago',
-    ),
-  ],
 );

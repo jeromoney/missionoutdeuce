@@ -18,6 +18,8 @@ dependencies:
     path: ../shared_models
   shared_theme:
     path: ../shared_theme
+  shared_previews:
+    path: ../shared_previews
 
 dev_dependencies:
   flutter_test:

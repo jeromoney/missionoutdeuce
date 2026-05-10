@@ -1,6 +1,9 @@
 export 'src/auth_role.dart';
 export 'src/availability_status.dart';
+export 'src/delivery_event.dart';
 export 'src/email_validator.dart';
+export 'src/incident.dart';
+export 'src/incident_draft.dart';
 export 'src/mission_timestamp.dart';
 export 'src/name_validator.dart';
 export 'src/phone_validator.dart';

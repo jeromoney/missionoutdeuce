@@ -6,7 +6,14 @@
       "Bash(.venv/Scripts/python scripts/export_openapi.py)",
       "Bash(.venv/Scripts/python run.py)",
       "Bash(curl -s http://localhost:8000/health)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "mcp__dart__analyze_files",
+      "Bash(xargs grep *)",
+      "Bash(flutter test *)",
+      "Bash(awk *)",
+      "Bash(Get-ChildItem *)",
+      "Bash(Select-Object Name)",
+      "Bash(flutter pub *)"
     ]
   },
   "enabledMcpjsonServers": [

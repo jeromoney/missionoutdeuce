@@ -5,10 +5,10 @@ void main() {
   group('formatMissionTimestamp', () {
     final now = DateTime(2026, 3, 29, 23, 23);
 
-    test('formats recent ISO timestamps within the week as relative time', () {
+    test('formats recent timestamps within the week as relative time', () {
       expect(
         formatMissionTimestamp(
-          '2026-03-29T22:56:00Z',
+          DateTime.utc(2026, 3, 29, 22, 56),
           now: DateTime.utc(2026, 3, 29, 23),
         ),
         '4 minutes ago',
@@ -17,36 +17,39 @@ void main() {
 
     test('formats same-year dates beyond a week as month and day', () {
       expect(
-        formatMissionTimestamp('2026-03-10T09:30:00Z', now: now.toUtc()),
+        formatMissionTimestamp(
+          DateTime.utc(2026, 3, 10, 9, 30),
+          now: now.toUtc(),
+        ),
         'March 10',
       );
     });
 
     test('formats prior-year dates with month day and year', () {
       expect(
-        formatMissionTimestamp('2025-11-03T18:20:00Z', now: now.toUtc()),
+        formatMissionTimestamp(
+          DateTime.utc(2025, 11, 3, 18, 20),
+          now: now.toUtc(),
+        ),
         'November 3, 2025',
       );
     });
 
-    test('returns fallback for blank strings', () {
+    test('returns fallback for null', () {
       expect(
-        formatMissionTimestamp('', now: now, fallback: 'Unknown'),
+        formatMissionTimestamp(null, now: now, fallback: 'Unknown'),
         'Unknown',
       );
     });
 
-    test('returns the raw value when the input is not ISO', () {
-      expect(formatMissionTimestamp('March 29', now: now), 'March 29');
-    });
-
-    test('returns error when the ISO timestamp is in the future', () {
+    test('returns fallback when the timestamp is in the future', () {
       expect(
         formatMissionTimestamp(
-          '2026-03-30T00:00:00Z',
+          DateTime.utc(2026, 3, 30),
           now: DateTime.utc(2026, 3, 29, 23, 23),
+          fallback: 'Unknown',
         ),
-        'error',
+        'Unknown',
       );
     });
   });

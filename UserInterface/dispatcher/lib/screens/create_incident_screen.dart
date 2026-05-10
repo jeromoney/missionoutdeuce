@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
-import '../models/incident_draft.dart';
 import '../widgets/common_widgets.dart';
 
 class CreateIncidentScreen extends StatefulWidget {
-  const CreateIncidentScreen({super.key});
+  const CreateIncidentScreen({super.key, this.onSubmit, this.onCancel});
+
+  final ValueChanged<IncidentDraft>? onSubmit;
+  final VoidCallback? onCancel;
 
   @override
   State<CreateIncidentScreen> createState() => _CreateIncidentScreenState();
@@ -87,7 +90,13 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
                           alignment: WrapAlignment.end,
                           children: [
                             OutlinedButton(
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: () {
+                                if (widget.onCancel != null) {
+                                  widget.onCancel!();
+                                  return;
+                                }
+                                Navigator.of(context).pop();
+                              },
                               child: const Text('Cancel'),
                             ),
                             FilledButton.icon(
@@ -121,13 +130,18 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
       return;
     }
 
-    Navigator.of(context).pop(
-      IncidentDraft(
-        title: _titleController.text.trim(),
-        location: _locationController.text.trim(),
-        notes: _notesController.text.trim(),
-      ),
+    final draft = IncidentDraft(
+      title: _titleController.text.trim(),
+      location: _locationController.text.trim(),
+      notes: _notesController.text.trim(),
     );
+
+    if (widget.onSubmit != null) {
+      widget.onSubmit!(draft);
+      return;
+    }
+
+    Navigator.of(context).pop(draft);
   }
 }
 
