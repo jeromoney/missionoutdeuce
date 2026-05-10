@@ -4,6 +4,7 @@ import 'package:shared_theme/shared_theme.dart';
 import 'package:flutter/widget_previews.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../widgets/responder_brand.dart';
 
 class LoggedOutScreen extends StatefulWidget {
@@ -90,6 +91,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
   Future<void> _submitEmailCode() async {
     final email = emailController.text.trim();
     final code = codeController.text.trim();
+    final l10n = AppLocalizations.of(context);
 
     setState(() {
       errorText = null;
@@ -101,8 +103,8 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     if (emailError != null) {
       setState(() {
         errorText = switch (emailError) {
-          EmailValidationError.empty => 'Enter an email address.',
-          EmailValidationError.invalid => 'Enter a valid email address.',
+          EmailValidationError.empty => l10n.emailRequired,
+          EmailValidationError.invalid => l10n.emailInvalid,
         };
         isSubmitting = false;
       });
@@ -111,7 +113,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
 
     if (awaitingCode && code.isEmpty) {
       setState(() {
-        errorText = 'Enter the code from your email.';
+        errorText = l10n.codeRequired;
         isSubmitting = false;
       });
       return;
@@ -128,7 +130,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
         return;
       }
       setState(() {
-        successText = 'Check your email for code';
+        successText = l10n.codeSentMessage;
         awaitingCode = true;
         isSubmitting = false;
       });
@@ -195,6 +197,7 @@ class _LoginPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
@@ -217,9 +220,9 @@ class _LoginPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Sign in to responder view',
-            style: TextStyle(
+          Text(
+            l10n.signInTitle,
+            style: const TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.7,
@@ -227,14 +230,17 @@ class _LoginPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Use an emailed code or Google to continue.',
-            style: TextStyle(color: ResponderPalette.textSoft, height: 1.5),
+          Text(
+            l10n.signInSubtitle,
+            style: const TextStyle(
+              color: ResponderPalette.textSoft,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 22),
-          const Text(
-            'Email',
-            style: TextStyle(
+          Text(
+            l10n.emailFieldLabel,
+            style: const TextStyle(
               fontWeight: FontWeight.w700,
               color: ResponderPalette.text,
             ),
@@ -244,12 +250,12 @@ class _LoginPanel extends StatelessWidget {
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             readOnly: awaitingCode,
-            decoration: const InputDecoration(hintText: 'example@domain.com'),
+            decoration: InputDecoration(hintText: l10n.emailFieldHint),
           ),
           const SizedBox(height: 10),
-          const Text(
-            'We will send a sign-in link for this responder account.',
-            style: TextStyle(color: ResponderPalette.textSoft),
+          Text(
+            l10n.emailFieldHelp,
+            style: const TextStyle(color: ResponderPalette.textSoft),
           ),
           if (successText != null) ...[
             const SizedBox(height: 14),
@@ -279,10 +285,10 @@ class _LoginPanel extends StatelessWidget {
               onPressed: isSubmitting ? null : onSubmitEmailCode,
               child: Text(
                 isSubmitting
-                    ? (awaitingCode ? 'Verifying code...' : 'Sending code...')
+                    ? (awaitingCode ? l10n.verifyingButton : l10n.sendingButton)
                     : awaitingCode
-                    ? 'Verify code'
-                    : 'Email me a sign-in code',
+                    ? l10n.verifyCodeButton
+                    : l10n.emailMeCodeButton,
               ),
             ),
           ),
@@ -299,8 +305,8 @@ class _LoginPanel extends StatelessWidget {
                 icon: const Icon(Icons.login_rounded),
                 label: Text(
                   googleLoginEnabled
-                      ? 'Continue with Google'
-                      : 'Google login not configured',
+                      ? l10n.continueWithGoogle
+                      : l10n.googleNotConfigured,
                 ),
               ),
             ),

@@ -3,6 +3,7 @@ import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../widgets/common_widgets.dart';
 
 class CreateIncidentScreen extends StatefulWidget {
@@ -31,6 +32,7 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: MissionOutBackdrop(
         child: SafeArea(
@@ -45,11 +47,11 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
                     key: _formKey,
                     child: ListView(
                       children: [
-                        const SectionEyebrow(label: 'New incident'),
+                        SectionEyebrow(label: l10n.newIncidentEyebrow),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Dispatch a new incident',
-                          style: TextStyle(
+                        Text(
+                          l10n.newIncidentTitle,
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.9,
@@ -58,29 +60,29 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
                         ),
                         const SizedBox(height: 26),
                         _LabeledField(
-                          label: 'Incident title',
+                          label: l10n.incidentTitleLabel,
                           child: TextFormField(
                             controller: _titleController,
                             textInputAction: TextInputAction.next,
-                            validator: _requiredField,
+                            validator: (value) => _requiredField(value, l10n),
                           ),
                         ),
                         const SizedBox(height: 18),
                         _LabeledField(
-                          label: 'Location',
+                          label: l10n.incidentLocationLabel,
                           child: TextFormField(
                             controller: _locationController,
-                            validator: _requiredField,
+                            validator: (value) => _requiredField(value, l10n),
                           ),
                         ),
                         const SizedBox(height: 18),
                         _LabeledField(
-                          label: 'Dispatch notes',
+                          label: l10n.incidentNotesLabel,
                           child: TextFormField(
                             controller: _notesController,
                             minLines: 5,
                             maxLines: 7,
-                            validator: _requiredField,
+                            validator: (value) => _requiredField(value, l10n),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -97,12 +99,12 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
                                 }
                                 Navigator.of(context).pop();
                               },
-                              child: const Text('Cancel'),
+                              child: Text(l10n.cancelButton),
                             ),
                             FilledButton.icon(
                               onPressed: _submit,
                               icon: const Icon(Icons.add_rounded),
-                              label: const Text('Create incident'),
+                              label: Text(l10n.createIncidentButton),
                             ),
                           ],
                         ),
@@ -118,9 +120,9 @@ class _CreateIncidentScreenState extends State<CreateIncidentScreen> {
     );
   }
 
-  String? _requiredField(String? value) {
+  String? _requiredField(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return 'Required';
+      return l10n.fieldRequired;
     }
     return null;
   }

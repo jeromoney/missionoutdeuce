@@ -1,0 +1,248 @@
+{
+  "@@locale": "en",
+  "appName": "MissionOut Responder",
+  "@appName": {
+    "description": "App display name shown in the OS task switcher and app launcher."
+  },
+
+  "emailRequired": "Enter an email address.",
+  "@emailRequired": {
+    "description": "Validation error when an email field is empty."
+  },
+  "emailInvalid": "Enter a valid email address.",
+  "@emailInvalid": {
+    "description": "Validation error when an email field has malformed input."
+  },
+  "codeRequired": "Enter the code from your email.",
+  "@codeRequired": {
+    "description": "Error shown when the email-code field is empty during code verification."
+  },
+  "codeSentMessage": "Check your email for code",
+  "@codeSentMessage": {
+    "description": "Success message after the responder requests a sign-in code."
+  },
+
+  "signInTitle": "Sign in to responder view",
+  "@signInTitle": {
+    "description": "Heading on the responder logged-out screen."
+  },
+  "signInSubtitle": "Use an emailed code or Google to continue.",
+  "@signInSubtitle": {
+    "description": "Subhead under the responder sign-in heading."
+  },
+  "emailFieldLabel": "Email",
+  "@emailFieldLabel": {
+    "description": "Label above the email text field on the sign-in form."
+  },
+  "emailFieldHint": "example@domain.com",
+  "@emailFieldHint": {
+    "description": "Placeholder shown inside the empty email field."
+  },
+  "emailFieldHelp": "We will send a sign-in link for this responder account.",
+  "@emailFieldHelp": {
+    "description": "Helper text under the email field on the responder sign-in form."
+  },
+  "verifyingButton": "Verifying code...",
+  "@verifyingButton": {
+    "description": "Sign-in button text while the entered code is being verified."
+  },
+  "sendingButton": "Sending code...",
+  "@sendingButton": {
+    "description": "Sign-in button text while the email code is being sent."
+  },
+  "verifyCodeButton": "Verify code",
+  "@verifyCodeButton": {
+    "description": "Sign-in button text when ready to verify a code."
+  },
+  "emailMeCodeButton": "Email me a sign-in code",
+  "@emailMeCodeButton": {
+    "description": "Sign-in button text on the initial state."
+  },
+  "continueWithGoogle": "Continue with Google",
+  "@continueWithGoogle": {
+    "description": "Label on the Google sign-in button."
+  },
+  "googleNotConfigured": "Google login not configured",
+  "@googleNotConfigured": {
+    "description": "Disabled Google button label when the client id is missing."
+  },
+
+  "errorLoadIncidents": "Could not load missions from the API.",
+  "@errorLoadIncidents": {
+    "description": "Error banner when the responder's mission list fails to load."
+  },
+  "errorRefreshIncidents": "Could not refresh missions after a live event.",
+  "@errorRefreshIncidents": {
+    "description": "Error banner when refreshing incidents after a live alert event fails."
+  },
+  "errorMissingIncidentId": "Could not submit response because the incident public ID is missing.",
+  "@errorMissingIncidentId": {
+    "description": "Error when the responder tries to submit a response without a known incident."
+  },
+  "errorSubmitResponse": "Could not submit your responder status.",
+  "@errorSubmitResponse": {
+    "description": "Error when posting the responder's status to the API fails."
+  },
+
+  "brandSubtitle": "Responder view for acknowledgements, readiness, and active mission context.",
+  "@brandSubtitle": {
+    "description": "Subtitle shown next to the MissionOut brand on the responder header."
+  },
+  "tooltipAccount": "Account",
+  "@tooltipAccount": {
+    "description": "Tooltip on the account avatar / popup-menu button."
+  },
+  "logOut": "Log out",
+  "@logOut": {
+    "description": "Logout entry inside the account popup menu."
+  },
+
+  "incomingAlertTitle": "Incoming mission alert",
+  "@incomingAlertTitle": {
+    "description": "Heading on the incoming-alert strip when a new mission arrives."
+  },
+  "openMissionButton": "Open mission",
+  "@openMissionButton": {
+    "description": "Primary button on the incoming-alert strip."
+  },
+  "dismissButton": "Dismiss",
+  "@dismissButton": {
+    "description": "Secondary button to clear the incoming-alert strip."
+  },
+
+  "cancelButton": "Cancel",
+  "@cancelButton": {
+    "description": "Generic cancel button (dialogs, confirmations)."
+  },
+  "dialogGoUnavailableTitle": "Go unavailable?",
+  "@dialogGoUnavailableTitle": {
+    "description": "Title of the confirmation dialog when switching availability to unavailable."
+  },
+  "dialogGoUnavailableContent": "If you switch to unavailable, you will not receive alerts until you change your status back.",
+  "@dialogGoUnavailableContent": {
+    "description": "Body of the confirmation dialog when switching availability to unavailable."
+  },
+  "dialogGoUnavailableConfirm": "Go unavailable",
+  "@dialogGoUnavailableConfirm": {
+    "description": "Confirm button on the unavailability dialog."
+  },
+
+  "availabilityStatus": "{status, select, available{Available} unavailable{Unavailable} other{Unknown}}",
+  "@availabilityStatus": {
+    "description": "Label for the responder's current availability state.",
+    "placeholders": {
+      "status": { "type": "String" }
+    }
+  },
+  "responseStatus": "{status, select, responding{Responding} pending{Pending} notAvailable{Not Available} other{Unknown}}",
+  "@responseStatus": {
+    "description": "Label for a responder's response status on an incident.",
+    "placeholders": {
+      "status": { "type": "String" }
+    }
+  },
+  "statusUnknown": "Unknown",
+  "@statusUnknown": {
+    "description": "Fallback label when a status enum value is missing or unrecognized."
+  },
+
+  "statusStandingBy": "Standing by",
+  "@statusStandingBy": {
+    "description": "Pill label on the standby hero when the responder is available and idle."
+  },
+  "standbyHeroTitle": "Quiet until a mission arrives.",
+  "@standbyHeroTitle": {
+    "description": "Large idle-state headline on the standby hero."
+  },
+  "standbyHeroDescriptionAvailable": "This screen stays minimal by default. When dispatch starts, the mission view takes over and response actions move to the front.",
+  "@standbyHeroDescriptionAvailable": {
+    "description": "Standby hero body text when the responder is available."
+  },
+  "standbyHeroDescriptionUnavailable": "You are currently unavailable, so the app stays in standby and no responder actions are active until you switch back.",
+  "@standbyHeroDescriptionUnavailable": {
+    "description": "Standby hero body text when the responder is unavailable."
+  },
+  "metricStateLabel": "State",
+  "@metricStateLabel": {
+    "description": "Standby metric label: which broad state the responder is in."
+  },
+  "metricStateReadyValue": "Ready for interrupt",
+  "@metricStateReadyValue": {
+    "description": "Standby metric value when the responder is available."
+  },
+  "metricStateAlertsPausedValue": "Alerts paused",
+  "@metricStateAlertsPausedValue": {
+    "description": "Standby metric value when the responder is unavailable."
+  },
+  "metricDefaultModeLabel": "Default mode",
+  "@metricDefaultModeLabel": {
+    "description": "Standby metric label: the responder's default operating mode."
+  },
+  "metricDefaultModeValue": "Idle, not queue-driven",
+  "@metricDefaultModeValue": {
+    "description": "Standby metric value describing the responder's default mode."
+  },
+
+  "readinessHeading": "Readiness",
+  "@readinessHeading": {
+    "description": "Heading of the readiness side panel on the responder home screen."
+  },
+  "readinessSubtitle": "Keep this device ready for the next interrupt. Notification channels are supplemental to native mobile alerting.",
+  "@readinessSubtitle": {
+    "description": "Subhead under the readiness panel heading."
+  },
+  "readinessAvailabilityTitle": "Availability",
+  "@readinessAvailabilityTitle": {
+    "description": "Section title for the availability row inside the readiness panel."
+  },
+  "readinessAvailabilityDetailAvailable": "Responder actions will surface when a mission is assigned.",
+  "@readinessAvailabilityDetailAvailable": {
+    "description": "Readiness availability row detail when the responder is available."
+  },
+  "readinessAvailabilityDetailUnavailable": "Alert actions stay out of the way until you are available again.",
+  "@readinessAvailabilityDetailUnavailable": {
+    "description": "Readiness availability row detail when the responder is unavailable."
+  },
+  "readinessNativeAlertsTitle": "Native Android alerts",
+  "@readinessNativeAlertsTitle": {
+    "description": "Section title for the native Android alert row inside the readiness panel."
+  },
+  "readinessBrowserAlertsTitle": "Browser alerts",
+  "@readinessBrowserAlertsTitle": {
+    "description": "Section title for the browser alert row inside the readiness panel."
+  },
+
+  "enableButton": "Enable",
+  "@enableButton": {
+    "description": "Generic Enable button (used for native and browser alert subscriptions)."
+  },
+  "fullScreenSettingsButton": "Full-screen settings",
+  "@fullScreenSettingsButton": {
+    "description": "Button that opens Android full-screen intent settings."
+  },
+  "dndSettingsButton": "DND settings",
+  "@dndSettingsButton": {
+    "description": "Button that opens Android Do-Not-Disturb access settings."
+  },
+  "testAlertButton": "Test alert",
+  "@testAlertButton": {
+    "description": "Button that sends a test push notification to the current device."
+  },
+  "savingButton": "Saving...",
+  "@savingButton": {
+    "description": "In-progress label shown beneath the response segmented control while saving."
+  },
+
+  "missionListTitle": "Active missions",
+  "@missionListTitle": {
+    "description": "Heading of the active-missions list on the responder home screen."
+  },
+  "missionListSubtitle": "Review active incidents and select one to update your response.",
+  "@missionListSubtitle": {
+    "description": "Subhead under the active-missions list heading."
+  },
+  "missionNotesHeading": "Mission notes",
+  "@missionNotesHeading": {
+    "description": "Heading above the incident notes inside the responder mission card."
+  }
+}

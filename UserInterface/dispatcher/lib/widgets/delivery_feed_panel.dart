@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_models/shared_models.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../mission_time_text.dart';
 import '../models/records.dart';
 import 'panel.dart';
@@ -13,10 +13,11 @@ class DeliveryFeedPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Panel(
-      title: 'Delivery Feed',
-      subtitle: 'Push attempts, acknowledgements, and escalation activity.',
-      action: 'View logs',
+      title: l10n.deliveryFeedTitle,
+      subtitle: l10n.deliveryFeedSubtitle,
+      action: l10n.viewLogsButton,
       child: ListView.separated(
         itemCount: events.length,
         separatorBuilder: (_, _) => const SizedBox(height: 10),

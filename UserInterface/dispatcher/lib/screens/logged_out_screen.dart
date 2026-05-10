@@ -3,6 +3,7 @@ import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../widgets/common_widgets.dart';
 
 class LoggedOutScreen extends StatefulWidget {
@@ -80,6 +81,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
   Future<void> _submitEmailCode() async {
     final email = emailController.text.trim();
     final code = codeController.text.trim();
+    final l10n = AppLocalizations.of(context);
 
     setState(() {
       errorText = null;
@@ -91,8 +93,8 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     if (emailError != null) {
       setState(() {
         errorText = switch (emailError) {
-          EmailValidationError.empty => 'Enter an email address.',
-          EmailValidationError.invalid => 'Enter a valid email address.',
+          EmailValidationError.empty => l10n.emailRequired,
+          EmailValidationError.invalid => l10n.emailInvalid,
         };
         isSubmitting = false;
       });
@@ -101,7 +103,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
 
     if (awaitingCode && code.isEmpty) {
       setState(() {
-        errorText = 'Enter the code from your email.';
+        errorText = l10n.codeRequired;
         isSubmitting = false;
       });
       return;
@@ -118,7 +120,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
         return;
       }
       setState(() {
-        successText = 'Check your email for code';
+        successText = l10n.codeSentMessage;
         awaitingCode = true;
         isSubmitting = false;
       });
@@ -188,14 +190,15 @@ class _LoginPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SectionShell(
       padding: const EdgeInsets.all(26),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const MissionOutBrandLockup(
-            subtitle: 'Secure sign-in for active MissionOut operations.',
+          MissionOutBrandLockup(
+            subtitle: l10n.signInBrandSubtitle,
             logoSize: 62,
           ),
           const SizedBox(height: 20),
@@ -208,11 +211,11 @@ class _LoginPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          SectionEyebrow(label: 'Access'),
+          SectionEyebrow(label: l10n.sectionEyebrowAccess),
           const SizedBox(height: 8),
-          const Text(
-            'Sign in to mission control',
-            style: TextStyle(
+          Text(
+            l10n.signInTitle,
+            style: const TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.8,
@@ -220,14 +223,14 @@ class _LoginPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Use an emailed code or Google to continue into the dispatcher workspace.',
-            style: TextStyle(color: AppPalette.textSoft, height: 1.5),
+          Text(
+            l10n.signInSubtitle,
+            style: const TextStyle(color: AppPalette.textSoft, height: 1.5),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Email',
-            style: TextStyle(
+          Text(
+            l10n.emailFieldLabel,
+            style: const TextStyle(
               fontWeight: FontWeight.w700,
               color: AppPalette.text,
             ),
@@ -237,18 +240,18 @@ class _LoginPanel extends StatelessWidget {
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             readOnly: awaitingCode,
-            decoration: const InputDecoration(hintText: 'name@example.com'),
+            decoration: InputDecoration(hintText: l10n.emailFieldHint),
           ),
           const SizedBox(height: 10),
-          const Text(
-            'We will send a sign-in link for this dispatcher account.',
-            style: TextStyle(color: AppPalette.textSoft),
+          Text(
+            l10n.emailFieldHelp,
+            style: const TextStyle(color: AppPalette.textSoft),
           ),
           if (awaitingCode) ...[
             const SizedBox(height: 18),
-            const Text(
-              'Code',
-              style: TextStyle(
+            Text(
+              l10n.codeFieldLabel,
+              style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 color: AppPalette.text,
               ),
@@ -258,9 +261,7 @@ class _LoginPanel extends StatelessWidget {
               controller: codeController,
               keyboardType: TextInputType.number,
               autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Enter the code from your email',
-              ),
+              decoration: InputDecoration(hintText: l10n.codeFieldHint),
             ),
           ],
           if (successText != null) ...[
@@ -291,10 +292,10 @@ class _LoginPanel extends StatelessWidget {
               onPressed: isSubmitting ? null : onSubmitEmailCode,
               child: Text(
                 isSubmitting
-                    ? (awaitingCode ? 'Verifying code...' : 'Sending code...')
+                    ? (awaitingCode ? l10n.verifyingButton : l10n.sendingButton)
                     : awaitingCode
-                    ? 'Verify code'
-                    : 'Email me a sign-in code',
+                    ? l10n.verifyCodeButton
+                    : l10n.emailMeCodeButton,
               ),
             ),
           ),
@@ -311,8 +312,8 @@ class _LoginPanel extends StatelessWidget {
                 icon: const Icon(Icons.login_rounded),
                 label: Text(
                   googleLoginEnabled
-                      ? 'Continue with Google'
-                      : 'Google login not configured',
+                      ? l10n.continueWithGoogle
+                      : l10n.googleNotConfigured,
                 ),
               ),
             ),

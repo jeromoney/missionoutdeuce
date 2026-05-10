@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_models/shared_models.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../mission_time_text.dart';
 import 'common_widgets.dart';
 import 'panel.dart';
@@ -24,11 +25,11 @@ class IncidentBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Panel(
-      title: 'Dispatch Board',
-      subtitle:
-          'Open missions, team load, and responder acknowledgement state.',
-      action: 'Create incident',
+      title: l10n.dispatchBoardTitle,
+      subtitle: l10n.dispatchBoardSubtitle,
+      action: l10n.createIncidentButton,
       primaryAction: true,
       onActionPressed: onCreateIncident,
       child: ListView.separated(
@@ -43,7 +44,8 @@ class IncidentBoard extends StatelessWidget {
               .where((response) => response.status == ResponseStatus.pending)
               .length;
           final teamName =
-              teamNamesByPublicId[incident.teamPublicId] ?? 'Assigned team';
+              teamNamesByPublicId[incident.teamPublicId] ??
+              l10n.teamFallbackName;
           final selected = index == selectedIndex;
 
           return InkWell(
@@ -79,7 +81,9 @@ class IncidentBoard extends StatelessWidget {
                         ),
                       ),
                       StatusPill(
-                        label: incident.active ? 'Active' : 'Resolved',
+                        label: incident.active
+                            ? l10n.incidentStateActive
+                            : l10n.incidentStateResolved,
                         color: incident.active
                             ? AppPalette.success
                             : AppPalette.muted,
@@ -108,15 +112,17 @@ class IncidentBoard extends StatelessWidget {
                     runSpacing: 10,
                     children: [
                       MetricBadge(
-                        label: ResponseStatus.responding.label,
+                        label: l10n.responseStatus(
+                          ResponseStatus.responding.name,
+                        ),
                         value: '$responding',
                       ),
                       MetricBadge(
-                        label: ResponseStatus.pending.label,
+                        label: l10n.responseStatus(ResponseStatus.pending.name),
                         value: '$pending',
                       ),
                       MetricBadge(
-                        label: 'Created',
+                        label: l10n.metricCreatedLabel,
                         value: formatMissionTime(incident.created, context),
                       ),
                     ],

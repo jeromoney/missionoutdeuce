@@ -7,6 +7,7 @@ import 'package:shared_theme/shared_theme.dart';
 
 import 'app_config.dart';
 import 'app_palette.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'screens/logged_out_screen.dart';
 import 'screens/responder_home_screen.dart';
 import 'services/native_alert_bridge.dart';
@@ -41,7 +42,9 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'MissionOut Responder',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appName,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: buildMissionOutTheme(accent: ResponderPalette.accent),
       home: ListenableBuilder(
         listenable: auth,

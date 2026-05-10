@@ -3,6 +3,7 @@ import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../mission_time_text.dart';
 import 'common_widgets.dart';
 import 'panel.dart';
@@ -23,13 +24,14 @@ class IncidentDetailPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final ordered = [...incident.responses]
       ..sort((a, b) => a.rank.compareTo(b.rank));
 
     return Panel(
-      title: 'Incident Detail',
-      subtitle: 'Dispatch notes, responder roster, and mission context.',
-      action: 'Edit incident',
+      title: l10n.incidentDetailTitle,
+      subtitle: l10n.incidentDetailSubtitle,
+      action: l10n.editIncidentButton,
       onActionPressed: onEditIncident,
       child: Column(
         children: [
@@ -92,8 +94,13 @@ class IncidentDetailPanel extends StatelessWidget {
               itemBuilder: (context, index) {
                 final response = ordered[index];
                 final responseColor = _responseColor(response.status);
-                final statusLabel = response.status?.label ?? 'Unknown';
-                final responderName = _responderNameFor(response.userPublicId);
+                final statusLabel = response.status != null
+                    ? l10n.responseStatus(response.status!.name)
+                    : l10n.statusUnknown;
+                final responderName = _responderNameFor(
+                  context,
+                  response.userPublicId,
+                );
                 final responderInitial = responderName.isEmpty
                     ? '?'
                     : responderName.substring(0, 1).toUpperCase();
@@ -128,7 +135,9 @@ class IncidentDetailPanel extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Updated ${formatMissionTime(response.updated, context)}',
+                              l10n.responseUpdated(
+                                formatMissionTime(response.updated, context),
+                              ),
                               style: const TextStyle(
                                 color: AppPalette.textSoft,
                                 height: 1.4,
@@ -163,15 +172,16 @@ class IncidentDetailPanel extends StatelessWidget {
     }
   }
 
-  String _responderNameFor(String userPublicId) {
+  String _responderNameFor(BuildContext context, String userPublicId) {
+    final l10n = AppLocalizations.of(context);
     final resolved = responderNamesByPublicId[userPublicId];
     if (resolved != null && resolved.isNotEmpty) {
       return resolved;
     }
     if (userPublicId.isEmpty) {
-      return 'Unknown responder';
+      return l10n.responderUnknown;
     }
     final end = userPublicId.length < 8 ? userPublicId.length : 8;
-    return 'Responder ${userPublicId.substring(0, end)}';
+    return l10n.responderFallbackName(userPublicId.substring(0, end));
   }
 }

@@ -70,7 +70,7 @@ ResponderHomeBody _body({
   final selectedIncident = incidents.isEmpty ? null : incidents.first;
   return ResponderHomeBody(
     userInitials: 'RR',
-    availability: 'Available',
+    availability: AvailabilityStatus.available,
     incidents: incidents,
     selected: 0,
     selectedIncident: selectedIncident,

@@ -8,6 +8,7 @@ import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
 import '../app_config.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../mission_time_text.dart';
 import '../models/backup_alert.dart';
 import '../models/incident.dart';
@@ -42,7 +43,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   );
   List<ResponderIncident> incidents = const [];
   int selected = 0;
-  String availability = 'Available';
+  AvailabilityStatus availability = AvailabilityStatus.available;
   bool loading = true;
   String? loadError;
   bool submittingResponse = false;
@@ -140,26 +141,28 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     );
   }
 
-  Future<void> _changeAvailability(String value) async {
-    if (availability == 'Available' && value == 'Unavailable') {
+  Future<void> _changeAvailability(AvailabilityStatus value) async {
+    if (availability == AvailabilityStatus.available &&
+        value == AvailabilityStatus.unavailable) {
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Go unavailable?'),
-          content: const Text(
-            'If you switch to unavailable, you will not receive alerts until you change your status back.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Go unavailable'),
-            ),
-          ],
-        ),
+        builder: (context) {
+          final l10n = AppLocalizations.of(context);
+          return AlertDialog(
+            title: Text(l10n.dialogGoUnavailableTitle),
+            content: Text(l10n.dialogGoUnavailableContent),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(l10n.cancelButton),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(l10n.dialogGoUnavailableConfirm),
+              ),
+            ],
+          );
+        },
       );
 
       if (confirmed != true || !mounted) {
@@ -211,7 +214,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
         incidents = const [];
         selected = 0;
         loading = false;
-        loadError = 'Could not load missions from the API.';
+        loadError = AppLocalizations.of(context).errorLoadIncidents;
       });
     }
   }
@@ -266,7 +269,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
       }
 
       setState(() {
-        loadError = 'Could not refresh missions after a live event.';
+        loadError = AppLocalizations.of(context).errorRefreshIncidents;
       });
     }
   }
@@ -290,7 +293,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     if (resolvedIncidentPublicId.isEmpty) {
       setState(() {
         loadError =
-            'Could not submit response because the incident public ID is missing.';
+            AppLocalizations.of(context).errorMissingIncidentId;
       });
       return;
     }
@@ -330,7 +333,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
       }
 
       setState(() {
-        loadError = 'Could not submit your responder status.';
+        loadError = AppLocalizations.of(context).errorSubmitResponse;
       });
     } finally {
       if (!mounted) {
@@ -423,7 +426,7 @@ class ResponderHomeBody extends StatelessWidget {
   });
 
   final String userInitials;
-  final String availability;
+  final AvailabilityStatus availability;
   final List<ResponderIncident> incidents;
   final int selected;
   final ResponderIncident? selectedIncident;
@@ -434,7 +437,7 @@ class ResponderHomeBody extends StatelessWidget {
   final BrowserAlertChannel browserAlerts;
   final NativeAlertStatusService nativeAlerts;
   final VoidCallback onLogout;
-  final ValueChanged<String> onAvailabilityChanged;
+  final ValueChanged<AvailabilityStatus> onAvailabilityChanged;
   final ValueChanged<int> onSelected;
   final VoidCallback onDismissAlert;
   final VoidCallback onOpenAlert;
@@ -517,7 +520,7 @@ class _StandbyWorkspace extends StatelessWidget {
     required this.onEnableBrowserAlerts,
   });
 
-  final String availability;
+  final AvailabilityStatus availability;
   final BrowserAlertChannel browserAlerts;
   final NativeAlertStatusService nativeAlerts;
   final Future<void> Function() onEnableBrowserAlerts;
@@ -582,7 +585,7 @@ class _ActiveMissionWorkspace extends StatelessWidget {
   final bool compact;
   final List<ResponderIncident> incidents;
   final int selected;
-  final String availability;
+  final AvailabilityStatus availability;
   final ResponderIncident selectedIncident;
   final BrowserAlertChannel browserAlerts;
   final NativeAlertStatusService nativeAlerts;
@@ -680,12 +683,13 @@ class _Header extends StatelessWidget {
   });
 
   final String userInitials;
-  final String availability;
-  final ValueChanged<String> onAvailabilityChanged;
+  final AvailabilityStatus availability;
+  final ValueChanged<AvailabilityStatus> onAvailabilityChanged;
   final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -699,11 +703,10 @@ class _Header extends StatelessWidget {
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const SizedBox(
+          SizedBox(
             width: 620,
             child: ResponderBrandLockup(
-              subtitle:
-                  'Responder view for acknowledgements, readiness, and active mission context.',
+              subtitle: l10n.brandSubtitle,
               logoSize: 58,
             ),
           ),
@@ -711,23 +714,23 @@ class _Header extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _StatusPill(
-                label: availability,
-                color: availability == 'Available'
+                label: l10n.availabilityStatus(availability.name),
+                color: availability == AvailabilityStatus.available
                     ? ResponderPalette.success
                     : ResponderPalette.warning,
               ),
               const SizedBox(width: 12),
               DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
+                child: DropdownButton<AvailabilityStatus>(
                   value: availability,
                   dropdownColor: ResponderPalette.cardAlt,
                   style: const TextStyle(color: ResponderPalette.text),
                   iconEnabledColor: ResponderPalette.text,
-                  items: const ['Available', 'Unavailable']
+                  items: AvailabilityStatus.values
                       .map(
-                        (status) => DropdownMenuItem<String>(
+                        (status) => DropdownMenuItem<AvailabilityStatus>(
                           value: status,
-                          child: Text(status),
+                          child: Text(l10n.availabilityStatus(status.name)),
                         ),
                       )
                       .toList(),
@@ -740,17 +743,17 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               PopupMenuButton<String>(
-                tooltip: 'Account',
+                tooltip: l10n.tooltipAccount,
                 color: ResponderPalette.cardAlt,
                 onSelected: (value) {
                   if (value == 'logout') {
                     onLogout();
                   }
                 },
-                itemBuilder: (context) => const [
+                itemBuilder: (context) => [
                   PopupMenuItem<String>(
                     value: 'logout',
-                    child: Text('Log out'),
+                    child: Text(l10n.logOut),
                   ),
                 ],
                 child: Container(
@@ -792,6 +795,7 @@ class _IncomingAlertStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -813,9 +817,9 @@ class _IncomingAlertStrip extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Incoming mission alert',
-                  style: TextStyle(
+                Text(
+                  l10n.incomingAlertTitle,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: ResponderPalette.text,
@@ -847,9 +851,9 @@ class _IncomingAlertStrip extends StatelessWidget {
             children: [
               FilledButton(
                 onPressed: onOpen,
-                child: const Text('Open mission'),
+                child: Text(l10n.openMissionButton),
               ),
-              TextButton(onPressed: onDismiss, child: const Text('Dismiss')),
+              TextButton(onPressed: onDismiss, child: Text(l10n.dismissButton)),
             ],
           ),
         ],
@@ -861,11 +865,12 @@ class _IncomingAlertStrip extends StatelessWidget {
 class _StandbyHero extends StatelessWidget {
   const _StandbyHero({required this.availability});
 
-  final String availability;
+  final AvailabilityStatus availability;
 
   @override
   Widget build(BuildContext context) {
-    final available = availability == 'Available';
+    final l10n = AppLocalizations.of(context);
+    final available = availability == AvailabilityStatus.available;
 
     return Container(
       padding: const EdgeInsets.all(28),
@@ -885,7 +890,9 @@ class _StandbyHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _StatusPill(
-            label: available ? 'Standing by' : 'Unavailable',
+            label: available
+                ? l10n.statusStandingBy
+                : l10n.availabilityStatus(AvailabilityStatus.unavailable.name),
             color: available
                 ? ResponderPalette.success
                 : ResponderPalette.warning,
@@ -893,9 +900,9 @@ class _StandbyHero extends StatelessWidget {
           const SizedBox(height: 56),
           const ResponderBrandLogo(size: 82),
           const SizedBox(height: 24),
-          const Text(
-            'Quiet until a mission arrives.',
-            style: TextStyle(
+          Text(
+            l10n.standbyHeroTitle,
+            style: const TextStyle(
               fontSize: 42,
               height: 1.05,
               fontWeight: FontWeight.w800,
@@ -906,8 +913,8 @@ class _StandbyHero extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             available
-                ? 'This screen stays minimal by default. When dispatch starts, the mission view takes over and response actions move to the front.'
-                : 'You are currently unavailable, so the app stays in standby and no responder actions are active until you switch back.',
+                ? l10n.standbyHeroDescriptionAvailable
+                : l10n.standbyHeroDescriptionUnavailable,
             style: const TextStyle(
               fontSize: 15,
               height: 1.6,
@@ -920,12 +927,14 @@ class _StandbyHero extends StatelessWidget {
             runSpacing: 14,
             children: [
               _StandbyMetric(
-                label: 'State',
-                value: available ? 'Ready for interrupt' : 'Alerts paused',
+                label: l10n.metricStateLabel,
+                value: available
+                    ? l10n.metricStateReadyValue
+                    : l10n.metricStateAlertsPausedValue,
               ),
-              const _StandbyMetric(
-                label: 'Default mode',
-                value: 'Idle, not queue-driven',
+              _StandbyMetric(
+                label: l10n.metricDefaultModeLabel,
+                value: l10n.metricDefaultModeValue,
               ),
             ],
           ),
@@ -947,11 +956,12 @@ class _ReadinessPanel extends StatelessWidget {
   final BrowserAlertChannel browserAlerts;
   final NativeAlertStatusService nativeAlerts;
   final Future<void> Function() onEnableBrowserAlerts;
-  final String? availability;
+  final AvailabilityStatus? availability;
   final Future<void> Function()? onSendTestAlert;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -962,9 +972,9 @@ class _ReadinessPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Readiness',
-            style: TextStyle(
+          Text(
+            l10n.readinessHeading,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.7,
@@ -972,21 +982,24 @@ class _ReadinessPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Keep this device ready for the next interrupt. Notification channels are supplemental to native mobile alerting.',
-            style: TextStyle(color: ResponderPalette.textSoft, height: 1.5),
+          Text(
+            l10n.readinessSubtitle,
+            style: const TextStyle(
+              color: ResponderPalette.textSoft,
+              height: 1.5,
+            ),
           ),
           if (availability != null) ...[
             const SizedBox(height: 18),
             _ReadinessRow(
-              title: 'Availability',
-              status: availability!,
-              statusColor: availability == 'Available'
+              title: l10n.readinessAvailabilityTitle,
+              status: l10n.availabilityStatus(availability!.name),
+              statusColor: availability == AvailabilityStatus.available
                   ? ResponderPalette.success
                   : ResponderPalette.warning,
-              detail: availability == 'Available'
-                  ? 'Responder actions will surface when a mission is assigned.'
-                  : 'Alert actions stay out of the way until you are available again.',
+              detail: availability == AvailabilityStatus.available
+                  ? l10n.readinessAvailabilityDetailAvailable
+                  : l10n.readinessAvailabilityDetailUnavailable,
             ),
           ],
           if (nativeAlerts.isSupported) ...[
@@ -1004,22 +1017,22 @@ class _ReadinessPanel extends StatelessWidget {
                 if (nativeAlerts.canRequestPermission) {
                   action = FilledButton(
                     onPressed: nativeAlerts.requestNotificationPermission,
-                    child: const Text('Enable'),
+                    child: Text(l10n.enableButton),
                   );
                 } else if (nativeAlerts.canOpenFullScreenSettings) {
                   action = OutlinedButton(
                     onPressed: nativeAlerts.openFullScreenIntentSettings,
-                    child: const Text('Full-screen settings'),
+                    child: Text(l10n.fullScreenSettingsButton),
                   );
                 } else if (nativeAlerts.canOpenPolicySettings) {
                   action = OutlinedButton(
                     onPressed: nativeAlerts.openNotificationPolicySettings,
-                    child: const Text('DND settings'),
+                    child: Text(l10n.dndSettingsButton),
                   );
                 }
 
                 return _ReadinessRow(
-                  title: 'Native Android alerts',
+                  title: l10n.readinessNativeAlertsTitle,
                   status: nativeAlerts.statusLabel,
                   statusColor: statusColor,
                   detail: nativeAlerts.detailText,
@@ -1046,18 +1059,18 @@ class _ReadinessPanel extends StatelessWidget {
                 if (browserAlerts.canEnable && !browserAlerts.isSubscribed) {
                   action = FilledButton(
                     onPressed: onEnableBrowserAlerts,
-                    child: const Text('Enable'),
+                    child: Text(l10n.enableButton),
                   );
                 } else if (browserAlerts.isSubscribed &&
                     onSendTestAlert != null) {
                   action = OutlinedButton(
                     onPressed: onSendTestAlert,
-                    child: const Text('Test alert'),
+                    child: Text(l10n.testAlertButton),
                   );
                 }
 
                 return _ReadinessRow(
-                  title: 'Browser alerts',
+                  title: l10n.readinessBrowserAlertsTitle,
                   status: browserAlerts.statusLabel,
                   statusColor: statusColor,
                   detail: browserAlerts.detailText,
@@ -1174,6 +1187,7 @@ class _MissionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -1184,9 +1198,9 @@ class _MissionList extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Active missions',
-            style: TextStyle(
+          Text(
+            l10n.missionListTitle,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.7,
@@ -1194,9 +1208,9 @@ class _MissionList extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Review active incidents and select one to update your response.',
-            style: TextStyle(color: ResponderPalette.textSoft),
+          Text(
+            l10n.missionListSubtitle,
+            style: const TextStyle(color: ResponderPalette.textSoft),
           ),
           const SizedBox(height: 18),
           Expanded(
@@ -1245,7 +1259,11 @@ class _MissionList extends StatelessWidget {
                         Row(
                           children: [
                             _StatusPill(
-                              label: incident.status?.label ?? 'Unknown',
+                              label: incident.status == null
+                                  ? l10n.statusUnknown
+                                  : l10n.responseStatus(
+                                      incident.status!.name,
+                                    ),
                               color: switch (incident.status) {
                                 ResponseStatus.responding =>
                                   ResponderPalette.success,
@@ -1294,6 +1312,7 @@ class _IncidentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
@@ -1347,9 +1366,9 @@ class _IncidentCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Mission notes',
-            style: TextStyle(
+          Text(
+            l10n.missionNotesHeading,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
               color: ResponderPalette.text,
@@ -1393,6 +1412,7 @@ class _ResponseSegmentedControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final groupValue = switch (currentStatus) {
       ResponseStatus.responding => _ResponseChoice.responding,
       ResponseStatus.notAvailable => _ResponseChoice.notAvailable,
@@ -1401,11 +1421,11 @@ class _ResponseSegmentedControl extends StatelessWidget {
 
     final children = <_ResponseChoice, Widget>{
       _ResponseChoice.responding: _segmentLabel(
-        ResponseStatus.responding.label,
+        l10n.responseStatus(ResponseStatus.responding.name),
         selected: groupValue == _ResponseChoice.responding,
       ),
       _ResponseChoice.notAvailable: _segmentLabel(
-        ResponseStatus.notAvailable.label,
+        l10n.responseStatus(ResponseStatus.notAvailable.name),
         selected: groupValue == _ResponseChoice.notAvailable,
       ),
     };
@@ -1454,16 +1474,16 @@ class _ResponseSegmentedControl extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                SizedBox(
+              children: [
+                const SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Text(
-                  'Saving...',
-                  style: TextStyle(color: ResponderPalette.textSoft),
+                  l10n.savingButton,
+                  style: const TextStyle(color: ResponderPalette.textSoft),
                 ),
               ],
             ),

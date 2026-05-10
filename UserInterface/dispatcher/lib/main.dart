@@ -5,6 +5,7 @@ import 'package:shared_theme/shared_theme.dart';
 
 import 'app_config.dart';
 import 'app_palette.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'screens/logged_out_screen.dart';
 import 'screens/mission_control_screen.dart';
 
@@ -33,7 +34,9 @@ class _MissionOutAppState extends State<MissionOutApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'MissionOut',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appName,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: buildMissionOutTheme(accent: AppPalette.secondary),
       home: ListenableBuilder(
         listenable: auth,

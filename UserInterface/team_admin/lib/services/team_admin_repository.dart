@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
-import 'package:shared_models/shared_models.dart';
 
 import '../app_config.dart';
 import '../mission_time_text.dart';

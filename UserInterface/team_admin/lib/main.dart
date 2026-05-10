@@ -5,6 +5,7 @@ import 'package:shared_theme/shared_theme.dart';
 
 import 'app_config.dart';
 import 'app_palette.dart';
+import 'l10n/generated/app_localizations.dart';
 import 'screens/logged_out_screen.dart';
 import 'screens/team_admin_home_screen.dart';
 
@@ -31,7 +32,9 @@ class _MissionOutTeamAdminAppState extends State<MissionOutTeamAdminApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'MissionOut Team Admin',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appName,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: buildMissionOutTheme(accent: TeamAdminPalette.accent),
       home: ListenableBuilder(
         listenable: auth,

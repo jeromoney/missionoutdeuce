@@ -1,0 +1,272 @@
+{
+  "@@locale": "en",
+  "appName": "MissionOut",
+  "@appName": {
+    "description": "App display name shown in the OS task switcher and app launcher."
+  },
+
+  "emailRequired": "Enter an email address.",
+  "@emailRequired": {
+    "description": "Validation error when an email field is empty."
+  },
+  "emailInvalid": "Enter a valid email address.",
+  "@emailInvalid": {
+    "description": "Validation error when an email field has malformed input."
+  },
+  "codeRequired": "Enter the code from your email.",
+  "@codeRequired": {
+    "description": "Error shown when the email-code field is empty during code verification."
+  },
+  "codeSentMessage": "Check your email for code",
+  "@codeSentMessage": {
+    "description": "Success message after the dispatcher requests a sign-in code."
+  },
+
+  "signInTitle": "Sign in to mission control",
+  "@signInTitle": {
+    "description": "Heading on the dispatcher logged-out screen."
+  },
+  "signInSubtitle": "Use an emailed code or Google to continue into the dispatcher workspace.",
+  "@signInSubtitle": {
+    "description": "Subhead under the dispatcher sign-in heading."
+  },
+  "signInBrandSubtitle": "Secure sign-in for active MissionOut operations.",
+  "@signInBrandSubtitle": {
+    "description": "Subtitle next to the brand on the dispatcher sign-in panel."
+  },
+  "sectionEyebrowAccess": "Access",
+  "@sectionEyebrowAccess": {
+    "description": "Section eyebrow above the sign-in heading."
+  },
+  "emailFieldLabel": "Email",
+  "@emailFieldLabel": {
+    "description": "Label above the email text field on the sign-in form."
+  },
+  "emailFieldHint": "name@example.com",
+  "@emailFieldHint": {
+    "description": "Placeholder shown inside the empty email field."
+  },
+  "emailFieldHelp": "We will send a sign-in link for this dispatcher account.",
+  "@emailFieldHelp": {
+    "description": "Helper text under the email field on the dispatcher sign-in form."
+  },
+  "codeFieldLabel": "Code",
+  "@codeFieldLabel": {
+    "description": "Label above the email-code input field that appears after a code has been sent."
+  },
+  "codeFieldHint": "Enter the code from your email",
+  "@codeFieldHint": {
+    "description": "Placeholder for the email-code input field."
+  },
+  "verifyingButton": "Verifying code...",
+  "@verifyingButton": {
+    "description": "Sign-in button text while the entered code is being verified."
+  },
+  "sendingButton": "Sending code...",
+  "@sendingButton": {
+    "description": "Sign-in button text while the email code is being sent."
+  },
+  "verifyCodeButton": "Verify code",
+  "@verifyCodeButton": {
+    "description": "Sign-in button text when ready to verify a code."
+  },
+  "emailMeCodeButton": "Email me a sign-in code",
+  "@emailMeCodeButton": {
+    "description": "Sign-in button text on the initial state."
+  },
+  "continueWithGoogle": "Continue with Google",
+  "@continueWithGoogle": {
+    "description": "Label on the Google sign-in button."
+  },
+  "googleNotConfigured": "Google login not configured",
+  "@googleNotConfigured": {
+    "description": "Disabled Google button label when the client id is missing."
+  },
+
+  "errorLoadIncidents": "Could not load incident data.",
+  "@errorLoadIncidents": {
+    "description": "Error banner shown on the dispatcher when the dashboard fails to load."
+  },
+  "brandSubtitle": "Mission control for recent dispatch activity, team visibility, and live responder coordination.",
+  "@brandSubtitle": {
+    "description": "Subtitle next to the MissionOut brand on the mission-control header."
+  },
+  "tooltipAccount": "Account",
+  "@tooltipAccount": {
+    "description": "Tooltip on the account avatar / popup-menu button."
+  },
+  "logOut": "Log out",
+  "@logOut": {
+    "description": "Logout entry inside the account popup menu."
+  },
+  "metricActiveLabel": "Active",
+  "@metricActiveLabel": {
+    "description": "MetricBadge label for the count of active incidents in the header."
+  },
+  "metricCreatedLabel": "Created",
+  "@metricCreatedLabel": {
+    "description": "MetricBadge label next to the relative creation time of an incident."
+  },
+
+  "summaryActiveTitle": "Active",
+  "@summaryActiveTitle": {
+    "description": "SummaryCard title for the active-incidents tile on the summary strip."
+  },
+  "summaryActiveSubtitle": "Open incidents from the last 7 days in the current feed.",
+  "@summaryActiveSubtitle": {
+    "description": "SummaryCard subtitle for the active-incidents tile."
+  },
+  "summaryRespondingSubtitle": "Confirmed field responders across the recent incident feed.",
+  "@summaryRespondingSubtitle": {
+    "description": "SummaryCard subtitle for the responding-responders tile."
+  },
+  "summaryPendingSubtitle": "Awaiting acknowledgement in the last-7-days incident feed.",
+  "@summaryPendingSubtitle": {
+    "description": "SummaryCard subtitle for the pending-responders tile."
+  },
+
+  "emptyIncidentTitle": "No active incidents yet",
+  "@emptyIncidentTitle": {
+    "description": "Heading shown on the empty-state when no incidents have been dispatched yet."
+  },
+
+  "teamFallbackName": "Assigned team",
+  "@teamFallbackName": {
+    "description": "Fallback label when an incident's team name cannot be resolved."
+  },
+
+  "dispatchBoardTitle": "Dispatch Board",
+  "@dispatchBoardTitle": {
+    "description": "Heading of the dispatch-board panel."
+  },
+  "dispatchBoardSubtitle": "Open missions, team load, and responder acknowledgement state.",
+  "@dispatchBoardSubtitle": {
+    "description": "Subhead under the dispatch-board panel heading."
+  },
+  "createIncidentButton": "Create incident",
+  "@createIncidentButton": {
+    "description": "Button label that opens the create-incident form."
+  },
+
+  "incidentStateActive": "Active",
+  "@incidentStateActive": {
+    "description": "Pill label for an incident that is still active."
+  },
+  "incidentStateResolved": "Resolved",
+  "@incidentStateResolved": {
+    "description": "Pill label for an incident that has been resolved."
+  },
+
+  "incidentDetailTitle": "Incident Detail",
+  "@incidentDetailTitle": {
+    "description": "Heading of the incident-detail panel."
+  },
+  "incidentDetailSubtitle": "Dispatch notes, responder roster, and mission context.",
+  "@incidentDetailSubtitle": {
+    "description": "Subhead under the incident-detail panel heading."
+  },
+  "editIncidentButton": "Edit incident",
+  "@editIncidentButton": {
+    "description": "Button on the incident-detail panel that opens the edit form."
+  },
+  "responseUpdated": "Updated {time}",
+  "@responseUpdated": {
+    "description": "Prefix shown next to a response's relative update time, e.g. 'Updated 5 minutes ago'.",
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "statusUnknown": "Unknown",
+  "@statusUnknown": {
+    "description": "Fallback label when a response status enum value is missing or unrecognized."
+  },
+  "responderUnknown": "Unknown responder",
+  "@responderUnknown": {
+    "description": "Fallback name when a response has no associated user public id."
+  },
+  "responderFallbackName": "Responder {prefix}",
+  "@responderFallbackName": {
+    "description": "Fallback name showing a short prefix of a responder's public id when no name is on file.",
+    "placeholders": {
+      "prefix": { "type": "String" }
+    }
+  },
+
+  "deliveryFeedTitle": "Delivery Feed",
+  "@deliveryFeedTitle": {
+    "description": "Heading of the delivery-feed panel."
+  },
+  "deliveryFeedSubtitle": "Push attempts, acknowledgements, and escalation activity.",
+  "@deliveryFeedSubtitle": {
+    "description": "Subhead under the delivery-feed panel heading."
+  },
+  "viewLogsButton": "View logs",
+  "@viewLogsButton": {
+    "description": "Action button that opens the full delivery log view."
+  },
+
+  "newIncidentEyebrow": "New incident",
+  "@newIncidentEyebrow": {
+    "description": "Section eyebrow above the create-incident heading."
+  },
+  "newIncidentTitle": "Dispatch a new incident",
+  "@newIncidentTitle": {
+    "description": "Heading on the create-incident screen."
+  },
+  "updateIncidentEyebrow": "Update incident",
+  "@updateIncidentEyebrow": {
+    "description": "Section eyebrow above the edit-incident heading."
+  },
+  "editIncidentTitle": "Edit live mission details",
+  "@editIncidentTitle": {
+    "description": "Heading on the edit-incident screen."
+  },
+  "editIncidentSubtitle": "Keep dispatch information current as access, hazards, and mission status change.",
+  "@editIncidentSubtitle": {
+    "description": "Subhead under the edit-incident heading."
+  },
+  "incidentTitleLabel": "Incident title",
+  "@incidentTitleLabel": {
+    "description": "Field label / hint for the incident title input."
+  },
+  "incidentLocationLabel": "Location",
+  "@incidentLocationLabel": {
+    "description": "Field label / hint for the incident location input."
+  },
+  "incidentNotesLabel": "Dispatch notes",
+  "@incidentNotesLabel": {
+    "description": "Field label for the incident dispatch-notes input."
+  },
+  "incidentNotesEditHint": "Updated incident notes",
+  "@incidentNotesEditHint": {
+    "description": "Placeholder hint inside the dispatch-notes input on the edit-incident screen."
+  },
+  "incidentActiveTitle": "Incident active",
+  "@incidentActiveTitle": {
+    "description": "Title of the active/resolved switch on the edit-incident screen."
+  },
+  "incidentActiveSubtitle": "Turn this off when the incident is resolved or no longer needs live response tracking.",
+  "@incidentActiveSubtitle": {
+    "description": "Subtitle of the active/resolved switch on the edit-incident screen."
+  },
+  "cancelButton": "Cancel",
+  "@cancelButton": {
+    "description": "Generic cancel button (forms, dialogs)."
+  },
+  "saveChangesButton": "Save changes",
+  "@saveChangesButton": {
+    "description": "Submit button on the edit-incident screen."
+  },
+  "fieldRequired": "Required",
+  "@fieldRequired": {
+    "description": "Generic short validation error shown beneath an empty required text field."
+  },
+
+  "responseStatus": "{status, select, responding{Responding} pending{Pending} notAvailable{Not Available} other{Unknown}}",
+  "@responseStatus": {
+    "description": "Label for a responder's response status on an incident.",
+    "placeholders": {
+      "status": { "type": "String" }
+    }
+  }
+}

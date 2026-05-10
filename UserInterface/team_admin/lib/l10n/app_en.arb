@@ -1,0 +1,101 @@
+{
+  "@@locale": "en",
+  "appName": "MissionOut Team Admin",
+  "@appName": {
+    "description": "App display name shown in the OS task switcher and app launcher."
+  },
+
+  "emailRequired": "Enter an email address.",
+  "@emailRequired": {
+    "description": "Validation error when an email field is empty."
+  },
+  "emailInvalid": "Enter a valid email address.",
+  "@emailInvalid": {
+    "description": "Validation error when an email field has malformed input."
+  },
+  "nameRequired": "Enter a name.",
+  "@nameRequired": {
+    "description": "Validation error when a name field is empty."
+  },
+  "nameInvalid": "Enter a valid name.",
+  "@nameInvalid": {
+    "description": "Validation error when a name field has malformed input."
+  },
+  "phoneRequired": "Enter a phone number.",
+  "@phoneRequired": {
+    "description": "Validation error when a phone field is empty."
+  },
+  "phoneInvalid": "Enter a valid phone number.",
+  "@phoneInvalid": {
+    "description": "Validation error when a phone field has malformed input."
+  },
+  "codeRequired": "Enter the code from your email.",
+  "@codeRequired": {
+    "description": "Error shown when the email-code field is empty during code verification."
+  },
+  "codeSentMessage": "Check your email for code",
+  "@codeSentMessage": {
+    "description": "Success message after the team admin requests a sign-in code."
+  },
+
+  "signInTitle": "Sign in to Team Admin",
+  "@signInTitle": {
+    "description": "Heading on the team-admin logged-out screen."
+  },
+  "signInSubtitle": "Use an emailed code or Google to continue into your team-management workspace.",
+  "@signInSubtitle": {
+    "description": "Subhead under the team-admin sign-in heading."
+  },
+  "signInBrandSubtitle": "Secure sign-in for active MissionOut operations.",
+  "@signInBrandSubtitle": {
+    "description": "Subtitle next to the brand on the team-admin sign-in panel."
+  },
+  "emailFieldLabel": "Email",
+  "@emailFieldLabel": {
+    "description": "Label above the email text field on the sign-in form."
+  },
+  "emailFieldHint": "name@example.com",
+  "@emailFieldHint": {
+    "description": "Placeholder shown inside the empty email field."
+  },
+  "emailFieldHelpInitial": "We will send a one-time code for this Team Admin account.",
+  "@emailFieldHelpInitial": {
+    "description": "Helper text under the email field before a code has been sent."
+  },
+  "emailFieldHelpAwaitingCode": "Enter the emailed code to finish Team Admin sign-in.",
+  "@emailFieldHelpAwaitingCode": {
+    "description": "Helper text under the email field once a code has been sent."
+  },
+  "codeFieldLabel": "Code",
+  "@codeFieldLabel": {
+    "description": "Label above the email-code input field that appears after a code has been sent."
+  },
+  "codeFieldHint": "123456",
+  "@codeFieldHint": {
+    "description": "Placeholder for the email-code input field."
+  },
+  "verifyingButton": "Verifying code...",
+  "@verifyingButton": {
+    "description": "Sign-in button text while the entered code is being verified."
+  },
+  "sendingButton": "Sending code...",
+  "@sendingButton": {
+    "description": "Sign-in button text while the email code is being sent."
+  },
+  "verifyCodeButton": "Verify code",
+  "@verifyCodeButton": {
+    "description": "Sign-in button text when ready to verify a code."
+  },
+  "emailMeCodeButton": "Email me a sign-in code",
+  "@emailMeCodeButton": {
+    "description": "Sign-in button text on the initial state."
+  },
+  "continueWithGoogle": "Continue with Google",
+  "@continueWithGoogle": {
+    "description": "Label on the Google sign-in button."
+  },
+  "googleNotConfigured": "Google login not configured",
+  "@googleNotConfigured": {
+    "description": "Disabled Google button label when the client id is missing."
+  }
+}

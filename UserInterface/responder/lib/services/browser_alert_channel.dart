@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:shared_models/shared_models.dart';
 
 import '../mission_time_text.dart';
 import '../models/backup_alert.dart';

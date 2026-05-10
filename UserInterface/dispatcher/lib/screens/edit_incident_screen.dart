@@ -3,6 +3,7 @@ import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../widgets/common_widgets.dart';
 
 class EditIncidentScreen extends StatefulWidget {
@@ -47,6 +48,7 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: MissionOutBackdrop(
         child: SafeArea(
@@ -61,11 +63,11 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                     key: _formKey,
                     child: ListView(
                       children: [
-                        const SectionEyebrow(label: 'Update incident'),
+                        SectionEyebrow(label: l10n.updateIncidentEyebrow),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Edit live mission details',
-                          style: TextStyle(
+                        Text(
+                          l10n.editIncidentTitle,
+                          style: const TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.9,
@@ -73,46 +75,46 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        const Text(
-                          'Keep dispatch information current as access, hazards, and mission status change.',
-                          style: TextStyle(
+                        Text(
+                          l10n.editIncidentSubtitle,
+                          style: const TextStyle(
                             color: AppPalette.textSoft,
                             height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 26),
                         _LabeledField(
-                          label: 'Incident title',
+                          label: l10n.incidentTitleLabel,
                           child: TextFormField(
                             controller: _titleController,
-                            decoration: const InputDecoration(
-                              hintText: 'Incident title',
+                            decoration: InputDecoration(
+                              hintText: l10n.incidentTitleLabel,
                             ),
-                            validator: _requiredField,
+                            validator: (value) => _requiredField(value, l10n),
                           ),
                         ),
                         const SizedBox(height: 18),
                         _LabeledField(
-                          label: 'Location',
+                          label: l10n.incidentLocationLabel,
                           child: TextFormField(
                             controller: _locationController,
-                            decoration: const InputDecoration(
-                              hintText: 'Location',
+                            decoration: InputDecoration(
+                              hintText: l10n.incidentLocationLabel,
                             ),
-                            validator: _requiredField,
+                            validator: (value) => _requiredField(value, l10n),
                           ),
                         ),
                         const SizedBox(height: 18),
                         _LabeledField(
-                          label: 'Dispatch notes',
+                          label: l10n.incidentNotesLabel,
                           child: TextFormField(
                             controller: _notesController,
                             minLines: 5,
                             maxLines: 7,
-                            decoration: const InputDecoration(
-                              hintText: 'Updated incident notes',
+                            decoration: InputDecoration(
+                              hintText: l10n.incidentNotesEditHint,
                             ),
-                            validator: _requiredField,
+                            validator: (value) => _requiredField(value, l10n),
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -128,16 +130,18 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                               horizontal: 16,
                               vertical: 8,
                             ),
-                            title: const Text(
-                              'Incident active',
-                              style: TextStyle(
+                            title: Text(
+                              l10n.incidentActiveTitle,
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: AppPalette.text,
                               ),
                             ),
-                            subtitle: const Text(
-                              'Turn this off when the incident is resolved or no longer needs live response tracking.',
-                              style: TextStyle(color: AppPalette.textSoft),
+                            subtitle: Text(
+                              l10n.incidentActiveSubtitle,
+                              style: const TextStyle(
+                                color: AppPalette.textSoft,
+                              ),
                             ),
                             onChanged: (value) {
                               setState(() => _active = value);
@@ -158,12 +162,12 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
                                 }
                                 Navigator.of(context).pop();
                               },
-                              child: const Text('Cancel'),
+                              child: Text(l10n.cancelButton),
                             ),
                             FilledButton.icon(
                               onPressed: _submit,
                               icon: const Icon(Icons.save_outlined),
-                              label: const Text('Save changes'),
+                              label: Text(l10n.saveChangesButton),
                             ),
                           ],
                         ),
@@ -179,9 +183,9 @@ class _EditIncidentScreenState extends State<EditIncidentScreen> {
     );
   }
 
-  String? _requiredField(String? value) {
+  String? _requiredField(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return 'Required';
+      return l10n.fieldRequired;
     }
     return null;
   }

@@ -5,6 +5,7 @@ import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
 
 import '../app_palette.dart';
+import '../l10n/generated/app_localizations.dart';
 import '../models/dashboard_snapshot.dart';
 import '../models/records.dart';
 import '../services/mission_out_api.dart';
@@ -106,7 +107,7 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
         responderNamesByPublicId = const {};
         selected = 0;
         loading = false;
-        loadError = 'Could not load incident data.';
+        loadError = AppLocalizations.of(context).errorLoadIncidents;
       });
     }
   }
@@ -231,8 +232,9 @@ class MissionControlBody extends StatelessWidget {
   final VoidCallback onCreateIncident;
   final VoidCallback onEditIncident;
 
-  String _teamNameFor(String teamPublicId) {
-    return teamNamesByPublicId[teamPublicId] ?? 'Assigned team';
+  String _teamNameFor(BuildContext context, String teamPublicId) {
+    return teamNamesByPublicId[teamPublicId] ??
+        AppLocalizations.of(context).teamFallbackName;
   }
 
   @override
@@ -268,7 +270,7 @@ class MissionControlBody extends StatelessWidget {
                           message: loadError,
                           onCreateIncident: onCreateIncident,
                         )
-                      : _buildDashboardLayout(compact),
+                      : _buildDashboardLayout(context, compact),
                 ),
               ],
             ),
@@ -278,7 +280,7 @@ class MissionControlBody extends StatelessWidget {
     );
   }
 
-  Widget _buildDashboardLayout(bool compact) {
+  Widget _buildDashboardLayout(BuildContext context, bool compact) {
     final incident = incidents[selected];
 
     if (compact) {
@@ -299,7 +301,7 @@ class MissionControlBody extends StatelessWidget {
             height: 580,
             child: IncidentDetailPanel(
               incident: incident,
-              teamName: _teamNameFor(incident.teamPublicId),
+              teamName: _teamNameFor(context, incident.teamPublicId),
               responderNamesByPublicId: responderNamesByPublicId,
               onEditIncident: onEditIncident,
             ),
@@ -328,7 +330,7 @@ class MissionControlBody extends StatelessWidget {
           flex: 5,
           child: IncidentDetailPanel(
             incident: incident,
-            teamName: _teamNameFor(incident.teamPublicId),
+            teamName: _teamNameFor(context, incident.teamPublicId),
             responderNamesByPublicId: responderNamesByPublicId,
             onEditIncident: onEditIncident,
           ),
@@ -355,6 +357,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final active = incidents.where((incident) => incident.active).length;
     final responders = incidents.fold<int>(
       0,
@@ -378,9 +381,8 @@ class _Header extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const MissionOutBrandLockup(
-                  subtitle:
-                      'Mission control for recent dispatch activity, team visibility, and live responder coordination.',
+                MissionOutBrandLockup(
+                  subtitle: l10n.brandSubtitle,
                   logoSize: 60,
                 ),
                 const SizedBox(height: 20),
@@ -398,25 +400,25 @@ class _Header extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  MetricBadge(label: 'Active', value: '$active'),
+                  MetricBadge(label: l10n.metricActiveLabel, value: '$active'),
                   const SizedBox(width: 12),
                   MetricBadge(
-                    label: ResponseStatus.responding.label,
+                    label: l10n.responseStatus(ResponseStatus.responding.name),
                     value: '$responders',
                   ),
                   const SizedBox(width: 12),
                   PopupMenuButton<String>(
-                    tooltip: 'Account',
+                    tooltip: l10n.tooltipAccount,
                     color: AppPalette.panelSoft,
                     onSelected: (value) {
                       if (value == 'logout') {
                         onLogout();
                       }
                     },
-                    itemBuilder: (context) => const [
+                    itemBuilder: (context) => [
                       PopupMenuItem<String>(
                         value: 'logout',
-                        child: Text('Log out'),
+                        child: Text(l10n.logOut),
                       ),
                     ],
                     child: Container(
@@ -454,6 +456,7 @@ class _SummaryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final active = incidents.where((incident) => incident.active).length;
     final responding = incidents.fold<int>(
       0,
@@ -477,25 +480,23 @@ class _SummaryStrip extends StatelessWidget {
       runSpacing: 16,
       children: [
         SummaryCard(
-          title: 'Active',
+          title: l10n.summaryActiveTitle,
           value: '$active',
-          subtitle: 'Open incidents from the last 7 days in the current feed.',
+          subtitle: l10n.summaryActiveSubtitle,
           icon: Icons.radar_rounded,
           color: AppPalette.info,
         ),
         SummaryCard(
-          title: ResponseStatus.responding.label,
+          title: l10n.responseStatus(ResponseStatus.responding.name),
           value: '$responding',
-          subtitle:
-              'Confirmed field responders across the recent incident feed.',
+          subtitle: l10n.summaryRespondingSubtitle,
           icon: Icons.hiking_rounded,
           color: AppPalette.success,
         ),
         SummaryCard(
-          title: ResponseStatus.pending.label,
+          title: l10n.responseStatus(ResponseStatus.pending.name),
           value: '$pending',
-          subtitle:
-              'Awaiting acknowledgement in the last-7-days incident feed.',
+          subtitle: l10n.summaryPendingSubtitle,
           icon: Icons.notifications_active_outlined,
           color: AppPalette.muted,
         ),
@@ -512,6 +513,7 @@ class _EmptyIncidentState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 620),
@@ -522,9 +524,9 @@ class _EmptyIncidentState extends StatelessWidget {
             children: [
               const MissionOutLogo(size: 78),
               const SizedBox(height: 20),
-              const Text(
-                'No active incidents yet',
-                style: TextStyle(
+              Text(
+                l10n.emptyIncidentTitle,
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.8,
@@ -535,7 +537,7 @@ class _EmptyIncidentState extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onCreateIncident,
                 icon: const Icon(Icons.add_rounded),
-                label: const Text('Create incident'),
+                label: Text(l10n.createIncidentButton),
               ),
             ],
           ),
