@@ -28,7 +28,11 @@
       "Bash(echo \"exit=$?\")",
       "Bash(command -v rg)",
       "PowerShell(& \"$PWD\\\\..\\\\tools\\\\check_no_hardcoded_strings.ps1\"; \"exit=$LASTEXITCODE\")",
-      "Bash(bash ../../.githooks/pre-commit)"
+      "Bash(bash ../../.githooks/pre-commit)",
+      "Bash(xargs -I{} dirname {})",
+      "Bash(xargs -I{} find {} -name \"FlutterActivity.java\")",
+      "mcp__dart__list_running_apps",
+      "mcp__dart__connect_dart_tooling_daemon"
     ]
   },
   "enabledMcpjsonServers": [

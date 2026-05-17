@@ -1,14 +1,13 @@
 package com.missionout.responder
 
 import android.Manifest
+import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.net.Uri
-import androidx.activity.ComponentActivity
-import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import io.flutter.plugin.common.BinaryMessenger
@@ -24,9 +23,8 @@ object NativeAlertBridge {
     private const val PENDING_EVENT_KEY = "pending_event"
 
     private var appContext: Context? = null
-    private var activity: ComponentActivity? = null
+    private var activity: MainActivity? = null
     private var eventSink: EventChannel.EventSink? = null
-    private var notificationPermissionLauncher: ActivityResultLauncher<String>? = null
     private var pendingPermissionResult: MethodChannel.Result? = null
 
     fun configure(context: Context, messenger: BinaryMessenger) {
@@ -47,18 +45,13 @@ object NativeAlertBridge {
         )
     }
 
-    fun attachActivity(
-        activity: ComponentActivity,
-        notificationPermissionLauncher: ActivityResultLauncher<String>
-    ) {
+    fun attachActivity(activity: MainActivity) {
         this.activity = activity
-        this.notificationPermissionLauncher = notificationPermissionLauncher
     }
 
-    fun detachActivity(activity: ComponentActivity) {
+    fun detachActivity(activity: Activity) {
         if (this.activity == activity) {
             this.activity = null
-            this.notificationPermissionLauncher = null
         }
     }
 
@@ -106,8 +99,8 @@ object NativeAlertBridge {
                     return
                 }
 
-                val launcher = notificationPermissionLauncher
-                if (launcher == null) {
+                val act = activity
+                if (act == null) {
                     result.error(
                         "activity_unavailable",
                         "Notification permission requires an active activity.",
@@ -122,7 +115,10 @@ object NativeAlertBridge {
                     null
                 )
                 pendingPermissionResult = result
-                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                act.requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    MainActivity.NOTIFICATION_PERMISSION_REQUEST_CODE
+                )
             }
 
             "showNativeAlert" -> {

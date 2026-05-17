@@ -29,7 +29,17 @@
       "Bash(.venv/Scripts/python -m pytest)",
       "Bash(.venv/Scripts/python -m pytest --collect-only -q)",
       "Skill(fullstack-dev-skills:security-reviewer)",
-      "Bash(uv run *)"
+      "Bash(uv run *)",
+      "Bash(uv --version)",
+      "Read(//Users/justinmatis/Documents/missionoutdeuce/**)",
+      "Read(//Users/justinmatis/Documents/missionoutdeuce/Secrets/**)",
+      "Bash(docker exec *)",
+      "Bash(.venv/bin/python *)",
+      "Bash(psql -U postgres -c \"\\\\du missionout_app\")",
+      "Bash(psql postgres *)",
+      "Bash(psql -U justinmatis -d missionout -c \"\\\\du missionout_app\")",
+      "Bash(psql -U justinmatis postgres -c \"\\\\du\")",
+      "Bash(psql -d missionout -c \"\\\\du\")"
     ]
   },
   "enabledMcpjsonServers": [

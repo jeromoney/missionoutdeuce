@@ -264,6 +264,27 @@ class _LoginPanel extends StatelessWidget {
               decoration: InputDecoration(hintText: l10n.codeFieldHint),
             ),
           ],
+          if (errorText != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: MissionOutColors.alertRed.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: MissionOutColors.alertRed.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Text(
+                errorText!,
+                style: const TextStyle(
+                  color: MissionOutColors.alertRed,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
           if (successText != null) ...[
             const SizedBox(height: 14),
             Container(
