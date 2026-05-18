@@ -46,7 +46,8 @@
       "Bash(xargs ls)",
       "Bash(keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android)",
       "Bash(python3 *)",
-      "Bash(uv add *)"
+      "Bash(uv add *)",
+      "Bash(gcloud auth *)"
     ]
   },
   "enabledMcpjsonServers": [

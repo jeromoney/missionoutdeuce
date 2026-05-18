@@ -14,6 +14,15 @@
   <script src="missionout_web_push.js" defer></script>
 </head>
 <body>
+  <script>
+    // Capture console.error calls so integration tests can assert on them.
+    window.__smokeTestErrors = [];
+    const _origError = window.console.error.bind(window.console);
+    window.console.error = function() {
+      window.__smokeTestErrors.push(Array.from(arguments).join(' '));
+      _origError.apply(window.console, arguments);
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

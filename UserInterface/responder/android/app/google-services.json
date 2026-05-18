@@ -29,6 +29,13 @@
             {
               "client_id": "145423397513-af92g8a4d591v4dc3ptm80t64urdusv3.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "145423397513-096a4b9390evusknfmlk0fg65gjbqpuk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.missionout.responder"
+              }
             }
           ]
         }

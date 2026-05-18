@@ -18,6 +18,7 @@ from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.config import settings
 from app.db.session import get_db
 from app.models.team_management import TeamMembership, User
 
@@ -77,7 +78,12 @@ def _verify_firebase_token(token: str) -> dict:
     try:
         app = firebase_admin.get_app()
     except ValueError:
-        app = firebase_admin.initialize_app()
+        if settings.firebase_credentials_path:
+            credential = firebase_admin.credentials.Certificate(settings.firebase_credentials_path)
+        else:
+            credential = firebase_admin.credentials.ApplicationDefault()
+        options = {"projectId": settings.firebase_project_id} if settings.firebase_project_id else {}
+        app = firebase_admin.initialize_app(credential=credential, options=options or None)
     try:
         return firebase_admin.auth.verify_id_token(token, app=app)
     except firebase_admin.auth.InvalidIdTokenError as error:
