@@ -46,7 +46,7 @@ class AuthController extends ChangeNotifier {
 
   Future<void> initializeGoogleSignIn() {
     return _googleInit ??= GoogleSignIn.instance
-        .initialize(clientId: googleClientId)
+        .initialize(clientId: googleClientId, serverClientId: googleClientId)
         .then((_) {
           _googleEventSub ??= GoogleSignIn.instance.authenticationEvents.listen(
             _handleGoogleAuthEvent,

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "145423397513",
+    "project_id": "mission-out-deuce",
+    "storage_bucket": "mission-out-deuce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145423397513:android:b62977eee05c8e9f284c58",
+        "android_client_info": {
+          "package_name": "com.missionout.responder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "145423397513-af92g8a4d591v4dc3ptm80t64urdusv3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhvjp0-SUGeoS_K-gqlwNOCZWjMjwzhlQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "145423397513-af92g8a4d591v4dc3ptm80t64urdusv3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

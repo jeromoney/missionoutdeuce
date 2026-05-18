@@ -13,7 +13,9 @@
       "Bash(awk *)",
       "Bash(Get-ChildItem *)",
       "Bash(Select-Object Name)",
-      "Bash(flutter pub *)"
+      "Bash(flutter pub *)",
+      "Skill(find-skills)",
+      "Bash(npx skills *)"
     ]
   },
   "enabledMcpjsonServers": [

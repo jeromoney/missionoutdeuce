@@ -39,7 +39,13 @@
       "Bash(psql postgres *)",
       "Bash(psql -U justinmatis -d missionout -c \"\\\\du missionout_app\")",
       "Bash(psql -U justinmatis postgres -c \"\\\\du\")",
-      "Bash(psql -d missionout -c \"\\\\du\")"
+      "Bash(psql -d missionout -c \"\\\\du\")",
+      "Bash(python3 -c ' *)",
+      "Bash(printenv GOOGLE_CLIENT_ID *)",
+      "Bash(pip show *)",
+      "Bash(xargs ls)",
+      "Bash(keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android)",
+      "Bash(python3 *)"
     ]
   },
   "enabledMcpjsonServers": [

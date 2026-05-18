@@ -23,6 +23,7 @@ dependencies:
     path: ../shared_theme
   shared_previews:
     path: ../shared_previews
+  firebase_auth: ^6.5.1
 
 dev_dependencies:
   flutter_test:
