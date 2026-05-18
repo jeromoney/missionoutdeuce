@@ -32,7 +32,18 @@
       "Bash(xargs -I{} dirname {})",
       "Bash(xargs -I{} find {} -name \"FlutterActivity.java\")",
       "mcp__dart__list_running_apps",
-      "mcp__dart__connect_dart_tooling_daemon"
+      "mcp__dart__connect_dart_tooling_daemon",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); paths={k:v for k,v in d['paths'].items\\(\\) if 'user' in k or 'me' in k or 'auth' in k}; print\\(json.dumps\\(paths, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); schemas=d['components']['schemas']; targets=['AuthUserRead','UserTeamMembershipRead','TeamMembershipRoleRead']; print\\(json.dumps\\({k:schemas[k] for k in targets if k in schemas}, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); schemas=d['components']['schemas']; targets=['AuthTeamMembershipRead']; print\\(json.dumps\\({k:schemas[k] for k in targets if k in schemas}, indent=2\\)\\)\")",
+      "Bash(xargs cat)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:v for k,v in d.items\\(\\) if k != 'client'}, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:v for k,v in d.items\\(\\) if any\\(x in k.lower\\(\\) for x in ['email','code','signin','sign_in','link','google','send','verify']\\)}, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); keys=[k for k in d if not k.startswith\\('@'\\)]; print\\(json.dumps\\({k:d[k] for k in keys}, indent=2\\)\\)\")",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; cat {}')",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; python3 -c \"import json,sys; d=json.load\\(open\\(\\\\\"$1\\\\\"\\)\\); print\\(json.dumps\\({k:d[k] for k in d if not k.startswith\\(\\\\\"@\\\\\"\\)}, indent=2\\)\\)\" \"$1\"' _ {})",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(p['package'],p.get\\('resolvable',{}\\).get\\('version','?'\\)\\) for p in d.get\\('packages',[]\\) if p['package'] in \\('firebase_auth','firebase_core'\\)]\")",
+      "Bash(wait)"
     ]
   },
   "enabledMcpjsonServers": [

@@ -39,20 +39,15 @@ class ServiceWorkerRegistrationResult {
   final String? error;
 }
 
-typedef AccessTokenProvider = Future<String?> Function();
-
 class BrowserAlertChannel extends ChangeNotifier {
   BrowserAlertChannel({
     required ResponderApi api,
     required String publicKey,
-    AccessTokenProvider? accessToken,
   })  : _api = api,
-        _publicKey = publicKey.trim(),
-        _accessToken = accessToken;
+        _publicKey = publicKey.trim();
 
   final ResponderApi _api;
   final String _publicKey;
-  final AccessTokenProvider? _accessToken;
 
   BrowserAlertState _state = BrowserAlertState.notEnabled;
   String? _errorMessage;
@@ -169,10 +164,7 @@ class BrowserAlertChannel extends ChangeNotifier {
     }
 
     try {
-      await _api.unregisterWebPush(
-        endpoint: endpoint,
-        accessToken: await _accessToken?.call(),
-      );
+      await _api.unregisterWebPush(endpoint: endpoint);
     } catch (_) {
       // Best-effort unregister; the backend can also reap stale subscriptions.
     }
@@ -235,7 +227,6 @@ class BrowserAlertChannel extends ChangeNotifier {
         endpoint: subscription.endpoint,
         p256dh: subscription.p256dh,
         auth: subscription.auth,
-        accessToken: await _accessToken?.call(),
       );
       _state = BrowserAlertState.subscribed;
     } catch (error) {

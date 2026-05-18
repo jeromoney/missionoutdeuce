@@ -1,40 +1,6 @@
 {
   "components": {
     "schemas": {
-      "AuthSessionRead": {
-        "properties": {
-          "access_token": {
-            "title": "Access Token",
-            "type": "string"
-          },
-          "access_token_expires_at": {
-            "format": "date-time",
-            "title": "Access Token Expires At",
-            "type": "string"
-          },
-          "refresh_token": {
-            "title": "Refresh Token",
-            "type": "string"
-          },
-          "refresh_token_expires_at": {
-            "format": "date-time",
-            "title": "Refresh Token Expires At",
-            "type": "string"
-          },
-          "user": {
-            "$ref": "#/components/schemas/AuthUserRead"
-          }
-        },
-        "required": [
-          "user",
-          "access_token",
-          "access_token_expires_at",
-          "refresh_token",
-          "refresh_token_expires_at"
-        ],
-        "title": "AuthSessionRead",
-        "type": "object"
-      },
       "AuthTeamMembershipRead": {
         "properties": {
           "roles": {
@@ -186,121 +152,6 @@
           "is_verified"
         ],
         "title": "DeviceRead",
-        "type": "object"
-      },
-      "EmailCodeRequest": {
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "requested_client": {
-            "enum": [
-              "responder",
-              "dispatcher",
-              "team_admin"
-            ],
-            "title": "Requested Client",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "requested_client"
-        ],
-        "title": "EmailCodeRequest",
-        "type": "object"
-      },
-      "EmailCodeSentRead": {
-        "properties": {
-          "code_length": {
-            "default": 6,
-            "title": "Code Length",
-            "type": "integer"
-          },
-          "delivery": {
-            "const": "email_code",
-            "default": "email_code",
-            "title": "Delivery",
-            "type": "string"
-          },
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "expires_in_minutes": {
-            "title": "Expires In Minutes",
-            "type": "integer"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "expires_in_minutes",
-          "message"
-        ],
-        "title": "EmailCodeSentRead",
-        "type": "object"
-      },
-      "EmailCodeVerifyRequest": {
-        "properties": {
-          "code": {
-            "title": "Code",
-            "type": "string"
-          },
-          "email": {
-            "title": "Email",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "code"
-        ],
-        "title": "EmailCodeVerifyRequest",
-        "type": "object"
-      },
-      "GoogleAuthRequest": {
-        "properties": {
-          "access_token": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Access Token"
-          },
-          "id_token": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Id Token"
-          },
-          "requested_client": {
-            "enum": [
-              "responder",
-              "dispatcher",
-              "team_admin"
-            ],
-            "title": "Requested Client",
-            "type": "string"
-          }
-        },
-        "required": [
-          "requested_client"
-        ],
-        "title": "GoogleAuthRequest",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -467,19 +318,6 @@
           "active"
         ],
         "title": "IncidentUpdate",
-        "type": "object"
-      },
-      "RefreshTokenRequest": {
-        "properties": {
-          "refresh_token": {
-            "title": "Refresh Token",
-            "type": "string"
-          }
-        },
-        "required": [
-          "refresh_token"
-        ],
-        "title": "RefreshTokenRequest",
         "type": "object"
       },
       "ResponseRecordCreate": {
@@ -902,208 +740,6 @@
         "summary": "Root",
         "tags": [
           "meta"
-        ]
-      }
-    },
-    "/auth/email-code": {
-      "post": {
-        "description": "Starts email-based sign-in by asking the backend to send a one-time verification code to the supplied email address. The code is entered directly into the MissionOut client for the requested surface.",
-        "operationId": "request_email_code_auth_email_code_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EmailCodeRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EmailCodeSentRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Request Email Sign-In Code",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/email-code/verify": {
-      "post": {
-        "description": "Completes email-code sign-in by exchanging a one-time emailed code for an authenticated MissionOut session (access token + refresh token).",
-        "operationId": "verify_email_code_auth_email_code_verify_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EmailCodeVerifyRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthSessionRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Verify Email Sign-In Code",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/google": {
-      "post": {
-        "operationId": "google_auth_auth_google_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GoogleAuthRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthSessionRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Google Auth",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/logout": {
-      "post": {
-        "description": "Revokes the supplied refresh token. Idempotent: an unknown or already-revoked token returns 204.",
-        "operationId": "logout_auth_logout_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshTokenRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Revoke Refresh Token",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "description": "Exchanges a valid refresh token for a new access token and a rotated refresh token. The presented refresh token is invalidated; replaying it will revoke every active refresh token for the owning user.",
-        "operationId": "refresh_session_auth_refresh_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshTokenRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthSessionRead"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Refresh Session",
-        "tags": [
-          "auth"
         ]
       }
     },
@@ -1683,6 +1319,28 @@
         "summary": "Update Team Member",
         "tags": [
           "teams"
+        ]
+      }
+    },
+    "/users/me": {
+      "get": {
+        "description": "Return the MissionOut profile for the authenticated Firebase user.\n\nReturns empty team_memberships when the user has no MissionOut account\n(unprovisioned state). If X-Team-Id is provided it is validated against\nactive memberships and RLS GUCs are set for that team's role.",
+        "operationId": "get_me_users_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Me",
+        "tags": [
+          "users"
         ]
       }
     }

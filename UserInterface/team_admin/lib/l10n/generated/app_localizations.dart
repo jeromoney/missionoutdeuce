@@ -140,17 +140,11 @@ abstract class AppLocalizations {
   /// **'Enter a valid phone number.'**
   String get phoneInvalid;
 
-  /// Error shown when the email-code field is empty during code verification.
+  /// Success message shown after a Firebase Email Link is sent.
   ///
   /// In en, this message translates to:
-  /// **'Enter the code from your email.'**
-  String get codeRequired;
-
-  /// Success message after the team admin requests a sign-in code.
-  ///
-  /// In en, this message translates to:
-  /// **'Check your email for code'**
-  String get codeSentMessage;
+  /// **'Check your email for a sign-in link. Tap it to complete sign-in.'**
+  String get linkSentMessage;
 
   /// Heading on the team-admin logged-out screen.
   ///
@@ -161,7 +155,7 @@ abstract class AppLocalizations {
   /// Subhead under the team-admin sign-in heading.
   ///
   /// In en, this message translates to:
-  /// **'Use an emailed code or Google to continue into your team-management workspace.'**
+  /// **'Use an email sign-in link or Google to continue into your team-management workspace.'**
   String get signInSubtitle;
 
   /// Subtitle next to the brand on the team-admin sign-in panel.
@@ -182,53 +176,29 @@ abstract class AppLocalizations {
   /// **'name@example.com'**
   String get emailFieldHint;
 
-  /// Helper text under the email field before a code has been sent.
+  /// Helper text under the email field on the team-admin sign-in form.
   ///
   /// In en, this message translates to:
-  /// **'We will send a one-time code for this Team Admin account.'**
+  /// **'We will send a sign-in link to this email address.'**
   String get emailFieldHelpInitial;
 
-  /// Helper text under the email field once a code has been sent.
+  /// Sign-in button text while the email sign-in link is being sent.
   ///
   /// In en, this message translates to:
-  /// **'Enter the emailed code to finish Team Admin sign-in.'**
-  String get emailFieldHelpAwaitingCode;
-
-  /// Label above the email-code input field that appears after a code has been sent.
-  ///
-  /// In en, this message translates to:
-  /// **'Code'**
-  String get codeFieldLabel;
-
-  /// Placeholder for the email-code input field.
-  ///
-  /// In en, this message translates to:
-  /// **'123456'**
-  String get codeFieldHint;
-
-  /// Sign-in button text while the entered code is being verified.
-  ///
-  /// In en, this message translates to:
-  /// **'Verifying code...'**
-  String get verifyingButton;
-
-  /// Sign-in button text while the email code is being sent.
-  ///
-  /// In en, this message translates to:
-  /// **'Sending code...'**
+  /// **'Sending link...'**
   String get sendingButton;
 
-  /// Sign-in button text when ready to verify a code.
+  /// Sign-in button label — sends a Firebase Email Link.
   ///
   /// In en, this message translates to:
-  /// **'Verify code'**
-  String get verifyCodeButton;
-
-  /// Sign-in button text on the initial state.
-  ///
-  /// In en, this message translates to:
-  /// **'Email me a sign-in code'**
+  /// **'Email me a sign-in link'**
   String get emailMeCodeButton;
+
+  /// Sign-in button label shown after a link has already been sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend link'**
+  String get resendLinkButton;
 
   /// Label on the Google sign-in button.
   ///

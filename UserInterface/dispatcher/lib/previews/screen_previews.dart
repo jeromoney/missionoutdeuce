@@ -185,9 +185,7 @@ Widget loggedOutScreen() {
   return PreviewApp(
     accent: _accent,
     child: LoggedOutScreen(
-      onRequestEmailCode: ({required String email}) async {},
-      onVerifyEmailCode:
-          ({required String email, required String code}) async {},
+      onSendSignInLink: (email) async {},
       onGoogleLogin: () async {},
       googleLoginEnabled: true,
       roleLabel: 'Dispatcher',

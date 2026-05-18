@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
@@ -31,16 +32,10 @@ class ResponderHomeScreen extends StatefulWidget {
 }
 
 class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
-  final api = ResponderApi();
+  late final ResponderApi api;
   final nativeAlerts = NativeAlertStatusService();
-  late final BrowserAlertChannel browserAlerts = BrowserAlertChannel(
-    api: api,
-    publicKey: webPushPublicKey,
-    accessToken: widget.auth.ensureFreshAccessToken,
-  );
-  late final OpenTabEventStream openTabEvents = createOpenTabEventStream(
-    streamUrl: '${api.baseUrl}/events/stream',
-  );
+  late final BrowserAlertChannel browserAlerts;
+  late final OpenTabEventStream openTabEvents;
   List<ResponderIncident> incidents = const [];
   int selected = 0;
   AvailabilityStatus availability = AvailabilityStatus.available;
@@ -55,6 +50,17 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   @override
   void initState() {
     super.initState();
+    api = ResponderApi(
+      client: AuthHeaderClient(
+        http.Client(),
+        widget.auth.getIdToken,
+        teamIdProvider: () => widget.auth.activeTeam?.teamPublicId,
+      ),
+    );
+    browserAlerts = BrowserAlertChannel(api: api, publicKey: webPushPublicKey);
+    openTabEvents = createOpenTabEventStream(
+      streamUrl: '${api.baseUrl}/events/stream',
+    );
     nativeAlerts.initialize();
     browserAlerts.ensureSubscribed();
     _connectOpenTabEvents();
@@ -174,7 +180,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
   }
 
   Future<void> _connectOpenTabEvents() async {
-    final accessToken = await widget.auth.ensureFreshAccessToken();
+    final accessToken = await widget.auth.getIdToken();
     if (!mounted || accessToken == null || accessToken.isEmpty) {
       return;
     }
@@ -188,9 +194,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     });
 
     try {
-      final accessToken = await widget.auth.ensureFreshAccessToken();
       final loadedIncidents = await api.fetchIncidents(
-        accessToken: accessToken,
         userPublicId: widget.auth.currentUser?.publicId,
       );
 
@@ -225,9 +229,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     }
 
     try {
-      final accessToken = await widget.auth.ensureFreshAccessToken();
       final loadedIncidents = await api.fetchIncidents(
-        accessToken: accessToken,
         userPublicId: widget.auth.currentUser?.publicId,
       );
 
@@ -304,12 +306,10 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     });
 
     try {
-      final accessToken = await widget.auth.ensureFreshAccessToken();
       final updatedResponse = await api.submitResponse(
         incidentPublicId: resolvedIncidentPublicId,
         status: status,
         source: source,
-        accessToken: accessToken,
       );
 
       if (!mounted) {

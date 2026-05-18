@@ -30,17 +30,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get phoneInvalid => 'Enter a valid phone number.';
 
   @override
-  String get codeRequired => 'Enter the code from your email.';
-
-  @override
-  String get codeSentMessage => 'Check your email for code';
+  String get linkSentMessage =>
+      'Check your email for a sign-in link. Tap it to complete sign-in.';
 
   @override
   String get signInTitle => 'Sign in to Team Admin';
 
   @override
   String get signInSubtitle =>
-      'Use an emailed code or Google to continue into your team-management workspace.';
+      'Use an email sign-in link or Google to continue into your team-management workspace.';
 
   @override
   String get signInBrandSubtitle =>
@@ -54,29 +52,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get emailFieldHelpInitial =>
-      'We will send a one-time code for this Team Admin account.';
+      'We will send a sign-in link to this email address.';
 
   @override
-  String get emailFieldHelpAwaitingCode =>
-      'Enter the emailed code to finish Team Admin sign-in.';
+  String get sendingButton => 'Sending link...';
 
   @override
-  String get codeFieldLabel => 'Code';
+  String get emailMeCodeButton => 'Envíame un enlace para iniciar sesión';
 
   @override
-  String get codeFieldHint => '123456';
-
-  @override
-  String get verifyingButton => 'Verifying code...';
-
-  @override
-  String get sendingButton => 'Sending code...';
-
-  @override
-  String get verifyCodeButton => 'Verify code';
-
-  @override
-  String get emailMeCodeButton => 'Envíame un código por correo';
+  String get resendLinkButton => 'Resend link';
 
   @override
   String get continueWithGoogle => 'Continue with Google';

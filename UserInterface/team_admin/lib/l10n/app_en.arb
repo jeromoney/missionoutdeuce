@@ -29,20 +29,16 @@
   "@phoneInvalid": {
     "description": "Validation error when a phone field has malformed input."
   },
-  "codeRequired": "Enter the code from your email.",
-  "@codeRequired": {
-    "description": "Error shown when the email-code field is empty during code verification."
-  },
-  "codeSentMessage": "Check your email for code",
-  "@codeSentMessage": {
-    "description": "Success message after the team admin requests a sign-in code."
+  "linkSentMessage": "Check your email for a sign-in link. Tap it to complete sign-in.",
+  "@linkSentMessage": {
+    "description": "Success message shown after a Firebase Email Link is sent."
   },
 
   "signInTitle": "Sign in to Team Admin",
   "@signInTitle": {
     "description": "Heading on the team-admin logged-out screen."
   },
-  "signInSubtitle": "Use an emailed code or Google to continue into your team-management workspace.",
+  "signInSubtitle": "Use an email sign-in link or Google to continue into your team-management workspace.",
   "@signInSubtitle": {
     "description": "Subhead under the team-admin sign-in heading."
   },
@@ -58,37 +54,21 @@
   "@emailFieldHint": {
     "description": "Placeholder shown inside the empty email field."
   },
-  "emailFieldHelpInitial": "We will send a one-time code for this Team Admin account.",
+  "emailFieldHelpInitial": "We will send a sign-in link to this email address.",
   "@emailFieldHelpInitial": {
-    "description": "Helper text under the email field before a code has been sent."
+    "description": "Helper text under the email field on the team-admin sign-in form."
   },
-  "emailFieldHelpAwaitingCode": "Enter the emailed code to finish Team Admin sign-in.",
-  "@emailFieldHelpAwaitingCode": {
-    "description": "Helper text under the email field once a code has been sent."
-  },
-  "codeFieldLabel": "Code",
-  "@codeFieldLabel": {
-    "description": "Label above the email-code input field that appears after a code has been sent."
-  },
-  "codeFieldHint": "123456",
-  "@codeFieldHint": {
-    "description": "Placeholder for the email-code input field."
-  },
-  "verifyingButton": "Verifying code...",
-  "@verifyingButton": {
-    "description": "Sign-in button text while the entered code is being verified."
-  },
-  "sendingButton": "Sending code...",
+  "sendingButton": "Sending link...",
   "@sendingButton": {
-    "description": "Sign-in button text while the email code is being sent."
+    "description": "Sign-in button text while the email sign-in link is being sent."
   },
-  "verifyCodeButton": "Verify code",
-  "@verifyCodeButton": {
-    "description": "Sign-in button text when ready to verify a code."
-  },
-  "emailMeCodeButton": "Email me a sign-in code",
+  "emailMeCodeButton": "Email me a sign-in link",
   "@emailMeCodeButton": {
-    "description": "Sign-in button text on the initial state."
+    "description": "Sign-in button label — sends a Firebase Email Link."
+  },
+  "resendLinkButton": "Resend link",
+  "@resendLinkButton": {
+    "description": "Sign-in button label shown after a link has already been sent."
   },
   "continueWithGoogle": "Continue with Google",
   "@continueWithGoogle": {

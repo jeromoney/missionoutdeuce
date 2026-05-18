@@ -43,7 +43,8 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
     api = MissionOutApi(
       client: AuthHeaderClient(
         http.Client(),
-        () => widget.auth.ensureFreshAccessToken(),
+        widget.auth.getIdToken,
+        teamIdProvider: () => widget.auth.activeTeam?.teamPublicId,
       ),
     );
     _loadDashboard();
@@ -75,8 +76,9 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
     });
 
     try {
+      final activeTeam = widget.auth.activeTeam;
       final DashboardSnapshot snapshot = await api.fetchDashboard(
-        memberships: widget.auth.currentUser?.teamMemberships ?? const [],
+        memberships: activeTeam != null ? [activeTeam] : const [],
       );
 
       if (!mounted) {
@@ -126,13 +128,10 @@ class _MissionControlScreenState extends State<MissionControlScreen> {
     }
 
     try {
-      final memberships = widget.auth.currentUser?.teamMemberships ?? const [];
-      final teamPublicId = memberships.isNotEmpty
-          ? memberships.first.teamPublicId
-          : '';
+      final teamPublicId = widget.auth.activeTeam?.teamPublicId ?? '';
       if (teamPublicId.isEmpty) {
         throw Exception(
-          'No team_public_id available for dispatcher incident creation.',
+          'No active team selected for incident creation.',
         );
       }
       final newIncident = await api.createIncident(

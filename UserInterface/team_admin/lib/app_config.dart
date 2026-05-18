@@ -3,8 +3,8 @@ const _apiBaseUrlFromEnv = String.fromEnvironment(
   defaultValue: '',
 );
 
-const googleClientId = String.fromEnvironment(
-  'GOOGLE_CLIENT_ID',
+const emailLinkContinueUrl = String.fromEnvironment(
+  'EMAIL_LINK_CONTINUE_URL',
   defaultValue: '',
 );
 

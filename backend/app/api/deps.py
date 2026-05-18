@@ -1,28 +1,23 @@
 """FastAPI dependencies for authenticated request handling.
 
 `get_current_principal` resolves the authenticated user from a
-`Authorization: Bearer <jwt>` header, verifies the access token signature
-and expiry, picks the effective role from the user's active memberships, and
-— when the database is Postgres — primes the session with `SET LOCAL
-app.user_id` and `SET LOCAL app.role` so RLS policies in `app/db/rls.py` see
-the caller's identity.
+`Authorization: Bearer <firebase-id-token>` header, verifies the Firebase ID
+token, picks the effective role from the user's active memberships, and —
+when the database is Postgres — primes the session with `set_config` so RLS
+policies in `app/db/rls.py` see the caller's identity.
 
-Note that `SET LOCAL` only persists within the current transaction; a
-`db.commit()` inside a handler will clear the setting. Handlers that need to
-commit mid-request and continue hitting RLS-protected tables must re-run
-`SET LOCAL` themselves.
-
-TODO(rls): migrate local dev + CI to Postgres so SET LOCAL is exercised in
-tests. Today the suite runs on SQLite and this dependency is effectively a
-no-op for the context-setting step.
+`get_firebase_claims` is a lighter dependency used by endpoints that need
+Firebase identity but not a full membership check (e.g. GET /users/me, which
+must succeed for unprovisioned users with no team memberships).
 """
 from dataclasses import dataclass
 
+import firebase_admin
+import firebase_admin.auth
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, selectinload
 
-from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models.team_management import TeamMembership, User
 
@@ -38,12 +33,7 @@ class Principal:
 
 
 def user_has_active_membership(user: User) -> bool:
-    """True if the user has at least one active membership on an active team.
-
-    Replaces the old global `User.is_active` flag: with `is_active` now living
-    on `TeamMembership`, "is this account allowed to act?" is equivalent to
-    "do they have any non-deactivated membership on a live team?".
-    """
+    """True if the user has at least one active membership on an active team."""
     return any(m.is_active and m.team.is_active for m in user.memberships)
 
 
@@ -51,8 +41,7 @@ def _select_effective_membership(user: User) -> TeamMembership | None:
     active = [m for m in user.memberships if m.is_active and m.team.is_active]
     if not active:
         return None
-    # Pick the highest-privilege role across the user's active memberships.
-    # Ties are broken by stable ordering on membership id.
+
     def rank(membership: TeamMembership) -> tuple[int, int]:
         try:
             role_rank = _ROLE_PRECEDENCE.index(membership.role)
@@ -79,18 +68,79 @@ def _extract_bearer_token(request: Request) -> str:
     return token.strip()
 
 
+def _verify_firebase_token(token: str) -> dict:
+    """Verify a Firebase ID token and return decoded claims.
+
+    Isolated as a named function so tests can monkeypatch it without
+    triggering real Firebase SDK calls or network requests.
+    """
+    try:
+        app = firebase_admin.get_app()
+    except ValueError:
+        app = firebase_admin.initialize_app()
+    try:
+        return firebase_admin.auth.verify_id_token(token, app=app)
+    except firebase_admin.auth.InvalidIdTokenError as error:
+        raise HTTPException(
+            status_code=401, detail="Invalid Firebase ID token."
+        ) from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=503, detail="Firebase token verification unavailable."
+        ) from error
+
+
+def _load_user_by_email(db: Session, email: str) -> User | None:
+    normalized = email.strip().lower()
+    return db.scalar(
+        select(User)
+        .options(selectinload(User.memberships).selectinload(TeamMembership.team))
+        .where(User.email == normalized)
+    )
+
+
+def _set_rls_gucs(db: Session, user_id: int, role: str) -> None:
+    if db.bind is not None and db.bind.dialect.name == "postgresql":
+        db.execute(
+            text("SELECT set_config('app.user_id', :uid, true)"),
+            {"uid": str(user_id)},
+        )
+        db.execute(
+            text("SELECT set_config('app.role', :role, true)"),
+            {"role": role},
+        )
+
+
+def get_firebase_claims(request: Request) -> dict:
+    """Verify Firebase ID token and return decoded claims.
+
+    Raises 401 if the token is missing, invalid, or lacks an email claim.
+    Does NOT require the user to exist in the database or have any team
+    memberships — safe for use on endpoints that serve unprovisioned users.
+    """
+    token = _extract_bearer_token(request)
+    claims = _verify_firebase_token(token)
+    if not claims.get("email"):
+        raise HTTPException(
+            status_code=401, detail="Firebase token missing email claim."
+        )
+    return claims
+
+
 def get_current_principal(
     request: Request,
     db: Session = Depends(get_db),
 ) -> Principal:
     token = _extract_bearer_token(request)
-    claims = decode_access_token(token)
+    claims = _verify_firebase_token(token)
 
-    user = db.scalar(
-        select(User)
-        .options(selectinload(User.memberships).selectinload(TeamMembership.team))
-        .where(User.public_id == claims["sub"])
-    )
+    email = claims.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=401, detail="Firebase token missing email claim."
+        )
+
+    user = _load_user_by_email(db, email)
     if user is None:
         raise HTTPException(
             status_code=401,
@@ -104,17 +154,5 @@ def get_current_principal(
             detail="Authenticated user does not have access to any active teams.",
         )
 
-    if db.bind is not None and db.bind.dialect.name == "postgresql":
-        # Equivalent to `SET LOCAL app.user_id = ...` but supports bound params.
-        # Postgres' SET grammar does not accept placeholders via the extended
-        # query protocol; set_config(is_local=true) matches SET LOCAL scope.
-        db.execute(
-            text("SELECT set_config('app.user_id', :uid, true)"),
-            {"uid": str(user.id)},
-        )
-        db.execute(
-            text("SELECT set_config('app.role', :role, true)"),
-            {"role": membership.role},
-        )
-
+    _set_rls_gucs(db, user.id, membership.role)
     return Principal(user=user, role=membership.role, membership=membership)

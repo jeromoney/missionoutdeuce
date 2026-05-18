@@ -1,5 +1,6 @@
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_models/shared_models.dart';
 import 'package:shared_theme/shared_theme.dart';
@@ -20,7 +21,7 @@ class TeamAdminHomeScreen extends StatefulWidget {
 }
 
 class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
-  final repository = TeamAdminRepository();
+  late final TeamAdminRepository repository;
   TeamAdminTeam team = const TeamAdminTeam(
     publicId: 'team_loading',
     name: 'Loading team',
@@ -41,6 +42,13 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
   @override
   void initState() {
     super.initState();
+    repository = TeamAdminRepository(
+      client: AuthHeaderClient(
+        http.Client(),
+        widget.auth.getIdToken,
+        teamIdProvider: () => widget.auth.activeTeam?.teamPublicId,
+      ),
+    );
     _loadWorkspace();
   }
 
@@ -69,10 +77,8 @@ class _TeamAdminHomeScreenState extends State<TeamAdminHomeScreen> {
       statusMessage = null;
     });
 
-    final accessToken = await widget.auth.ensureFreshAccessToken();
     final workspace = await repository.loadWorkspace(
       memberships: widget.auth.currentUser?.teamMemberships ?? const [],
-      accessToken: accessToken,
     );
 
     if (!mounted) {

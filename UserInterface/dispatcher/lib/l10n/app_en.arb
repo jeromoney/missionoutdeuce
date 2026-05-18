@@ -13,20 +13,16 @@
   "@emailInvalid": {
     "description": "Validation error when an email field has malformed input."
   },
-  "codeRequired": "Enter the code from your email.",
-  "@codeRequired": {
-    "description": "Error shown when the email-code field is empty during code verification."
-  },
-  "codeSentMessage": "Check your email for code",
-  "@codeSentMessage": {
-    "description": "Success message after the dispatcher requests a sign-in code."
+  "linkSentMessage": "Check your email for a sign-in link. Tap it to complete sign-in.",
+  "@linkSentMessage": {
+    "description": "Success message shown after a Firebase Email Link is sent."
   },
 
   "signInTitle": "Sign in to mission control",
   "@signInTitle": {
     "description": "Heading on the dispatcher logged-out screen."
   },
-  "signInSubtitle": "Use an emailed code or Google to continue into the dispatcher workspace.",
+  "signInSubtitle": "Use an email sign-in link or Google to continue into the dispatcher workspace.",
   "@signInSubtitle": {
     "description": "Subhead under the dispatcher sign-in heading."
   },
@@ -46,33 +42,21 @@
   "@emailFieldHint": {
     "description": "Placeholder shown inside the empty email field."
   },
-  "emailFieldHelp": "We will send a sign-in link for this dispatcher account.",
+  "emailFieldHelp": "We will send a sign-in link to this email address.",
   "@emailFieldHelp": {
     "description": "Helper text under the email field on the dispatcher sign-in form."
   },
-  "codeFieldLabel": "Code",
-  "@codeFieldLabel": {
-    "description": "Label above the email-code input field that appears after a code has been sent."
-  },
-  "codeFieldHint": "Enter the code from your email",
-  "@codeFieldHint": {
-    "description": "Placeholder for the email-code input field."
-  },
-  "verifyingButton": "Verifying code...",
-  "@verifyingButton": {
-    "description": "Sign-in button text while the entered code is being verified."
-  },
-  "sendingButton": "Sending code...",
+  "sendingButton": "Sending link...",
   "@sendingButton": {
-    "description": "Sign-in button text while the email code is being sent."
+    "description": "Sign-in button text while the email sign-in link is being sent."
   },
-  "verifyCodeButton": "Verify code",
-  "@verifyCodeButton": {
-    "description": "Sign-in button text when ready to verify a code."
-  },
-  "emailMeCodeButton": "Email me a sign-in code",
+  "emailMeCodeButton": "Email me a sign-in link",
   "@emailMeCodeButton": {
-    "description": "Sign-in button text on the initial state."
+    "description": "Sign-in button label — sends a Firebase Email Link."
+  },
+  "resendLinkButton": "Resend link",
+  "@resendLinkButton": {
+    "description": "Sign-in button label shown after a link has already been sent."
   },
   "continueWithGoogle": "Continue with Google",
   "@continueWithGoogle": {

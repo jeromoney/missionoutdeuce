@@ -36,28 +36,22 @@ void main() {
     });
   });
 
-  group('AuthUser.fromSessionJson with envelope', () {
-    test('parses a full AuthSessionRead envelope', () {
-      final user = AuthUser.fromSessionJson({
-        'user': {
-          'public_id': 'u-1',
-          'name': 'Alex Responder',
-          'initials': 'AR',
-          'role': 'Responder',
-          'email': 'alex@example.test',
-          'global_permissions': const ['read:incidents'],
-          'team_memberships': [
-            {
-              'team_public_id': 'team-1',
-              'team_name': 'Alpha team',
-              'roles': ['responder'],
-            },
-          ],
-        },
-        'access_token': 'access-jwt',
-        'access_token_expires_at': '2026-05-01T12:00:00Z',
-        'refresh_token': 'refresh-jwt',
-        'refresh_token_expires_at': '2026-06-01T12:00:00Z',
+  group('AuthUser.fromJson', () {
+    test('parses a full AuthUserRead payload', () {
+      final user = AuthUser.fromJson({
+        'public_id': 'u-1',
+        'name': 'Alex Responder',
+        'initials': 'AR',
+        'role': 'Responder',
+        'email': 'alex@example.test',
+        'global_permissions': const ['read:incidents'],
+        'team_memberships': [
+          {
+            'team_public_id': 'team-1',
+            'team_name': 'Alpha team',
+            'roles': ['responder'],
+          },
+        ],
       });
 
       expect(user.publicId, 'u-1');
@@ -68,31 +62,10 @@ void main() {
       expect(user.globalPermissions, const ['read:incidents']);
       expect(user.teamMemberships, hasLength(1));
       expect(user.teamMemberships.first.teamPublicId, 'team-1');
-      expect(user.accessToken, 'access-jwt');
-      expect(user.accessTokenExpiresAt, DateTime.utc(2026, 5, 1, 12));
-      expect(user.refreshToken, 'refresh-jwt');
-      expect(user.refreshTokenExpiresAt, DateTime.utc(2026, 6, 1, 12));
     });
 
-    test('falls back to legacy AuthUserRead-only payloads', () {
-      final user = AuthUser.fromSessionJson(const {
-        'public_id': 'u-1',
-        'name': 'Alex Responder',
-        'initials': 'AR',
-        'role': 'Responder',
-        'email': 'alex@example.test',
-      });
-
-      expect(user.publicId, 'u-1');
-      expect(user.role, 'Responder');
-      expect(user.accessToken, isNull);
-      expect(user.accessTokenExpiresAt, isNull);
-      expect(user.refreshToken, isNull);
-      expect(user.refreshTokenExpiresAt, isNull);
-    });
-
-    test('applies safe defaults when user fields are absent', () {
-      final user = AuthUser.fromSessionJson(<String, dynamic>{'user': <String, dynamic>{}});
+    test('applies safe defaults when fields are absent', () {
+      final user = AuthUser.fromJson(const {});
 
       expect(user.publicId, '');
       expect(user.name, 'Unknown User');
@@ -103,15 +76,13 @@ void main() {
     });
 
     test('drops non-string globalPermissions and non-object memberships', () {
-      final user = AuthUser.fromSessionJson(const {
-        'user': {
-          'global_permissions': ['admin', 42, null],
-          'team_memberships': [
-            {'team_public_id': 'team-1', 'team_name': 'Alpha', 'roles': []},
-            'not-an-object',
-            42,
-          ],
-        },
+      final user = AuthUser.fromJson(const {
+        'global_permissions': ['admin', 42, null],
+        'team_memberships': [
+          {'team_public_id': 'team-1', 'team_name': 'Alpha', 'roles': []},
+          'not-an-object',
+          42,
+        ],
       });
 
       expect(user.globalPermissions, const ['admin']);
@@ -120,28 +91,23 @@ void main() {
     });
   });
 
-  group('AuthUser.fromSessionJson role resolution', () {
+  group('AuthUser.fromJson role resolution', () {
     test('explicit role in payload wins over heuristics', () {
-      final user = AuthUser.fromSessionJson(const {
-        'user': {'role': 'Custom Role'},
-      }, requestedClient: 'team_admin');
+      final user = AuthUser.fromJson(
+        const {'role': 'Custom Role'},
+        requestedClient: 'team_admin',
+      );
 
       expect(user.role, 'Custom Role');
     });
 
     test('requestedClient maps to the canonical role label', () {
-      final teamAdmin = AuthUser.fromSessionJson(
-        <String, dynamic>{'user': <String, dynamic>{}},
-        requestedClient: 'team_admin',
-      );
-      final dispatcher = AuthUser.fromSessionJson(
-        <String, dynamic>{'user': <String, dynamic>{}},
-        requestedClient: 'dispatcher',
-      );
-      final responder = AuthUser.fromSessionJson(
-        <String, dynamic>{'user': <String, dynamic>{}},
-        requestedClient: 'responder',
-      );
+      final teamAdmin =
+          AuthUser.fromJson(const {}, requestedClient: 'team_admin');
+      final dispatcher =
+          AuthUser.fromJson(const {}, requestedClient: 'dispatcher');
+      final responder =
+          AuthUser.fromJson(const {}, requestedClient: 'responder');
 
       expect(teamAdmin.role, 'Team Admin');
       expect(dispatcher.role, 'Dispatcher');
@@ -149,45 +115,37 @@ void main() {
     });
 
     test('global super_admin permission promotes to Super Admin', () {
-      final user = AuthUser.fromSessionJson(const {
-        'user': {
-          'global_permissions': ['super_admin'],
-        },
+      final user = AuthUser.fromJson(const {
+        'global_permissions': ['super_admin'],
       });
 
       expect(user.role, 'Super Admin');
     });
 
     test('membership roles cascade Team Admin > Dispatcher > Responder', () {
-      final teamAdmin = AuthUser.fromSessionJson(const {
-        'user': {
-          'team_memberships': [
-            {'team_public_id': 't', 'team_name': 'A', 'roles': ['responder']},
-            {
-              'team_public_id': 't2',
-              'team_name': 'B',
-              'roles': ['team_admin'],
-            },
-          ],
-        },
+      final teamAdmin = AuthUser.fromJson(const {
+        'team_memberships': [
+          {'team_public_id': 't', 'team_name': 'A', 'roles': ['responder']},
+          {
+            'team_public_id': 't2',
+            'team_name': 'B',
+            'roles': ['team_admin'],
+          },
+        ],
       });
-      final dispatcher = AuthUser.fromSessionJson(const {
-        'user': {
-          'team_memberships': [
-            {
-              'team_public_id': 't',
-              'team_name': 'A',
-              'roles': ['dispatcher', 'responder'],
-            },
-          ],
-        },
+      final dispatcher = AuthUser.fromJson(const {
+        'team_memberships': [
+          {
+            'team_public_id': 't',
+            'team_name': 'A',
+            'roles': ['dispatcher', 'responder'],
+          },
+        ],
       });
-      final responder = AuthUser.fromSessionJson(const {
-        'user': {
-          'team_memberships': [
-            {'team_public_id': 't', 'team_name': 'A', 'roles': ['responder']},
-          ],
-        },
+      final responder = AuthUser.fromJson(const {
+        'team_memberships': [
+          {'team_public_id': 't', 'team_name': 'A', 'roles': ['responder']},
+        ],
       });
 
       expect(teamAdmin.role, 'Team Admin');
@@ -196,87 +154,47 @@ void main() {
     });
 
     test('falls back to fallbackRole when nothing else matches', () {
-      final user = AuthUser.fromSessionJson(
-        <String, dynamic>{'user': <String, dynamic>{}},
+      final user = AuthUser.fromJson(
+        const {},
         fallbackRole: 'Visitor',
       );
 
       expect(user.role, 'Visitor');
     });
 
-    test('defaults to Responder when neither client nor fallback is given',
-        () {
-      final user = AuthUser.fromSessionJson(<String, dynamic>{'user': <String, dynamic>{}});
+    test('defaults to Responder when neither client nor fallback is given', () {
+      final user = AuthUser.fromJson(const {});
 
       expect(user.role, 'Responder');
     });
   });
 
-  group('AuthUser.fromJson', () {
-    test('delegates to fromSessionJson', () {
-      final user = AuthUser.fromJson(const {
-        'user': {'public_id': 'u-1', 'role': 'Dispatcher'},
-        'access_token': 'jwt',
-      });
-
-      expect(user.publicId, 'u-1');
-      expect(user.role, 'Dispatcher');
-      expect(user.accessToken, 'jwt');
-    });
-  });
-
   group('AuthUser.toJson', () {
-    test('emits the full session envelope including timestamps', () {
-      final user = AuthUser(
-        publicId: 'u-1',
-        name: 'Alex',
-        initials: 'A',
-        role: 'Responder',
-        email: 'a@example.test',
-        globalPermissions: const ['read:incidents'],
-        teamMemberships: const [
-          AuthTeamMembership(
-            teamPublicId: 'team-1',
-            teamName: 'Alpha',
-            roles: ['responder'],
-          ),
-        ],
-        accessToken: 'jwt',
-        accessTokenExpiresAt: DateTime.utc(2026, 5, 1, 12),
-        refreshToken: 'refresh',
-        refreshTokenExpiresAt: DateTime.utc(2026, 6, 1, 12),
-      );
-
-      final json = user.toJson();
-      final innerUser = json['user'] as Map<String, dynamic>;
-
-      expect(innerUser['public_id'], 'u-1');
-      expect(innerUser['name'], 'Alex');
-      expect(innerUser['initials'], 'A');
-      expect(innerUser['email'], 'a@example.test');
-      expect(innerUser['global_permissions'], const ['read:incidents']);
-      expect(innerUser['team_memberships'], hasLength(1));
-      expect(json['access_token'], 'jwt');
-      expect(json['access_token_expires_at'], '2026-05-01T12:00:00.000Z');
-      expect(json['refresh_token'], 'refresh');
-      expect(json['refresh_token_expires_at'], '2026-06-01T12:00:00.000Z');
-    });
-
-    test('emits null timestamps when not set', () {
+    test('round-trips through toJson/fromJson', () {
       const user = AuthUser(
         publicId: 'u-1',
         name: 'Alex',
         initials: 'A',
         role: 'Responder',
         email: 'a@example.test',
+        globalPermissions: ['read:incidents'],
+        teamMemberships: [
+          AuthTeamMembership(
+            teamPublicId: 'team-1',
+            teamName: 'Alpha',
+            roles: ['responder'],
+          ),
+        ],
       );
 
-      final json = user.toJson();
+      final restored = AuthUser.fromJson(user.toJson());
 
-      expect(json['access_token'], isNull);
-      expect(json['access_token_expires_at'], isNull);
-      expect(json['refresh_token'], isNull);
-      expect(json['refresh_token_expires_at'], isNull);
+      expect(restored.publicId, user.publicId);
+      expect(restored.name, user.name);
+      expect(restored.initials, user.initials);
+      expect(restored.email, user.email);
+      expect(restored.globalPermissions, user.globalPermissions);
+      expect(restored.teamMemberships, hasLength(1));
     });
   });
 
@@ -299,10 +217,6 @@ void main() {
       expect(copy.email, original.email);
       expect(copy.globalPermissions, original.globalPermissions);
       expect(copy.teamMemberships, original.teamMemberships);
-      expect(copy.accessToken, original.accessToken);
-      expect(copy.accessTokenExpiresAt, original.accessTokenExpiresAt);
-      expect(copy.refreshToken, original.refreshToken);
-      expect(copy.refreshTokenExpiresAt, original.refreshTokenExpiresAt);
     });
 
     test('overrides only the supplied fields', () {
@@ -312,36 +226,6 @@ void main() {
       expect(renamed.role, 'Dispatcher');
       expect(renamed.publicId, original.publicId);
       expect(renamed.email, original.email);
-    });
-  });
-
-  group('AuthUser._parseDate', () {
-    test('normalizes timezone offsets to UTC', () {
-      final user = AuthUser.fromSessionJson(<String, dynamic>{
-        'user': <String, dynamic>{},
-        'access_token_expires_at': '2026-05-01T08:00:00-04:00',
-      });
-
-      expect(user.accessTokenExpiresAt, DateTime.utc(2026, 5, 1, 12));
-      expect(user.accessTokenExpiresAt!.isUtc, isTrue);
-    });
-
-    test('returns null for empty timestamp strings', () {
-      final user = AuthUser.fromSessionJson(<String, dynamic>{
-        'user': <String, dynamic>{},
-        'access_token_expires_at': '',
-      });
-
-      expect(user.accessTokenExpiresAt, isNull);
-    });
-
-    test('returns null for non-string timestamp values', () {
-      final user = AuthUser.fromSessionJson(<String, dynamic>{
-        'user': <String, dynamic>{},
-        'access_token_expires_at': 12345,
-      });
-
-      expect(user.accessTokenExpiresAt, isNull);
     });
   });
 }

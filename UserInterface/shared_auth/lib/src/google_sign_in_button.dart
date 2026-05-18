@@ -1,8 +1,6 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import 'auth_controller.dart';
-import 'google_sign_in_button_stub.dart'
-    if (dart.library.js_interop) 'google_sign_in_button_web.dart';
 
 class MissionOutGoogleLoginButton extends StatelessWidget {
   const MissionOutGoogleLoginButton({super.key, required this.controller});
@@ -11,6 +9,10 @@ class MissionOutGoogleLoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return buildGoogleSignInButton(controller);
+    return OutlinedButton.icon(
+      onPressed: controller.loginWithGoogle,
+      icon: const Icon(Icons.login_rounded),
+      label: const Text('Continue with Google'),
+    );
   }
 }

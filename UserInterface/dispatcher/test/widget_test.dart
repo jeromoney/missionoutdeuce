@@ -11,59 +11,56 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: LoggedOutScreen(
-          onRequestEmailCode: ({required email}) async {},
-          onVerifyEmailCode: ({required email, required code}) async {},
+          onSendSignInLink: (email) async {},
           onGoogleLogin: () async {},
         ),
       ),
     );
 
     expect(find.text('Sign in to mission control'), findsOneWidget);
-    expect(find.text('Email me a sign-in code'), findsOneWidget);
+    expect(find.text('Email me a sign-in link'), findsOneWidget);
   });
 
-  testWidgets('shows code field after successful email request',
+  testWidgets('shows link-sent confirmation after sending sign-in link',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: LoggedOutScreen(
-          onRequestEmailCode: ({required email}) async {},
-          onVerifyEmailCode: ({required email, required code}) async {},
+          onSendSignInLink: (email) async {},
           onGoogleLogin: () async {},
         ),
       ),
     );
 
     await tester.enterText(find.byType(TextField).first, 'user@example.com');
-    await tester.tap(find.text('Email me a sign-in code'));
+    await tester.tap(find.text('Email me a sign-in link'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Code'), findsOneWidget);
+    expect(find.text('Resend link'), findsOneWidget);
   });
 
-  testWidgets('shows error message when email request fails',
+  testWidgets('shows error message when send-link request fails',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: LoggedOutScreen(
-          onRequestEmailCode: ({required email}) async {
+          onSendSignInLink: (_) async {
             throw Exception('Server error');
           },
-          onVerifyEmailCode: ({required email, required code}) async {},
           onGoogleLogin: () async {},
         ),
       ),
     );
 
     await tester.enterText(find.byType(TextField).first, 'user@example.com');
-    await tester.tap(find.text('Email me a sign-in code'));
+    await tester.tap(find.text('Email me a sign-in link'));
     await tester.pumpAndSettle();
 
     expect(find.text('Server error'), findsOneWidget);
-    expect(find.text('Code'), findsNothing);
+    expect(find.text('Resend link'), findsNothing);
   });
 }

@@ -116,17 +116,11 @@ abstract class AppLocalizations {
   /// **'Enter a valid email address.'**
   String get emailInvalid;
 
-  /// Error shown when the email-code field is empty during code verification.
+  /// Success message shown after a Firebase Email Link is sent.
   ///
   /// In en, this message translates to:
-  /// **'Enter the code from your email.'**
-  String get codeRequired;
-
-  /// Success message after the responder requests a sign-in code.
-  ///
-  /// In en, this message translates to:
-  /// **'Check your email for code'**
-  String get codeSentMessage;
+  /// **'Check your email for a sign-in link. Tap it to complete sign-in.'**
+  String get linkSentMessage;
 
   /// Heading on the responder logged-out screen.
   ///
@@ -137,7 +131,7 @@ abstract class AppLocalizations {
   /// Subhead under the responder sign-in heading.
   ///
   /// In en, this message translates to:
-  /// **'Use an emailed code or Google to continue.'**
+  /// **'Use an email sign-in link or Google to continue.'**
   String get signInSubtitle;
 
   /// Label above the email text field on the sign-in form.
@@ -155,32 +149,26 @@ abstract class AppLocalizations {
   /// Helper text under the email field on the responder sign-in form.
   ///
   /// In en, this message translates to:
-  /// **'We will send a sign-in link for this responder account.'**
+  /// **'We will send a sign-in link to this email address.'**
   String get emailFieldHelp;
 
-  /// Sign-in button text while the entered code is being verified.
+  /// Sign-in button text while the email sign-in link is being sent.
   ///
   /// In en, this message translates to:
-  /// **'Verifying code...'**
-  String get verifyingButton;
-
-  /// Sign-in button text while the email code is being sent.
-  ///
-  /// In en, this message translates to:
-  /// **'Sending code...'**
+  /// **'Sending link...'**
   String get sendingButton;
 
-  /// Sign-in button text when ready to verify a code.
+  /// Sign-in button label — sends a Firebase Email Link.
   ///
   /// In en, this message translates to:
-  /// **'Verify code'**
-  String get verifyCodeButton;
-
-  /// Sign-in button text on the initial state.
-  ///
-  /// In en, this message translates to:
-  /// **'Email me a sign-in code'**
+  /// **'Email me a sign-in link'**
   String get emailMeCodeButton;
+
+  /// Sign-in button label shown after a link has already been sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend link'**
+  String get resendLinkButton;
 
   /// Label on the Google sign-in button.
   ///

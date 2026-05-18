@@ -1,377 +1,207 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth_user.dart';
-
-const _googleScopes = <String>['email', 'profile'];
-
-/// How close to expiry an access token must be before we proactively refresh.
-const _accessTokenRefreshSkew = Duration(seconds: 60);
+import 'firebase_auth_service.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({
-    required this.loggedOutRoleLabel,
     required this.backendBaseUrl,
     required this.requestedClient,
-    this.googleClientId,
-  }) {
-    unawaited(_restoreSession());
+    this.loggedOutRoleLabel = 'User',
+    this.googleLoginEnabled = true,
+    this.emailLinkContinueUrl,
+    FirebaseAuthService? firebaseAuthService,
+  }) : _firebase = firebaseAuthService ?? FirebaseAuthService() {
+    _authSub = _firebase.authStateChanges.listen(_onAuthStateChanged);
   }
 
-  final String loggedOutRoleLabel;
   final String backendBaseUrl;
   final String requestedClient;
-  final String? googleClientId;
+  final String loggedOutRoleLabel;
+  final bool googleLoginEnabled;
 
-  AuthUser? _currentUser;
+  /// The URL Firebase redirects to after the user taps an Email Link.
+  /// Must be an authorized domain in the Firebase console.
+  final String? emailLinkContinueUrl;
+
+  final FirebaseAuthService _firebase;
+  StreamSubscription<User?>? _authSub;
+
   bool _isRestoring = true;
-  Future<String?>? _inFlightRefresh;
+  bool _isUnprovisioned = false;
+  AuthUser? _profile;
+  AuthTeamMembership? _activeTeam;
 
-  Future<void>? _googleInit;
-  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleEventSub;
-
-  AuthUser? get currentUser => _currentUser;
-  bool get isLoggedIn => _currentUser != null;
+  /// True while the initial Firebase auth state is being determined.
   bool get isRestoring => _isRestoring;
-  String get roleLabel => _currentUser?.role ?? loggedOutRoleLabel;
-  bool get canUseGoogleLogin =>
-      googleClientId != null && googleClientId!.trim().isNotEmpty;
 
-  String get _sessionStorageKey => 'missionout.auth.$requestedClient';
+  /// True when Firebase authenticated but the user has no MissionOut
+  /// Team Membership — show "contact your administrator" screen.
+  bool get isUnprovisioned => _isUnprovisioned;
 
-  Future<void> initializeGoogleSignIn() {
-    return _googleInit ??= GoogleSignIn.instance
-        .initialize(clientId: googleClientId, serverClientId: googleClientId)
-        .then((_) {
-          _googleEventSub ??= GoogleSignIn.instance.authenticationEvents.listen(
-            _handleGoogleAuthEvent,
-          );
-        })
-        .catchError((Object error) {
-          _googleInit = null;
-          throw error;
-        });
-  }
+  /// True when the user has a MissionOut Profile but has not yet selected
+  /// an Active Team (only possible with 2+ memberships).
+  bool get needsTeamSelection =>
+      _profile != null && _activeTeam == null && !_isUnprovisioned;
 
-  Future<void> loginWithEmailCode({required String email}) async {
-    final response = await http.post(
-      Uri.parse('$backendBaseUrl/auth/email-code'),
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'requested_client': requestedClient}),
-    );
+  /// True when fully authenticated: Firebase OK + MissionOut Profile + Active Team.
+  bool get isLoggedIn => _profile != null && _activeTeam != null;
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(_buildEmailCodeError(response));
+  AuthUser? get currentUser => _profile;
+  AuthTeamMembership? get activeTeam => _activeTeam;
+  bool get canUseGoogleLogin => googleLoginEnabled;
+  String get roleLabel => _profile?.role ?? loggedOutRoleLabel;
+
+  // ── Sign-in ──────────────────────────────────────────────────────────────
+
+  Future<void> loginWithGoogle() => _firebase.signInWithGoogle();
+
+  Future<void> sendSignInLinkToEmail(String email) async {
+    final url = emailLinkContinueUrl;
+    if (url == null || url.isEmpty) {
+      throw Exception(
+        'Set emailLinkContinueUrl on AuthController to use Email Link sign-in.',
+      );
     }
+    await _firebase.sendSignInLinkToEmail(email, continueUrl: url);
   }
 
-  Future<void> verifyEmailCode({
+  Future<void> handleEmailLink({
     required String email,
-    required String code,
-  }) async {
-    final response = await http.post(
-      Uri.parse('$backendBaseUrl/auth/email-code/verify'),
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'code': code}),
-    );
+    required String emailLink,
+  }) =>
+      _firebase.handleEmailLink(email: email, emailLink: emailLink);
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(_buildEmailCodeError(response));
-    }
+  /// Call on app startup and when the app receives a deep link. Automatically
+  /// completes a pending email-link sign-in on web.
+  Future<void> checkIncomingEmailLink() =>
+      _firebase.checkAndHandleIncomingEmailLink();
 
-    final decoded = jsonDecode(response.body);
-    if (decoded is! Map<String, dynamic>) {
-      throw Exception('Invalid auth response.');
-    }
+  // ── Active Team ──────────────────────────────────────────────────────────
 
-    _currentUser = AuthUser.fromSessionJson(
-      decoded,
-      requestedClient: requestedClient,
-      fallbackRole: loggedOutRoleLabel,
-    );
-    await _persistSession();
+  Future<void> selectTeam(AuthTeamMembership team) async {
+    _activeTeam = team;
     notifyListeners();
+    await _persistActiveTeam(team.teamPublicId);
   }
 
-  Future<void> loginWithGoogle() async {
-    if (!canUseGoogleLogin) {
-      throw Exception(
-        'Google login is not configured. Set GOOGLE_CLIENT_ID for this app.',
-      );
-    }
+  // ── Token ────────────────────────────────────────────────────────────────
 
-    await initializeGoogleSignIn();
+  /// Returns a fresh Firebase ID token. Firebase handles refresh automatically.
+  Future<String?> getIdToken() => _firebase.getIdToken();
 
-    if (!GoogleSignIn.instance.supportsAuthenticate()) {
-      throw Exception(
-        'On web, embed MissionOutGoogleLoginButton instead of calling loginWithGoogle().',
-      );
-    }
+  bool isSignInWithEmailLink(String link) =>
+      _firebase.isSignInWithEmailLink(link);
 
-    await GoogleSignIn.instance.authenticate(scopeHint: _googleScopes);
-  }
-
-  Future<void> _handleGoogleAuthEvent(
-    GoogleSignInAuthenticationEvent event,
-  ) async {
-    if (event is GoogleSignInAuthenticationEventSignIn) {
-      try {
-        await _completeGoogleLogin(event.user);
-      } catch (_) {
-        // Surfaced via the next sign-in attempt; the stream API has no
-        // direct callback path back to the UI.
-      }
-    } else if (event is GoogleSignInAuthenticationEventSignOut) {
-      _currentUser = null;
-      unawaited(_clearSession());
-      notifyListeners();
-    }
-  }
-
-  Future<void> _completeGoogleLogin(GoogleSignInAccount account) async {
-    final idToken = account.authentication.idToken;
-    final authorization = await account.authorizationClient
-        .authorizationForScopes(_googleScopes);
-    final accessToken = authorization?.accessToken;
-
-    if ((idToken == null || idToken.isEmpty) &&
-        (accessToken == null || accessToken.isEmpty)) {
-      throw Exception(
-        'Google sign-in did not return a usable token. Check the web client ID configuration.',
-      );
-    }
-
-    final body = <String, String>{'requested_client': requestedClient};
-    if (idToken != null && idToken.isNotEmpty) {
-      body['id_token'] = idToken;
-    }
-    if (accessToken != null && accessToken.isNotEmpty) {
-      body['access_token'] = accessToken;
-    }
-
-    _currentUser = await _sendGoogleAuthRequest(body);
-    await _persistSession();
-    notifyListeners();
-  }
-
-  Future<AuthUser> _sendGoogleAuthRequest(Map<String, String> body) async {
-    final response = await http.post(
-      Uri.parse('$backendBaseUrl/auth/google'),
-      headers: const {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    );
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(_buildBackendError(response));
-    }
-
-    final decoded = jsonDecode(response.body);
-    if (decoded is! Map<String, dynamic>) {
-      throw Exception('Invalid auth response.');
-    }
-
-    return AuthUser.fromSessionJson(
-      decoded,
-      requestedClient: requestedClient,
-      fallbackRole: loggedOutRoleLabel,
-    );
-  }
-
-  /// Returns a fresh access token, transparently refreshing it via
-  /// `/auth/refresh` if it is within [_accessTokenRefreshSkew] of expiry. If
-  /// no session is loaded or the refresh fails, returns null and forces a
-  /// sign-out so the UI can route to the login screen.
-  Future<String?> ensureFreshAccessToken() async {
-    final user = _currentUser;
-    if (user == null) {
-      return null;
-    }
-
-    final expiresAt = user.accessTokenExpiresAt;
-    final mustRefresh = expiresAt == null
-        ? user.accessToken == null
-        : DateTime.now()
-            .toUtc()
-            .add(_accessTokenRefreshSkew)
-            .isAfter(expiresAt);
-
-    if (!mustRefresh) {
-      return user.accessToken;
-    }
-
-    return _inFlightRefresh ??= _performRefresh().whenComplete(() {
-      _inFlightRefresh = null;
-    });
-  }
-
-  Future<String?> _performRefresh() async {
-    final refreshToken = _currentUser?.refreshToken;
-    if (refreshToken == null || refreshToken.isEmpty) {
-      await _forceSignOut();
-      return null;
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse('$backendBaseUrl/auth/refresh'),
-        headers: const {'Content-Type': 'application/json'},
-        body: jsonEncode({'refresh_token': refreshToken}),
-      );
-
-      if (response.statusCode == 401) {
-        await _forceSignOut();
-        return null;
-      }
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception(_buildBackendError(response));
-      }
-
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        throw Exception('Invalid refresh response.');
-      }
-
-      _currentUser = AuthUser.fromSessionJson(
-        decoded,
-        requestedClient: requestedClient,
-        fallbackRole: loggedOutRoleLabel,
-      );
-      await _persistSession();
-      notifyListeners();
-      return _currentUser?.accessToken;
-    } on Exception {
-      await _forceSignOut();
-      rethrow;
-    }
-  }
-
-  Future<void> _forceSignOut() async {
-    _currentUser = null;
-    await _clearSession();
-    notifyListeners();
-  }
-
-  /// Service clients invoke this on a 401 response. Triggers one refresh; if
-  /// it succeeds, callers can retry the original request with the new token.
-  Future<String?> handleUnauthorized() async {
-    final user = _currentUser;
-    if (user?.refreshToken == null) {
-      await _forceSignOut();
-      return null;
-    }
-    return _performRefresh();
-  }
+  // ── Sign-out ─────────────────────────────────────────────────────────────
 
   Future<void> logout() async {
-    final refreshToken = _currentUser?.refreshToken;
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      try {
-        await http.post(
-          Uri.parse('$backendBaseUrl/auth/logout'),
-          headers: const {'Content-Type': 'application/json'},
-          body: jsonEncode({'refresh_token': refreshToken}),
-        );
-      } catch (_) {
-        // Best-effort revocation; the local session is cleared regardless.
-      }
+    final uid = _firebase.currentUser?.uid;
+    _profile = null;
+    _activeTeam = null;
+    _isUnprovisioned = false;
+    if (uid != null) {
+      await _clearActiveTeam(uid);
     }
-
-    _currentUser = null;
-    await _clearSession();
-    if (_googleInit != null) {
-      unawaited(GoogleSignIn.instance.signOut().catchError((_) => null));
-    }
+    await _firebase.signOut();
     notifyListeners();
   }
 
-  @override
-  void dispose() {
-    unawaited(_googleEventSub?.cancel());
-    _googleEventSub = null;
-    super.dispose();
-  }
+  // ── Firebase auth state ──────────────────────────────────────────────────
 
-  String _buildBackendError(http.Response response) {
-    final prefix = 'Auth request failed (${response.statusCode})';
-    try {
-      final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) {
-        final detail = decoded['detail'];
-        if (detail is String && detail.isNotEmpty) {
-          return '$prefix: $detail';
-        }
-      }
-    } catch (_) {
-      // Ignore malformed error payloads and fall back to the status code.
+  Future<void> _onAuthStateChanged(User? user) async {
+    if (user == null) {
+      _profile = null;
+      _activeTeam = null;
+      _isUnprovisioned = false;
+      _isRestoring = false;
+      notifyListeners();
+      return;
     }
-    return prefix;
-  }
 
-  String _buildEmailCodeError(http.Response response) {
-    final prefix = 'Email code request failed (${response.statusCode})';
     try {
-      final decoded = jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) {
-        final detail = decoded['detail'];
-        if (detail is String && detail.isNotEmpty) {
-          return '$prefix: $detail';
-        }
-      }
-    } catch (_) {
-      // Ignore malformed error payloads and fall back to the status code.
-    }
-    return prefix;
-  }
+      final idToken = await _firebase.getIdToken();
+      final response = await http.get(
+        Uri.parse('$backendBaseUrl/users/me'),
+        headers: {
+          if (idToken != null && idToken.isNotEmpty)
+            'Authorization': 'Bearer $idToken',
+        },
+      );
 
-  Future<void> _restoreSession() async {
-    try {
-      final preferences = await SharedPreferences.getInstance();
-      final storedSession = preferences.getString(_sessionStorageKey);
-      if (storedSession != null && storedSession.isNotEmpty) {
-        final decoded = jsonDecode(storedSession);
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
-          _currentUser = AuthUser.fromSessionJson(
+          _profile = AuthUser.fromJson(
             decoded,
             requestedClient: requestedClient,
             fallbackRole: loggedOutRoleLabel,
           );
-          // If the persisted access token is already expired, attempt a
-          // background refresh so the UI doesn't have to wait until the
-          // first authenticated call to discover the staleness.
-          final expiresAt = _currentUser?.accessTokenExpiresAt;
-          if (expiresAt != null &&
-              DateTime.now().toUtc().isAfter(expiresAt) &&
-              (_currentUser?.refreshToken?.isNotEmpty ?? false)) {
-            unawaited(ensureFreshAccessToken());
-          }
+          _isUnprovisioned = _profile!.teamMemberships.isEmpty;
+          _activeTeam = _isUnprovisioned
+              ? null
+              : await _restoreActiveTeam(user.uid, _profile!.teamMemberships);
         }
+      } else {
+        _profile = null;
+        _isUnprovisioned = false;
+        _activeTeam = null;
       }
     } catch (_) {
-      await _clearSession();
-      _currentUser = null;
+      _profile = null;
+      _isUnprovisioned = false;
+      _activeTeam = null;
     } finally {
       _isRestoring = false;
       notifyListeners();
     }
   }
 
-  Future<void> _persistSession() async {
-    final user = _currentUser;
-    if (user == null) {
-      return;
-    }
+  // ── Active Team persistence ───────────────────────────────────────────────
 
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_sessionStorageKey, jsonEncode(user.toJson()));
+  Future<AuthTeamMembership?> _restoreActiveTeam(
+    String uid,
+    List<AuthTeamMembership> memberships,
+  ) async {
+    if (memberships.length == 1) {
+      await _persistActiveTeam(memberships.first.teamPublicId, uid: uid);
+      return memberships.first;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final savedId = prefs.getString(_teamKey(uid));
+    if (savedId != null && savedId.isNotEmpty) {
+      final match = memberships
+          .where((m) => m.teamPublicId == savedId)
+          .firstOrNull;
+      if (match != null) return match;
+    }
+    return null;
   }
 
-  Future<void> _clearSession() async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.remove(_sessionStorageKey);
+  String _teamKey(String uid) =>
+      'missionout.active_team.$uid.$requestedClient';
+
+  Future<void> _persistActiveTeam(String teamId, {String? uid}) async {
+    final effectiveUid = uid ?? _firebase.currentUser?.uid;
+    if (effectiveUid == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_teamKey(effectiveUid), teamId);
+  }
+
+  Future<void> _clearActiveTeam(String uid) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_teamKey(uid));
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 }

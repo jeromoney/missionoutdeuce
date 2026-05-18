@@ -9,35 +9,6 @@ import '../app_config.dart';
 import '../models/dashboard_snapshot.dart';
 import '../models/records.dart';
 
-typedef AccessTokenProvider = Future<String?> Function();
-
-// Wraps an http.Client and stamps Authorization: Bearer onto every outbound
-// request. Centralizing this prevents call sites from forgetting to forward
-// the token and silently issuing unauthenticated requests. The provider is
-// async so it can await `AuthController.ensureFreshAccessToken()` and
-// transparently refresh tokens that are about to expire.
-class AuthHeaderClient extends http.BaseClient {
-  AuthHeaderClient(this._inner, this._tokenProvider);
-
-  final http.Client _inner;
-  final AccessTokenProvider _tokenProvider;
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final token = (await _tokenProvider())?.trim();
-    if (token != null && token.isNotEmpty) {
-      request.headers['Authorization'] = 'Bearer $token';
-    }
-    return _inner.send(request);
-  }
-
-  @override
-  void close() {
-    _inner.close();
-    super.close();
-  }
-}
-
 class MissionOutApi {
   MissionOutApi({http.Client? client, String? baseUrl})
     : _client = client ?? http.Client(),

@@ -4,13 +4,12 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.core.config import settings
-from app.core.security import create_access_token
 from app.core.time import utc_now
 from app.db.base import Base
 from app.db.session import get_db
@@ -26,12 +25,6 @@ from app.models.team_management import (
 )
 
 
-# Tests run without the production secrets file. Inject a deterministic
-# signing key so JWT mint+verify works end-to-end in the suite.
-if not settings.jwt_signing_key:
-    settings.jwt_signing_key = "d88ea38654a8c1db42e26530aec41989024a30137b4502824c165170e4ccfbd3"
-
-
 TEST_DATABASE_URL = "sqlite+pysqlite:///:memory:"
 
 engine = create_engine(
@@ -40,6 +33,25 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+@pytest.fixture(autouse=True)
+def firebase_registry(monkeypatch) -> dict[str, dict]:
+    """Replace Firebase token verification with a registry for every test.
+
+    Keys are fake bearer tokens; values are the decoded-claims dicts that
+    `_verify_firebase_token` should return for that token. Any token not in
+    the registry raises HTTPException(401).
+    """
+    registry: dict[str, dict] = {}
+
+    def _fake_verify(token: str) -> dict:
+        if token in registry:
+            return registry[token]
+        raise HTTPException(status_code=401, detail="Invalid Firebase ID token.")
+
+    monkeypatch.setattr("app.api.deps._verify_firebase_token", _fake_verify)
+    return registry
 
 
 @pytest.fixture()
@@ -240,9 +252,10 @@ def seeded_delivery_event(db_session: Session) -> DeliveryEvent:
 
 
 @pytest.fixture()
-def auth_headers() -> Callable[[User], dict[str, str]]:
+def auth_headers(firebase_registry) -> Callable[[User], dict[str, str]]:
     def _build(user: User) -> dict[str, str]:
-        token, _ = create_access_token(user)
+        token = f"test-token-{user.public_id}"
+        firebase_registry[token] = {"email": user.email, "name": user.name}
         return {"Authorization": f"Bearer {token}"}
 
     return _build

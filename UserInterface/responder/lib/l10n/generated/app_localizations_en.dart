@@ -18,16 +18,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emailInvalid => 'Enter a valid email address.';
 
   @override
-  String get codeRequired => 'Enter the code from your email.';
-
-  @override
-  String get codeSentMessage => 'Check your email for code';
+  String get linkSentMessage =>
+      'Check your email for a sign-in link. Tap it to complete sign-in.';
 
   @override
   String get signInTitle => 'Sign in to responder view';
 
   @override
-  String get signInSubtitle => 'Use an emailed code or Google to continue.';
+  String get signInSubtitle =>
+      'Use an email sign-in link or Google to continue.';
 
   @override
   String get emailFieldLabel => 'Email';
@@ -37,19 +36,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emailFieldHelp =>
-      'We will send a sign-in link for this responder account.';
+      'We will send a sign-in link to this email address.';
 
   @override
-  String get verifyingButton => 'Verifying code...';
+  String get sendingButton => 'Sending link...';
 
   @override
-  String get sendingButton => 'Sending code...';
+  String get emailMeCodeButton => 'Email me a sign-in link';
 
   @override
-  String get verifyCodeButton => 'Verify code';
-
-  @override
-  String get emailMeCodeButton => 'Email me a sign-in code';
+  String get resendLinkButton => 'Resend link';
 
   @override
   String get continueWithGoogle => 'Continue with Google';

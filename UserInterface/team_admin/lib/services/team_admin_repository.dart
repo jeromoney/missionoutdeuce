@@ -15,7 +15,6 @@ class TeamAdminRepository {
   final String _baseUrl;
   String? _currentTeamPublicId;
   String? _currentTeamName;
-  String? _currentAccessToken;
 
   String get baseUrl => _baseUrl;
 
@@ -27,9 +26,7 @@ class TeamAdminRepository {
 
   Future<TeamAdminWorkspace> loadWorkspace({
     List<AuthTeamMembership> memberships = const [],
-    String? accessToken,
   }) async {
-    _currentAccessToken = accessToken;
     final teamPublicId = memberships.isNotEmpty
         ? memberships.first.teamPublicId
         : '';
@@ -55,9 +52,6 @@ class TeamAdminRepository {
       final memberJson = results[1] as List<Map<String, dynamic>>?;
       final deviceJson = results[2] as List<Map<String, dynamic>>?;
 
-      final resolvedTeamPublicId = teamPublicId;
-      final resolvedTeamName = preferredTeamName;
-
       final deviceByUserPublicId = {
         for (final device in deviceJson ?? const <Map<String, dynamic>>[])
           device['user_public_id']: device,
@@ -75,18 +69,16 @@ class TeamAdminRepository {
                 .toList();
 
       final liveTeam = _buildTeam(
-        teamPublicId: resolvedTeamPublicId,
-        teamName: resolvedTeamName,
+        teamPublicId: teamPublicId,
+        teamName: preferredTeamName,
         members: members,
       );
-      _currentTeamPublicId = resolvedTeamPublicId;
-      _currentTeamName = resolvedTeamName;
-
-      final memberCrudSupported = memberJson != null;
+      _currentTeamPublicId = teamPublicId;
+      _currentTeamName = preferredTeamName;
 
       return TeamAdminWorkspace(
         team: liveTeam,
-        memberCrudSupported: memberCrudSupported,
+        memberCrudSupported: memberJson != null,
         usingLiveData: true,
       );
     } catch (error) {
@@ -109,10 +101,7 @@ class TeamAdminRepository {
     final teamPublicId = _requireTeamPublicId();
     final response = await _client.post(
       Uri.parse('$_baseUrl/teams/$teamPublicId/members'),
-      headers: {
-        'Content-Type': 'application/json',
-        ..._headers(accessToken: _currentAccessToken),
-      },
+      headers: const {'Content-Type': 'application/json'},
       body: jsonEncode({
         'name': draft.name,
         'email': draft.email,
@@ -136,10 +125,7 @@ class TeamAdminRepository {
     final teamPublicId = _requireTeamPublicId();
     final response = await _client.patch(
       Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
-      headers: {
-        'Content-Type': 'application/json',
-        ..._headers(accessToken: _currentAccessToken),
-      },
+      headers: const {'Content-Type': 'application/json'},
       body: jsonEncode({'roles': draft.roles}),
     );
 
@@ -157,10 +143,7 @@ class TeamAdminRepository {
     final teamPublicId = _requireTeamPublicId();
     final response = await _client.patch(
       Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
-      headers: {
-        'Content-Type': 'application/json',
-        ..._headers(accessToken: _currentAccessToken),
-      },
+      headers: const {'Content-Type': 'application/json'},
       body: jsonEncode({'is_active': isActive}),
     );
 
@@ -177,7 +160,6 @@ class TeamAdminRepository {
     final teamPublicId = _requireTeamPublicId();
     final response = await _client.delete(
       Uri.parse('$_baseUrl/teams/$teamPublicId/members/$membershipPublicId'),
-      headers: _headers(accessToken: _currentAccessToken),
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -266,7 +248,6 @@ class TeamAdminRepository {
           roles: const [],
         ),
       ],
-      accessToken: _currentAccessToken,
     );
     return workspace.team;
   }
@@ -297,15 +278,6 @@ class TeamAdminRepository {
       return 'Inactive';
     }
     return 'Needs review';
-  }
-
-  Map<String, String> _headers({String? accessToken}) {
-    final trimmed = accessToken?.trim();
-    if (trimmed == null || trimmed.isEmpty) {
-      return const {};
-    }
-
-    return {'Authorization': 'Bearer $trimmed'};
   }
 
   TeamAdminTeam _buildTeam({

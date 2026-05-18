@@ -121,7 +121,6 @@ void main() {
 
       final workspace = await repo.loadWorkspace(
         memberships: const [_membership],
-        accessToken: 'jwt',
       );
 
       expect(workspace.usingLiveData, isTrue);
@@ -329,10 +328,7 @@ void main() {
         }),
         baseUrl: _baseUrl,
       );
-      await repo.loadWorkspace(
-        memberships: const [_membership],
-        accessToken: 'jwt',
-      );
+      await repo.loadWorkspace(memberships: const [_membership]);
       return repo;
     }
 
@@ -605,44 +601,5 @@ void main() {
       );
     });
 
-    test('omits Authorization header when accessToken is whitespace',
-        () async {
-      String? capturedAuth = 'sentinel';
-      final repo = TeamAdminRepository(
-        client: MockClient((request) async {
-          final path = request.url.path;
-          if (path == '/health') {
-            return http.Response(jsonEncode({'status': 'ok'}), 200);
-          }
-          if (path == '/teams/team-1/members' && request.method == 'GET') {
-            return http.Response(jsonEncode(const []), 200);
-          }
-          if (path == '/teams/team-1/devices' && request.method == 'GET') {
-            return http.Response(jsonEncode(const []), 200);
-          }
-          if (request.method == 'POST') {
-            capturedAuth = request.headers['Authorization'];
-            return http.Response('', 201);
-          }
-          return http.Response('unexpected', 500);
-        }),
-        baseUrl: _baseUrl,
-      );
-
-      await repo.loadWorkspace(
-        memberships: const [_membership],
-        accessToken: '   ',
-      );
-      await repo.createMember(
-        const TeamAdminMemberDraft(
-          name: 'Pat',
-          email: 'p@example.test',
-          phone: '+15555550000',
-          roles: ['responder'],
-        ),
-      );
-
-      expect(capturedAuth, isNull);
-    });
   });
 }

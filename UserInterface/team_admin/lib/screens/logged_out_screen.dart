@@ -8,20 +8,15 @@ import '../l10n/generated/app_localizations.dart';
 class LoggedOutScreen extends StatefulWidget {
   const LoggedOutScreen({
     super.key,
-    required this.onRequestEmailCode,
-    required this.onVerifyEmailCode,
+    required this.onSendSignInLink,
     required this.onGoogleLogin,
     this.googleLoginEnabled = true,
-    this.googleSignInButton,
     this.roleLabel = 'Team Admin',
   });
 
-  final Future<void> Function({required String email}) onRequestEmailCode;
-  final Future<void> Function({required String email, required String code})
-  onVerifyEmailCode;
+  final Future<void> Function(String email) onSendSignInLink;
   final Future<void> Function() onGoogleLogin;
   final bool googleLoginEnabled;
-  final Widget? googleSignInButton;
   final String roleLabel;
 
   @override
@@ -30,17 +25,15 @@ class LoggedOutScreen extends StatefulWidget {
 
 class _LoggedOutScreenState extends State<LoggedOutScreen> {
   final emailController = TextEditingController();
-  final codeController = TextEditingController();
 
   String? errorText;
   String? successText;
   bool isSubmitting = false;
-  bool awaitingCode = false;
+  bool linkSent = false;
 
   @override
   void dispose() {
     emailController.dispose();
-    codeController.dispose();
     super.dispose();
   }
 
@@ -56,14 +49,12 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
                 padding: const EdgeInsets.all(24),
                 child: _LoginPanel(
                   emailController: emailController,
-                  codeController: codeController,
                   errorText: errorText,
                   successText: successText,
                   isSubmitting: isSubmitting,
-                  awaitingCode: awaitingCode,
+                  linkSent: linkSent,
                   googleLoginEnabled: widget.googleLoginEnabled,
-                  googleSignInButton: widget.googleSignInButton,
-                  onSubmitEmailCode: _submitEmailCode,
+                  onSendSignInLink: _sendSignInLink,
                   onGoogleLogin: _submitGoogle,
                   roleLabel: widget.roleLabel,
                 ),
@@ -75,9 +66,8 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     );
   }
 
-  Future<void> _submitEmailCode() async {
+  Future<void> _sendSignInLink() async {
     final email = emailController.text.trim();
-    final code = codeController.text.trim();
     final l10n = AppLocalizations.of(context);
 
     setState(() {
@@ -98,33 +88,16 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
       return;
     }
 
-    if (awaitingCode && code.isEmpty) {
-      setState(() {
-        errorText = l10n.codeRequired;
-        isSubmitting = false;
-      });
-      return;
-    }
-
     try {
-      if (awaitingCode) {
-        await widget.onVerifyEmailCode(email: email, code: code);
-        return;
-      }
-
-      await widget.onRequestEmailCode(email: email);
-      if (!mounted) {
-        return;
-      }
+      await widget.onSendSignInLink(email);
+      if (!mounted) return;
       setState(() {
-        successText = l10n.codeSentMessage;
-        awaitingCode = true;
+        successText = l10n.linkSentMessage;
+        linkSent = true;
         isSubmitting = false;
       });
     } catch (error) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         errorText = error.toString().replaceFirst('Exception: ', '');
         isSubmitting = false;
@@ -142,6 +115,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
     try {
       await widget.onGoogleLogin();
     } catch (error) {
+      if (!mounted) return;
       setState(() {
         errorText = error.toString().replaceFirst('Exception: ', '');
         isSubmitting = false;
@@ -158,27 +132,23 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
 class _LoginPanel extends StatelessWidget {
   const _LoginPanel({
     required this.emailController,
-    required this.codeController,
     required this.errorText,
     required this.successText,
     required this.isSubmitting,
-    required this.awaitingCode,
+    required this.linkSent,
     required this.googleLoginEnabled,
-    required this.googleSignInButton,
-    required this.onSubmitEmailCode,
+    required this.onSendSignInLink,
     required this.onGoogleLogin,
     required this.roleLabel,
   });
 
   final TextEditingController emailController;
-  final TextEditingController codeController;
   final String? errorText;
   final String? successText;
   final bool isSubmitting;
-  final bool awaitingCode;
+  final bool linkSent;
   final bool googleLoginEnabled;
-  final Widget? googleSignInButton;
-  final Future<void> Function() onSubmitEmailCode;
+  final Future<void> Function() onSendSignInLink;
   final Future<void> Function() onGoogleLogin;
   final String roleLabel;
 
@@ -239,14 +209,12 @@ class _LoginPanel extends StatelessWidget {
           TextField(
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
-            readOnly: awaitingCode,
+            readOnly: linkSent,
             decoration: InputDecoration(hintText: l10n.emailFieldHint),
           ),
           const SizedBox(height: 10),
           Text(
-            awaitingCode
-                ? l10n.emailFieldHelpAwaitingCode
-                : l10n.emailFieldHelpInitial,
+            l10n.emailFieldHelpInitial,
             style: const TextStyle(color: TeamAdminPalette.textSoft),
           ),
           if (errorText != null) ...[
@@ -269,22 +237,6 @@ class _LoginPanel extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
-            ),
-          ],
-          if (awaitingCode) ...[
-            const SizedBox(height: 18),
-            Text(
-              l10n.codeFieldLabel,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: TeamAdminPalette.text,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: codeController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(hintText: l10n.codeFieldHint),
             ),
           ],
           if (successText != null) ...[
@@ -312,34 +264,29 @@ class _LoginPanel extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: isSubmitting ? null : onSubmitEmailCode,
+              onPressed: isSubmitting ? null : onSendSignInLink,
               child: Text(
                 isSubmitting
-                    ? (awaitingCode ? l10n.verifyingButton : l10n.sendingButton)
-                    : awaitingCode
-                    ? l10n.verifyCodeButton
-                    : l10n.emailMeCodeButton,
+                    ? l10n.sendingButton
+                    : linkSent
+                        ? l10n.resendLinkButton
+                        : l10n.emailMeCodeButton,
               ),
             ),
           ),
           const SizedBox(height: 12),
-          if (googleSignInButton != null && googleLoginEnabled)
-            SizedBox(width: double.infinity, child: googleSignInButton!)
-          else
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: isSubmitting || !googleLoginEnabled || awaitingCode
-                    ? null
-                    : onGoogleLogin,
-                icon: const Icon(Icons.login_rounded),
-                label: Text(
-                  googleLoginEnabled
-                      ? l10n.continueWithGoogle
-                      : l10n.googleNotConfigured,
-                ),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: isSubmitting || !googleLoginEnabled ? null : onGoogleLogin,
+              icon: const Icon(Icons.login_rounded),
+              label: Text(
+                googleLoginEnabled
+                    ? l10n.continueWithGoogle
+                    : l10n.googleNotConfigured,
               ),
             ),
+          ),
         ],
       ),
     );

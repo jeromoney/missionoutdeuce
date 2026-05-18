@@ -35,26 +35,7 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = Field(default=8000, validation_alias=AliasChoices("API_PORT", "PORT"))
     debug: bool = Field(default=False, validation_alias=AliasChoices("MISSIONOUT_DEBUG"))
-    google_client_id: str | None = None
-    jwt_signing_key: str | None = None
-    jwt_issuer: str = "missionout-backend"
-    access_token_minutes: int = 60
-    refresh_token_days: int = 180
-    email_code_length: int = 6
-    email_code_rate_limit_attempts: int = 5
-    email_code_rate_limit_window_minutes: int = 15
-    email_code_max_verify_attempts: int = 5
-    email_code_verify_rate_limit_attempts: int = 10
-    email_code_verify_rate_limit_window_minutes: int = 15
-    email_code_expires_in_minutes: int = Field(
-        default=15,
-        validation_alias=AliasChoices(
-            "EMAIL_CODE_EXPIRES_IN_MINUTES",
-            "EMAIL_LINK_EXPIRES_IN_MINUTES",
-        ),
-    )
-    resend_api_key: str | None = None
-    resend_from_email: str | None = None
+    firebase_project_id: str | None = None
     web_push_public_key: str | None = None
     web_push_private_key: str | None = None
     web_push_subject: str | None = None
@@ -83,12 +64,6 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
-
-    @property
-    def google_client_ids(self) -> list[str]:
-        if not self.google_client_id:
-            return []
-        return [client_id.strip() for client_id in self.google_client_id.split(",") if client_id.strip()]
 
 
 settings = Settings()

@@ -4,50 +4,58 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:missionout_responder/services/responder_api.dart';
+import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_models/shared_models.dart';
+
+ResponderApi _apiWithAuth(
+  Future<http.Response> Function(http.Request) handler, {
+  String token = 'test-jwt',
+}) {
+  return ResponderApi(
+    client: AuthHeaderClient(
+      MockClient(handler),
+      () async => token,
+    ),
+    baseUrl: 'http://example.test',
+  );
+}
 
 void main() {
   test('fetchIncidents resolves responder status via user_public_id', () async {
     String? capturedAuth;
-    final api = ResponderApi(
-      client: MockClient((request) async {
-        capturedAuth = request.headers['Authorization'];
-        return http.Response(
-          jsonEncode([
-            {
-              'id': 14,
-              'public_id': 'incident-public-id',
-              'team_public_id': 'team-public-id',
-              'title': 'Field mission',
-              'location': 'North ridge',
-              'created': '2020-01-01T12:00:00Z',
-              'notes': 'Steep terrain.',
-              'responses': [
-                {
-                  'user_public_id': 'other-user',
-                  'status': 'Pending',
-                  'rank': 1,
-                  'updated': '2020-01-02T12:00:00Z',
-                },
-                {
-                  'user_public_id': 'responder-user',
-                  'status': 'Responding',
-                  'rank': 0,
-                  'updated': '2020-01-03T12:00:00Z',
-                },
-              ],
-            },
-          ]),
-          200,
-        );
-      }),
-      baseUrl: 'http://example.test',
-    );
+    final api = _apiWithAuth((request) async {
+      capturedAuth = request.headers['Authorization'];
+      return http.Response(
+        jsonEncode([
+          {
+            'id': 14,
+            'public_id': 'incident-public-id',
+            'team_public_id': 'team-public-id',
+            'title': 'Field mission',
+            'location': 'North ridge',
+            'created': '2020-01-01T12:00:00Z',
+            'notes': 'Steep terrain.',
+            'responses': [
+              {
+                'user_public_id': 'other-user',
+                'status': 'Pending',
+                'rank': 1,
+                'updated': '2020-01-02T12:00:00Z',
+              },
+              {
+                'user_public_id': 'responder-user',
+                'status': 'Responding',
+                'rank': 0,
+                'updated': '2020-01-03T12:00:00Z',
+              },
+            ],
+          },
+        ]),
+        200,
+      );
+    });
 
-    final incidents = await api.fetchIncidents(
-      accessToken: 'test-jwt',
-      userPublicId: 'responder-user',
-    );
+    final incidents = await api.fetchIncidents(userPublicId: 'responder-user');
 
     expect(capturedAuth, 'Bearer test-jwt');
     expect(incidents, hasLength(1));
@@ -67,28 +75,24 @@ void main() {
   test('submitResponse sends canonical source field', () async {
     late Map<String, dynamic> requestBody;
     String? capturedAuth;
-    final api = ResponderApi(
-      client: MockClient((request) async {
-        capturedAuth = request.headers['Authorization'];
-        requestBody = jsonDecode(request.body) as Map<String, dynamic>;
-        return http.Response(
-          jsonEncode({
-            'user_public_id': 'responder-user',
-            'status': 'Responding',
-            'rank': 0,
-            'updated': '2026-04-27T12:00:00Z',
-          }),
-          201,
-        );
-      }),
-      baseUrl: 'http://example.test',
-    );
+    final api = _apiWithAuth((request) async {
+      capturedAuth = request.headers['Authorization'];
+      requestBody = jsonDecode(request.body) as Map<String, dynamic>;
+      return http.Response(
+        jsonEncode({
+          'user_public_id': 'responder-user',
+          'status': 'Responding',
+          'rank': 0,
+          'updated': '2026-04-27T12:00:00Z',
+        }),
+        201,
+      );
+    });
 
     final result = await api.submitResponse(
       incidentPublicId: 'incident-public-id',
       status: ResponseStatus.responding,
       source: 'android_app',
-      accessToken: 'test-jwt',
     );
 
     expect(capturedAuth, 'Bearer test-jwt');
@@ -122,45 +126,10 @@ void main() {
         baseUrl: 'http://example.test',
       );
 
-      final incidents = await api.fetchIncidents(
-        accessToken: 'test-jwt',
-        userPublicId: 'responder-user',
-      );
+      final incidents = await api.fetchIncidents(userPublicId: 'responder-user');
 
       expect(incidents, hasLength(1));
       expect(incidents.first.status, isNull);
-    });
-
-    test('omits Authorization header when no access token is provided',
-        () async {
-      String? capturedAuth = 'sentinel';
-      final api = ResponderApi(
-        client: MockClient((request) async {
-          capturedAuth = request.headers['Authorization'];
-          return http.Response(jsonEncode(const []), 200);
-        }),
-        baseUrl: 'http://example.test',
-      );
-
-      await api.fetchIncidents();
-
-      expect(capturedAuth, isNull);
-    });
-
-    test('omits Authorization header when access token is whitespace',
-        () async {
-      String? capturedAuth = 'sentinel';
-      final api = ResponderApi(
-        client: MockClient((request) async {
-          capturedAuth = request.headers['Authorization'];
-          return http.Response(jsonEncode(const []), 200);
-        }),
-        baseUrl: 'http://example.test',
-      );
-
-      await api.fetchIncidents(accessToken: '   ');
-
-      expect(capturedAuth, isNull);
     });
 
     test('every incident status is null when userPublicId is omitted',
@@ -207,7 +176,7 @@ void main() {
       );
 
       await expectLater(
-        api.fetchIncidents(accessToken: 't'),
+        api.fetchIncidents(),
         throwsA(isA<Exception>()),
       );
     });
@@ -221,7 +190,7 @@ void main() {
       );
 
       await expectLater(
-        api.fetchIncidents(accessToken: 't'),
+        api.fetchIncidents(),
         throwsA(isA<Exception>()),
       );
     });
@@ -241,7 +210,6 @@ void main() {
           incidentPublicId: 'incident-1',
           status: ResponseStatus.responding,
           source: 'android_app',
-          accessToken: 't',
         ),
         throwsA(isA<Exception>()),
       );
@@ -260,7 +228,6 @@ void main() {
           incidentPublicId: 'incident-1',
           status: ResponseStatus.responding,
           source: 'android_app',
-          accessToken: 't',
         ),
         throwsA(isA<Exception>()),
       );
@@ -273,23 +240,21 @@ void main() {
       String? capturedAuth;
       String capturedMethod = '';
       Uri? capturedUri;
-      final api = ResponderApi(
-        client: MockClient((request) async {
+      final api = _apiWithAuth(
+        (request) async {
           capturedAuth = request.headers['Authorization'];
           capturedMethod = request.method;
           capturedUri = request.url;
           requestBody = jsonDecode(request.body) as Map<String, dynamic>;
           return http.Response('', 204);
-        }),
-        baseUrl: 'http://example.test',
+        },
+        token: 'jwt',
       );
 
       await api.registerWebPush(
         endpoint: 'https://push.example/abc',
         p256dh: 'key1',
         auth: 'key2',
-        accessToken: 'jwt',
-        teamPublicId: 'team-1',
         userAgent: 'Mozilla/5.0',
       );
 
@@ -299,7 +264,6 @@ void main() {
       expect(requestBody['client'], 'responder');
       expect(requestBody['endpoint'], 'https://push.example/abc');
       expect(requestBody['keys'], {'p256dh': 'key1', 'auth': 'key2'});
-      expect(requestBody['team_public_id'], 'team-1');
       expect(requestBody['user_agent'], 'Mozilla/5.0');
     });
 
@@ -319,7 +283,6 @@ void main() {
         auth: 'k2',
       );
 
-      expect(requestBody.containsKey('team_public_id'), isFalse);
       expect(requestBody.containsKey('user_agent'), isFalse);
     });
 
@@ -355,10 +318,7 @@ void main() {
         baseUrl: 'http://example.test',
       );
 
-      await api.unregisterWebPush(
-        endpoint: 'https://push.example/abc',
-        accessToken: 'jwt',
-      );
+      await api.unregisterWebPush(endpoint: 'https://push.example/abc');
 
       expect(capturedMethod, 'DELETE');
       expect(requestBody['endpoint'], 'https://push.example/abc');
