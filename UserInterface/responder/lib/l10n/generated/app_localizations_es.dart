@@ -54,6 +54,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get googleNotConfigured => 'Google login not configured';
 
   @override
+  String contactAdministrator(String email) {
+    return 'Comuníquese con su administrador local indicando este correo: $email';
+  }
+
+  @override
   String get errorLoadIncidents => 'Could not load missions from the API.';
 
   @override

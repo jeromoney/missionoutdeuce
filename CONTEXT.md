@@ -31,7 +31,7 @@ The team a user has selected for their current session. Sent as `X-Team-Id` on e
 _Avoid_: "current team", "selected team", "active context"
 
 **Unprovisioned User**:
-A user who has successfully authenticated with Firebase but has no active MissionOut team membership. Results in a 403 from `/users/me`. The client shows a "contact your administrator" state — neither signed in nor signed out.
+A user who has successfully authenticated with Firebase but has no active MissionOut team membership (200 with empty memberships from `/users/me`), or whose account is entirely unknown to the backend (non-200 from `/users/me`). Both cases are treated identically: the client remains on the sign-in screen and shows a persistent banner with the user's authenticated email — "Contact your local administrator referencing this email: {email}". The user stays neither signed in nor fully signed out of Firebase.
 _Avoid_: "unauthorized user", "unknown user"
 
 ### Roles and Clients

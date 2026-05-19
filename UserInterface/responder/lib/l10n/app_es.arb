@@ -1,5 +1,6 @@
 {
   "@@locale": "es",
   "appName": "MissionOut Responder",
-  "emailMeCodeButton": "Envíame un enlace para iniciar sesión"
+  "emailMeCodeButton": "Envíame un enlace para iniciar sesión",
+  "contactAdministrator": "Comuníquese con su administrador local indicando este correo: {email}"
 }

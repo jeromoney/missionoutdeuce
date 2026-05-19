@@ -313,19 +313,22 @@ void main() {
   group('TeamAdminRepository CRUD', () {
     Future<TeamAdminRepository> warmRepo(MockClientHandler handler) async {
       final repo = TeamAdminRepository(
-        client: MockClient((request) async {
-          final path = request.url.path;
-          if (path == '/health') {
-            return http.Response(jsonEncode({'status': 'ok'}), 200);
-          }
-          if (path == '/teams/team-1/members' && request.method == 'GET') {
-            return http.Response(jsonEncode(const []), 200);
-          }
-          if (path == '/teams/team-1/devices' && request.method == 'GET') {
-            return http.Response(jsonEncode(const []), 200);
-          }
-          return await handler(request);
-        }),
+        client: AuthHeaderClient(
+          MockClient((request) async {
+            final path = request.url.path;
+            if (path == '/health') {
+              return http.Response(jsonEncode({'status': 'ok'}), 200);
+            }
+            if (path == '/teams/team-1/members' && request.method == 'GET') {
+              return http.Response(jsonEncode(const []), 200);
+            }
+            if (path == '/teams/team-1/devices' && request.method == 'GET') {
+              return http.Response(jsonEncode(const []), 200);
+            }
+            return await handler(request);
+          }),
+          () async => 'jwt',
+        ),
         baseUrl: _baseUrl,
       );
       await repo.loadWorkspace(memberships: const [_membership]);

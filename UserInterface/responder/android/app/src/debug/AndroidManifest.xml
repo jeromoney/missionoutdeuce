@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Allow cleartext HTTP to the Android emulator host so the Firebase
+         Auth Emulator (http://10.0.2.2:9099) is reachable in debug builds. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

@@ -66,6 +66,18 @@ class FirebaseAuthService {
 
   bool isSignInWithEmailLink(String link) => _auth.isSignInWithEmailLink(link);
 
+  /// Retrieves the stored pending email and completes sign-in with [link].
+  /// Returns true if sign-in was completed, false if no pending email was found.
+  /// Returns false immediately if [link] is not a valid sign-in link.
+  Future<bool> handleMobileDeepLink(String link) async {
+    if (!_auth.isSignInWithEmailLink(link)) return false;
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString(_pendingEmailKey);
+    if (email == null || email.isEmpty) return false;
+    await handleEmailLink(email: email, emailLink: link);
+    return true;
+  }
+
   Future<String?> getIdToken({bool forceRefresh = false}) =>
       _auth.currentUser?.getIdToken(forceRefresh) ?? Future.value(null);
 

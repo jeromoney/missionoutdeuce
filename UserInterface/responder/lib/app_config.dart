@@ -5,7 +5,7 @@ const webPushPublicKey = String.fromEnvironment(
 );
 const emailLinkContinueUrl = String.fromEnvironment(
   'EMAIL_LINK_CONTINUE_URL',
-  defaultValue: '',
+  defaultValue: 'https://mission-out-deuce.firebaseapp.com',
 );
 
 String resolveApiBaseUrl() {

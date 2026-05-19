@@ -1,1 +1,42 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"mission-out-deuce","appId":"1:145423397513:android:b62977eee05c8e9f284c58","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"mission-out-deuce","configurations":{"android":"1:145423397513:android:b62977eee05c8e9f284c58","ios":"1:145423397513:ios:34a7f7bd7f0e946f284c58","web":"1:145423397513:web:95ee335d6f409637284c58"}}}}}}
+{
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": false
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": ["firebase.json", "**/.*"],
+    "headers": [
+      {
+        "source": "/.well-known/assetlinks.json",
+        "headers": [{"key": "Content-Type", "value": "application/json"}]
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "mission-out-deuce",
+          "appId": "1:145423397513:android:b62977eee05c8e9f284c58",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "mission-out-deuce",
+          "configurations": {
+            "android": "1:145423397513:android:b62977eee05c8e9f284c58",
+            "ios": "1:145423397513:ios:34a7f7bd7f0e946f284c58",
+            "web": "1:145423397513:web:95ee335d6f409637284c58"
+          }
+        }
+      }
+    }
+  }
+}

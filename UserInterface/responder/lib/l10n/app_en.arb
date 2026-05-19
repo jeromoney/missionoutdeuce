@@ -59,6 +59,14 @@
     "description": "Disabled Google button label when the client id is missing."
   },
 
+  "contactAdministrator": "Contact your local administrator referencing this email: {email}",
+  "@contactAdministrator": {
+    "description": "Banner shown on the sign-in screen when a user authenticates but is not provisioned in MissionOut.",
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+
   "errorLoadIncidents": "Could not load missions from the API.",
   "@errorLoadIncidents": {
     "description": "Error banner when the responder's mission list fails to load."

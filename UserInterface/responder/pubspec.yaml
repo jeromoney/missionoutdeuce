@@ -25,6 +25,7 @@ dependencies:
     path: ../shared_theme
   shared_previews:
     path: ../shared_previews
+  app_links: ^7.0.0
 
 dev_dependencies:
   flutter_test:
@@ -32,6 +33,7 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  test: ^1.25.0
 
 flutter:
   generate: true

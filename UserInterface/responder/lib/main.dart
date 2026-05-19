@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_auth/shared_auth.dart';
 import 'package:shared_theme/shared_theme.dart';
 
@@ -20,30 +22,77 @@ void main() async {
   runApp(const MissionOutResponderApp());
 }
 
+/// Exposed for integration tests to inject a stub [http.Client].
+Widget buildApp({http.Client? httpClient}) =>
+    MissionOutResponderApp(httpClient: httpClient);
+
 class MissionOutResponderApp extends StatefulWidget {
-  const MissionOutResponderApp({super.key});
+  const MissionOutResponderApp({super.key, this.httpClient});
+
+  final http.Client? httpClient;
 
   @override
   State<MissionOutResponderApp> createState() => _MissionOutResponderAppState();
 }
 
 class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
-  final auth = AuthController(
-    backendBaseUrl: resolveApiBaseUrl(),
-    requestedClient: 'responder',
-    loggedOutRoleLabel: 'Responder',
-    emailLinkContinueUrl:
-        emailLinkContinueUrl.isEmpty ? null : emailLinkContinueUrl,
-  );
+  late final AuthController auth;
+
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  StreamSubscription<Uri>? _linkSub;
 
   @override
   void initState() {
     super.initState();
-    unawaited(auth.checkIncomingEmailLink());
+    auth = AuthController(
+      backendBaseUrl: resolveApiBaseUrl(),
+      requestedClient: 'responder',
+      loggedOutRoleLabel: 'Responder',
+      emailLinkContinueUrl:
+          emailLinkContinueUrl.isEmpty ? null : emailLinkContinueUrl,
+      httpClient: widget.httpClient,
+    );
+    unawaited(auth.checkIncomingEmailLink()); // handles web
+    _initAppLinks();
+  }
+
+  void _initAppLinks() {
+    final appLinks = AppLinks();
+    appLinks.getInitialLink().then(_handleIncomingLink).catchError(_onLinkError);
+    _linkSub = appLinks.uriLinkStream.listen(
+      _handleIncomingLink,
+      onError: _onLinkError,
+    );
+  }
+
+  Future<void> _handleIncomingLink(Uri? uri) async {
+    if (uri == null) return;
+    if (!auth.isSignInWithEmailLink(uri.toString())) return;
+    try {
+      final completed = await auth.handleMobileDeepLink(uri.toString());
+      if (!completed) {
+        _showSnackBar(
+          'Open the sign-in link on the device where you entered your email, or request a new link.',
+        );
+      }
+    } catch (e) {
+      _showSnackBar('Sign-in failed: ${e.toString().replaceFirst('Exception: ', '')}');
+    }
+  }
+
+  void _onLinkError(Object error) {
+    _showSnackBar('Could not process sign-in link: $error');
+  }
+
+  void _showSnackBar(String message) {
+    _scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   void dispose() {
+    _linkSub?.cancel();
     auth.dispose();
     super.dispose();
   }
@@ -51,6 +100,7 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      scaffoldMessengerKey: _scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => AppLocalizations.of(context).appName,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -62,9 +112,6 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
           if (auth.isRestoring) {
             return const _AuthLoadingScreen();
           }
-          if (auth.isUnprovisioned) {
-            return _UnprovisionedScreen(onLogout: auth.logout);
-          }
           if (auth.needsTeamSelection) {
             return _TeamSelectionScreen(auth: auth);
           }
@@ -72,6 +119,8 @@ class _MissionOutResponderAppState extends State<MissionOutResponderApp> {
             return ResponderHomeScreen(auth: auth);
           }
           return LoggedOutScreen(
+            key: ValueKey(auth.rejectedEmail),
+            rejectedEmail: auth.rejectedEmail,
             onSendSignInLink: auth.sendSignInLinkToEmail,
             onGoogleLogin: auth.loginWithGoogle,
             googleLoginEnabled: auth.canUseGoogleLogin,
@@ -91,54 +140,6 @@ class _AuthLoadingScreen extends StatelessWidget {
     return const Scaffold(
       body: MissionOutBackdrop(
         child: Center(child: CircularProgressIndicator()),
-      ),
-    );
-  }
-}
-
-class _UnprovisionedScreen extends StatelessWidget {
-  const _UnprovisionedScreen({required this.onLogout});
-
-  final Future<void> Function() onLogout;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: MissionOutBackdrop(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.lock_outline, size: 48),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Account not provisioned',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Your account is not associated with any MissionOut team. '
-                    'Contact your administrator to be added.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(height: 1.5),
-                  ),
-                  const SizedBox(height: 28),
-                  OutlinedButton(
-                    onPressed: onLogout,
-                    child: const Text('Sign out'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

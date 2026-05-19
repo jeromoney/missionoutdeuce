@@ -15,7 +15,20 @@
       "Bash(Select-Object Name)",
       "Bash(flutter pub *)",
       "Skill(find-skills)",
-      "Bash(npx skills *)"
+      "Bash(npx skills *)",
+      "Bash(xargs ls -la)",
+      "mcp__dart__pub",
+      "mcp__dart__list_devices",
+      "Bash(firebase --version)",
+      "Read(//Users/justinmatis/Library/Android/sdk/emulator/**)",
+      "Bash(flutter emulators *)",
+      "Bash(firebase emulators:start --only auth --project mission-out-deuce)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -H \"Authorization: Bearer owner\" http://localhost:9099/emulator/v1/projects/mission-out-deuce/oobCodes)",
+      "Bash(flutter devices *)",
+      "Bash(pkill -f \"firebase emulators\")",
+      "Bash(pkill -f \"auth\")",
+      "Bash(adb -s emulator-5554 emu kill)",
+      "Bash(flutter analyze *)"
     ]
   },
   "enabledMcpjsonServers": [

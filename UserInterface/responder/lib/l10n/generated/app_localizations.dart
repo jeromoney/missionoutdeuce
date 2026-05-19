@@ -182,6 +182,12 @@ abstract class AppLocalizations {
   /// **'Google login not configured'**
   String get googleNotConfigured;
 
+  /// Banner shown on the sign-in screen when a user authenticates but is not provisioned in MissionOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact your local administrator referencing this email: {email}'**
+  String contactAdministrator(String email);
+
   /// Error banner when the responder's mission list fails to load.
   ///
   /// In en, this message translates to:

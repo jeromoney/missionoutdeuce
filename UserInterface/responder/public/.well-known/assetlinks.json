@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.missionout.responder",
+      "sha256_cert_fingerprints": [
+        "E7:96:01:F0:74:40:BB:5D:70:82:B7:07:41:F3:D7:E1:B4:60:0F:48:01:02:F7:AD:DF:3D:E5:8A:A7:0A:32:7F"
+      ]
+    }
+  }
+]

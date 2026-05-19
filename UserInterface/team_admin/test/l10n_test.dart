@@ -27,7 +27,7 @@ void main() {
     );
 
     expect(resolved.appName, 'MissionOut Team Admin');
-    expect(resolved.emailMeCodeButton, 'Email me a sign-in code');
+    expect(resolved.emailMeCodeButton, 'Email me a sign-in link');
     expect(resolved.signInTitle, 'Sign in to Team Admin');
     expect(resolved.deviceHealth('healthy'), 'Healthy');
     expect(resolved.deviceHealth('needsReview'), 'Needs review');
@@ -49,7 +49,7 @@ void main() {
       ),
     );
 
-    expect(resolved.emailMeCodeButton, 'Envíame un código por correo');
+    expect(resolved.emailMeCodeButton, 'Envíame un enlace para iniciar sesión');
     expect(resolved.signInTitle, 'Sign in to Team Admin');
   });
 }

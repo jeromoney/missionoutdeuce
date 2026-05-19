@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "145423397513-571tqt44iq46fea5d1qdp2ap32eovlia.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.missionout.responder",
+            "certificate_hash": "a007b30221976fdd9da412706d2d5c84f19266f8"
+          }
+        },
+        {
           "client_id": "145423397513-af92g8a4d591v4dc3ptm80t64urdusv3.apps.googleusercontent.com",
           "client_type": 3
         }

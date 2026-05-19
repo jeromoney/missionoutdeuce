@@ -17,7 +17,9 @@ class AuthController extends ChangeNotifier {
     this.googleLoginEnabled = true,
     this.emailLinkContinueUrl,
     FirebaseAuthService? firebaseAuthService,
-  }) : _firebase = firebaseAuthService ?? FirebaseAuthService() {
+    http.Client? httpClient,
+  })  : _firebase = firebaseAuthService ?? FirebaseAuthService(),
+        _httpClient = httpClient ?? http.Client() {
     _authSub = _firebase.authStateChanges.listen(_onAuthStateChanged);
   }
 
@@ -31,10 +33,12 @@ class AuthController extends ChangeNotifier {
   final String? emailLinkContinueUrl;
 
   final FirebaseAuthService _firebase;
+  final http.Client _httpClient;
   StreamSubscription<User?>? _authSub;
 
   bool _isRestoring = true;
   bool _isUnprovisioned = false;
+  String? _rejectedEmail;
   AuthUser? _profile;
   AuthTeamMembership? _activeTeam;
 
@@ -42,8 +46,13 @@ class AuthController extends ChangeNotifier {
   bool get isRestoring => _isRestoring;
 
   /// True when Firebase authenticated but the user has no MissionOut
-  /// Team Membership — show "contact your administrator" screen.
+  /// Team Membership — show "contact your administrator" state.
   bool get isUnprovisioned => _isUnprovisioned;
+
+  /// Non-null when sign-in succeeded but the backend rejected the user
+  /// (unprovisioned or unknown). The value is the authenticated email to
+  /// display in the "contact your administrator" banner.
+  String? get rejectedEmail => _rejectedEmail;
 
   /// True when the user has a MissionOut Profile but has not yet selected
   /// an Active Team (only possible with 2+ memberships).
@@ -60,9 +69,15 @@ class AuthController extends ChangeNotifier {
 
   // ── Sign-in ──────────────────────────────────────────────────────────────
 
-  Future<void> loginWithGoogle() => _firebase.signInWithGoogle();
+  Future<void> loginWithGoogle() async {
+    _rejectedEmail = null;
+    notifyListeners();
+    await _firebase.signInWithGoogle();
+  }
 
   Future<void> sendSignInLinkToEmail(String email) async {
+    _rejectedEmail = null;
+    notifyListeners();
     final url = emailLinkContinueUrl;
     if (url == null || url.isEmpty) {
       throw Exception(
@@ -99,6 +114,12 @@ class AuthController extends ChangeNotifier {
   bool isSignInWithEmailLink(String link) =>
       _firebase.isSignInWithEmailLink(link);
 
+  /// Completes a mobile email-link sign-in from a deep link URI.
+  /// Returns true if sign-in was completed, false if no pending email was
+  /// stored on this device (prompt the user to re-request a link).
+  Future<bool> handleMobileDeepLink(String link) =>
+      _firebase.handleMobileDeepLink(link);
+
   // ── Sign-out ─────────────────────────────────────────────────────────────
 
   Future<void> logout() async {
@@ -106,6 +127,7 @@ class AuthController extends ChangeNotifier {
     _profile = null;
     _activeTeam = null;
     _isUnprovisioned = false;
+    _rejectedEmail = null;
     if (uid != null) {
       await _clearActiveTeam(uid);
     }
@@ -127,7 +149,7 @@ class AuthController extends ChangeNotifier {
 
     try {
       final idToken = await _firebase.getIdToken();
-      final response = await http.get(
+      final response = await _httpClient.get(
         Uri.parse('$backendBaseUrl/users/me'),
         headers: {
           if (idToken != null && idToken.isNotEmpty)
@@ -144,16 +166,24 @@ class AuthController extends ChangeNotifier {
             fallbackRole: loggedOutRoleLabel,
           );
           _isUnprovisioned = _profile!.teamMemberships.isEmpty;
-          _activeTeam = _isUnprovisioned
-              ? null
-              : await _restoreActiveTeam(user.uid, _profile!.teamMemberships);
+          if (_isUnprovisioned) {
+            _rejectedEmail =
+                _profile!.email.isNotEmpty ? _profile!.email : user.email;
+            _activeTeam = null;
+          } else {
+            _rejectedEmail = null;
+            _activeTeam =
+                await _restoreActiveTeam(user.uid, _profile!.teamMemberships);
+          }
         }
       } else {
+        _rejectedEmail = user.email;
         _profile = null;
         _isUnprovisioned = false;
         _activeTeam = null;
       }
     } catch (_) {
+      _rejectedEmail = user.email;
       _profile = null;
       _isUnprovisioned = false;
       _activeTeam = null;
@@ -202,6 +232,7 @@ class AuthController extends ChangeNotifier {
   @override
   void dispose() {
     _authSub?.cancel();
+    _httpClient.close();
     super.dispose();
   }
 }

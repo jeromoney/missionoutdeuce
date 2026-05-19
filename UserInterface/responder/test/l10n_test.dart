@@ -27,7 +27,7 @@ void main() {
     );
 
     expect(resolved.appName, 'MissionOut Responder');
-    expect(resolved.emailMeCodeButton, 'Email me a sign-in code');
+    expect(resolved.emailMeCodeButton, 'Email me a sign-in link');
     expect(resolved.signInTitle, 'Sign in to responder view');
   });
 
@@ -47,7 +47,7 @@ void main() {
       ),
     );
 
-    expect(resolved.emailMeCodeButton, 'Envíame un código por correo');
+    expect(resolved.emailMeCodeButton, 'Envíame un enlace para iniciar sesión');
     expect(resolved.signInTitle, 'Sign in to responder view');
   });
 }
