@@ -104,7 +104,7 @@ abstract class AppLocalizations {
   /// **'MissionOut'**
   String get appName;
 
-  /// Banner shown when the user has no active MissionOut team membership.
+  /// Banner shown on the sign-in screen when the user has no active MissionOut team membership.
   ///
   /// In en, this message translates to:
   /// **'Contact your local administrator referencing this email: {email}'**

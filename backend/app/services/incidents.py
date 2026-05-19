@@ -69,6 +69,7 @@ def _targets_for_page_group(
             TeamMembership.team_id == team_id,
             TeamMembership.is_active.is_(True),
             Device.is_active.is_(True),
+            Device.is_available.is_(True),
         )
     )
     sub_q = (

@@ -63,6 +63,44 @@ class ResponderApi {
     return ResponseRecord.fromJson(decoded);
   }
 
+  Future<void> registerDevice({
+    required String pushToken,
+    required String platform,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$_baseUrl/devices/fcm'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'push_token': pushToken,
+        'platform': platform,
+        'client': 'responder',
+      }),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        'Request failed for POST /devices/fcm (${response.statusCode})',
+      );
+    }
+  }
+
+  Future<void> setAvailability({
+    required String pushToken,
+    required bool available,
+  }) async {
+    final response = await _client.patch(
+      Uri.parse('$_baseUrl/devices/fcm/availability'),
+      headers: const {'Content-Type': 'application/json'},
+      body: jsonEncode({'push_token': pushToken, 'available': available}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        'Request failed for PATCH /devices/fcm/availability (${response.statusCode})',
+      );
+    }
+  }
+
   Future<void> registerWebPush({
     required String endpoint,
     required String p256dh,

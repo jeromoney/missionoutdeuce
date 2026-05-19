@@ -215,6 +215,40 @@ def ensure_team_membership_is_active(engine: Engine) -> None:
                 connection.execute(text("ALTER TABLE users DROP COLUMN is_active"))
 
 
+def ensure_device_client_and_availability(engine: Engine) -> None:
+    inspector = inspect(engine)
+    if "devices" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("devices")}
+    is_postgres = engine.dialect.name == "postgresql"
+
+    with engine.begin() as connection:
+        if "client" not in columns:
+            connection.execute(
+                text("ALTER TABLE devices ADD COLUMN client VARCHAR(32) DEFAULT 'responder'")
+            )
+            connection.execute(
+                text("UPDATE devices SET client = 'responder' WHERE client IS NULL")
+            )
+            if is_postgres:
+                connection.execute(
+                    text("ALTER TABLE devices ALTER COLUMN client SET NOT NULL")
+                )
+
+        if "is_available" not in columns:
+            connection.execute(
+                text("ALTER TABLE devices ADD COLUMN is_available BOOLEAN DEFAULT TRUE")
+            )
+            connection.execute(
+                text("UPDATE devices SET is_available = TRUE WHERE is_available IS NULL")
+            )
+            if is_postgres:
+                connection.execute(
+                    text("ALTER TABLE devices ALTER COLUMN is_available SET NOT NULL")
+                )
+
+
 def ensure_team_membership_role(engine: Engine) -> None:
     inspector = inspect(engine)
     if "team_memberships" not in inspector.get_table_names():

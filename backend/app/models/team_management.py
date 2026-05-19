@@ -76,8 +76,10 @@ class Device(Base):
     platform: Mapped[str] = mapped_column(String(32))
     push_token: Mapped[str] = mapped_column(Text)
     last_seen: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=True)
+    client: Mapped[str] = mapped_column(String(32), nullable=False, default="responder")
+    is_available: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     user: Mapped[User] = relationship(back_populates="devices")
 

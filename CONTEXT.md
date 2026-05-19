@@ -58,6 +58,14 @@ _Avoid_: "acknowledgement", "reply", "RSVP"
 A user's association with a team, carrying one or more Roles. A user may belong to multiple teams.
 _Avoid_: "membership", "user-team association"
 
+**Availability**:
+A team member's declared readiness to be paged for an Incident. Set explicitly in the responder app as Available or Unavailable. An Unavailable member is excluded from Incident pages. Distinct from authentication state — a user can be authenticated but Unavailable.
+_Avoid_: "online/offline", "active/inactive", "status"
+
+**Device**:
+An FCM-registered installation of the responder app, associated with a User. The primary channel for delivering Incident pages on Android. A Device remains registered across logout; a member controls their Device by installing or uninstalling the app, or by toggling Availability.
+_Avoid_: "phone", "mobile device", "push subscription"
+
 ## Relationships
 
 - A **Team** has one or more **Team Memberships**

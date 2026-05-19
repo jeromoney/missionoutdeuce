@@ -65,6 +65,7 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     browserAlerts.ensureSubscribed();
     _connectOpenTabEvents();
     _loadIncidents();
+    _registerFcmToken();
     alertSubscription = browserAlerts.alerts.listen((alert) {
       if (!mounted) {
         return;
@@ -177,6 +178,33 @@ class _ResponderHomeScreenState extends State<ResponderHomeScreen> {
     }
 
     setState(() => availability = value);
+    _syncAvailability(value);
+  }
+
+  Future<void> _syncAvailability(AvailabilityStatus value) async {
+    final token = await nativeAlertBridge.getToken();
+    if (token == null) return;
+    try {
+      await api.setAvailability(
+        pushToken: token,
+        available: value == AvailabilityStatus.available,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).errorSubmitResponse),
+        ),
+      );
+    }
+  }
+
+  Future<void> _registerFcmToken() async {
+    final token = await nativeAlertBridge.getToken();
+    if (token == null) return;
+    try {
+      await api.registerDevice(pushToken: token, platform: 'android');
+    } catch (_) {}
   }
 
   Future<void> _connectOpenTabEvents() async {

@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, validation_alias=AliasChoices("MISSIONOUT_DEBUG"))
     firebase_project_id: str | None = None
     firebase_credentials_path: str | None = None
+    firebase_service_account_json: str | None = None
     web_push_public_key: str | None = None
     web_push_private_key: str | None = None
     web_push_subject: str | None = None

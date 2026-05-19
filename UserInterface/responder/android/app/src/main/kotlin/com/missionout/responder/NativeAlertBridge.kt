@@ -140,6 +140,13 @@ object NativeAlertBridge {
                 result.success(null)
             }
 
+            "getToken" -> {
+                val token = appContext
+                    ?.getSharedPreferences("missionout_native_push", Context.MODE_PRIVATE)
+                    ?.getString("last_push_token", null)
+                result.success(token)
+            }
+
             "dismissActiveAlert" -> {
                 appContext?.let(MissionAlertNotifier::dismissActiveAlert)
                 result.success(null)

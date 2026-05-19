@@ -38,6 +38,19 @@ class DeviceRead(BaseModel):
     last_seen: datetime
     is_active: bool
     is_verified: bool
+    client: str
+    is_available: bool
+
+
+class FcmDeviceCreate(BaseModel):
+    push_token: str
+    platform: str
+    client: Literal["responder", "dispatcher", "team_admin"] = "responder"
+
+
+class FcmDeviceAvailabilityUpdate(BaseModel):
+    push_token: str
+    available: bool
 
 
 class WebPushKeys(BaseModel):

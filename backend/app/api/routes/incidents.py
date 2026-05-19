@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -18,6 +18,7 @@ from app.schemas.incident import (
     ResponseRecordRead,
 )
 from app.services import incidents as incident_service
+from app.services.push import dispatch_mobile_deliveries
 
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
@@ -93,6 +94,7 @@ def list_incidents(
 @router.post("", response_model=IncidentRead, status_code=201)
 def create_incident(
     payload: IncidentCreate,
+    background_tasks: BackgroundTasks,
     principal: Principal = Depends(get_current_principal),
     db: Session = Depends(get_db),
 ):
@@ -122,6 +124,7 @@ def create_incident(
         )
 
     incident = incident_service.create_incident(db=db, payload=payload, team=team)
+    background_tasks.add_task(dispatch_mobile_deliveries, db, incident.id)
     db.refresh(team)
 
     event_broker.publish(
@@ -141,6 +144,7 @@ def create_incident(
 def update_incident(
     incident_public_id: str,
     payload: IncidentUpdate,
+    background_tasks: BackgroundTasks,
     principal: Principal = Depends(get_current_principal),
     db: Session = Depends(get_db),
 ):
@@ -171,6 +175,8 @@ def update_incident(
         )
 
     incident = incident_service.update_incident(db=db, incident=incident, payload=payload)
+    if payload.page_group is not None:
+        background_tasks.add_task(dispatch_mobile_deliveries, db, incident.id)
     return _serialize_incident(incident)
 
 

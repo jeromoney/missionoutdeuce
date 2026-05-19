@@ -6,8 +6,11 @@ from app.api.deps import Principal, get_current_principal
 from app.core.config import settings
 from app.core.time import utc_now
 from app.db.session import get_db
-from app.models.team_management import TeamMembership, WebPushSubscription
+from app.models.team_management import Device, TeamMembership, WebPushSubscription
 from app.schemas.team_management import (
+    DeviceRead,
+    FcmDeviceAvailabilityUpdate,
+    FcmDeviceCreate,
     WebPushPublicKeyRead,
     WebPushSubscriptionCreate,
     WebPushSubscriptionDelete,
@@ -106,6 +109,75 @@ def register_web_push_subscription(
     db.refresh(subscription)
     db.refresh(subscription, attribute_names=["user", "team"])
     return _serialize_subscription(subscription)
+
+
+@router.post("/fcm", response_model=DeviceRead, status_code=status.HTTP_201_CREATED)
+def register_fcm_device(
+    payload: FcmDeviceCreate,
+    response: Response,
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
+    user = principal.user
+    device = db.scalar(select(Device).where(Device.push_token == payload.push_token))
+    now = utc_now()
+
+    if device is None:
+        device = Device(
+            user_id=user.id,
+            platform=payload.platform,
+            push_token=payload.push_token,
+            client=payload.client,
+            last_seen=now,
+            is_active=True,
+            is_available=True,
+        )
+        db.add(device)
+    else:
+        if device.user_id != user.id:
+            raise HTTPException(
+                status_code=409,
+                detail="FCM token is already registered to another user.",
+            )
+        device.last_seen = now
+        device.is_active = True
+        device.is_available = True
+        response.status_code = status.HTTP_200_OK
+
+    db.commit()
+    db.refresh(device)
+    db.refresh(device, attribute_names=["user"])
+    return DeviceRead(
+        public_id=device.public_id,
+        user_public_id=device.user.public_id,
+        user_name=device.user.name,
+        platform=device.platform,
+        push_token=device.push_token,
+        last_seen=device.last_seen,
+        is_active=device.is_active,
+        is_verified=device.is_verified,
+        client=device.client,
+        is_available=device.is_available,
+    )
+
+
+@router.patch("/fcm/availability", status_code=status.HTTP_200_OK)
+def update_fcm_device_availability(
+    payload: FcmDeviceAvailabilityUpdate,
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
+    device = db.scalar(
+        select(Device).where(
+            Device.push_token == payload.push_token,
+            Device.user_id == principal.user.id,
+        )
+    )
+    if device is None:
+        raise HTTPException(status_code=404, detail="FCM device not found.")
+    device.is_available = payload.available
+    db.commit()
+    return {"ok": True}
 
 
 @router.delete("/web-push", status_code=status.HTTP_204_NO_CONTENT)

@@ -202,6 +202,18 @@ class NativeAlertBridge {
     }
   }
 
+  Future<String?> getToken() async {
+    if (!isSupported || _supported == false) return null;
+    try {
+      return await _methodChannel.invokeMethod<String?>('getToken');
+    } on MissingPluginException {
+      _supported = false;
+      return null;
+    } on PlatformException {
+      return null;
+    }
+  }
+
   Future<void> dismissActiveAlert() async {
     if (!isSupported || _supported == false) {
       return;

@@ -1,5 +1,8 @@
+import json
 from contextlib import asynccontextmanager
 
+import firebase_admin
+from firebase_admin import credentials
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,6 +10,7 @@ from app.api.routes import devices, events, health, incidents, team_management, 
 from app.core.config import settings
 from app.db.base import Base
 from app.db.bootstrap import (
+    ensure_device_client_and_availability,
     ensure_email_code_failed_attempts,
     ensure_incident_team_fk,
     ensure_incident_version,
@@ -36,6 +40,10 @@ from app.schemas.meta import RootRead
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    if settings.firebase_service_account_json and not firebase_admin._apps:
+        cred = credentials.Certificate(json.loads(settings.firebase_service_account_json))
+        firebase_admin.initialize_app(cred)
+
     Base.metadata.create_all(bind=engine)
     ensure_incident_team_fk(engine)
     ensure_public_ids(engine)
@@ -44,6 +52,7 @@ async def lifespan(_: FastAPI):
     ensure_team_membership_role(engine)
     ensure_team_membership_is_active(engine)
     ensure_email_code_failed_attempts(engine)
+    ensure_device_client_and_availability(engine)
     apply_rls_policies(engine)
     yield
 
