@@ -28,7 +28,9 @@
       "Bash(pkill -f \"firebase emulators\")",
       "Bash(pkill -f \"auth\")",
       "Bash(adb -s emulator-5554 emu kill)",
-      "Bash(flutter analyze *)"
+      "Bash(flutter analyze *)",
+      "Bash(kill %1)",
+      "Bash(wait)"
     ]
   },
   "enabledMcpjsonServers": [
