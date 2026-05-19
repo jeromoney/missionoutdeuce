@@ -5,6 +5,14 @@
     "description": "App display name shown in the OS task switcher and app launcher."
   },
 
+  "contactAdministrator": "Contact your local administrator referencing this email: {email}",
+  "@contactAdministrator": {
+    "description": "Banner shown on the sign-in screen when the user has no active MissionOut team membership.",
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+
   "emailRequired": "Enter an email address.",
   "@emailRequired": {
     "description": "Validation error when an email field is empty."

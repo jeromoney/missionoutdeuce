@@ -12,12 +12,14 @@ class LoggedOutScreen extends StatefulWidget {
     required this.onGoogleLogin,
     this.googleLoginEnabled = true,
     this.roleLabel = 'Team Admin',
+    this.rejectedEmail,
   });
 
   final Future<void> Function(String email) onSendSignInLink;
   final Future<void> Function() onGoogleLogin;
   final bool googleLoginEnabled;
   final String roleLabel;
+  final String? rejectedEmail;
 
   @override
   State<LoggedOutScreen> createState() => _LoggedOutScreenState();
@@ -57,6 +59,7 @@ class _LoggedOutScreenState extends State<LoggedOutScreen> {
                   onSendSignInLink: _sendSignInLink,
                   onGoogleLogin: _submitGoogle,
                   roleLabel: widget.roleLabel,
+                  rejectedEmail: widget.rejectedEmail,
                 ),
               ),
             ),
@@ -140,6 +143,7 @@ class _LoginPanel extends StatelessWidget {
     required this.onSendSignInLink,
     required this.onGoogleLogin,
     required this.roleLabel,
+    this.rejectedEmail,
   });
 
   final TextEditingController emailController;
@@ -151,6 +155,7 @@ class _LoginPanel extends StatelessWidget {
   final Future<void> Function() onSendSignInLink;
   final Future<void> Function() onGoogleLogin;
   final String roleLabel;
+  final String? rejectedEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +203,27 @@ class _LoginPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
+          if (rejectedEmail != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: TeamAdminPalette.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: TeamAdminPalette.accent.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Text(
+                l10n.contactAdministrator(rejectedEmail!),
+                style: const TextStyle(
+                  color: TeamAdminPalette.accent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
           Text(
             l10n.emailFieldLabel,
             style: const TextStyle(

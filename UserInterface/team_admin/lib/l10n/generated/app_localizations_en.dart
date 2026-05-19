@@ -12,6 +12,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appName => 'MissionOut Team Admin';
 
   @override
+  String contactAdministrator(String email) {
+    return 'Contact your local administrator referencing this email: $email';
+  }
+
+  @override
   String get emailRequired => 'Enter an email address.';
 
   @override
